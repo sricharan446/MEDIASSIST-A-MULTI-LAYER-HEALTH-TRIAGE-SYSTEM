@@ -1,0 +1,9 @@
+Python is a high-level programming language used for backend, data science, and automation.
+
+FastAPI is a modern Python web framework used for building APIs. It is known for high performance and automatic Swagger documentation.
+
+Retrieval Augmented Generation (RAG) is a technique that improves AI responses by retrieving relevant information from a vector database before generating a final answer.
+
+ChromaDB is a vector database used to store embeddings for semantic search.
+
+Ollama is a local Large Language Model runtime that allows running LLMs offline.

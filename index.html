@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AI Agent (Ollama)</title>
+  <style>
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+           background:#0f0f1a; color:#e2e8f0; height:100vh; display:flex; overflow:hidden; }
+
+    /* Sidebar */
+    .sidebar { width:260px; background:#1a1a2e; border-right:1px solid #2d2d44;
+               display:flex; flex-direction:column; flex-shrink:0; }
+    .sb-head  { padding:18px 14px 14px; border-bottom:1px solid #2d2d44; }
+    .sb-head h1 { font-size:17px; font-weight:700; margin-bottom:10px;
+                  background:linear-gradient(135deg,#22c55e,#16a34a);
+                  background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .status-bar { display:flex; align-items:center; gap:6px; font-size:12px;
+                  padding:6px 10px; border-radius:6px; background:#0f0f1a;
+                  border:1px solid #2d2d44; margin-bottom:10px; color:#94a3b8; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#ef4444; flex-shrink:0; }
+    .dot.ok { background:#22c55e; box-shadow:0 0 6px #22c55e; }
+    .btn-new { width:100%; padding:9px;
+               background:linear-gradient(135deg,#22c55e,#16a34a);
+               color:#fff; border:none; border-radius:8px; cursor:pointer;
+               font-size:13px; font-weight:600; transition:opacity .2s; }
+    .btn-new:hover { opacity:.85; }
+    .sb-body { flex:1; overflow-y:auto; padding:10px; }
+    .sess-lbl { font-size:11px; color:#475569; text-transform:uppercase;
+                letter-spacing:1px; margin-bottom:6px; padding:0 4px; }
+    .sess-item { display:flex; align-items:center; padding:9px 10px;
+                 border-radius:8px; cursor:pointer; margin-bottom:3px; transition:background .15s; }
+    .sess-item:hover  { background:#2d2d44; }
+    .sess-item.active { background:#14532d; }
+    .sess-info { flex:1; min-width:0; }
+    .sess-name { font-size:13px; font-weight:500; white-space:nowrap;
+                 overflow:hidden; text-overflow:ellipsis; }
+    .sess-meta { font-size:11px; color:#64748b; margin-top:2px; }
+    .btn-del { background:none; border:none; color:#475569; font-size:18px;
+               cursor:pointer; padding:0 4px; transition:color .15s; flex-shrink:0; }
+    .btn-del:hover { color:#ef4444; }
+    .model-row { padding:8px 14px; border-top:1px solid #2d2d44; }
+    .model-row label { font-size:11px; color:#64748b; display:block; margin-bottom:4px; }
+    .model-row select { width:100%; padding:6px 8px; background:#0f0f1a;
+                        border:1px solid #2d2d44; border-radius:6px;
+                        color:#e2e8f0; font-size:12px; cursor:pointer; }
+
+    /* Main */
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .topbar { padding:13px 18px; background:#1a1a2e; border-bottom:1px solid #2d2d44;
+              display:flex; align-items:center; gap:10px; }
+    .topbar-title { font-size:15px; font-weight:600; }
+    .topbar-sub { font-size:11px; color:#64748b; margin-left:auto; }
+
+    /* Messages */
+    .messages { flex:1; overflow-y:auto; padding:20px 18px;
+                display:flex; flex-direction:column; gap:14px; }
+
+    /* Welcome */
+    .welcome { margin:auto; text-align:center; padding:30px 20px; }
+    .welcome-icon { font-size:52px; margin-bottom:14px; }
+    .welcome h2 { font-size:26px; font-weight:700; margin-bottom:8px; }
+    .welcome p  { color:#94a3b8; margin-bottom:24px; }
+    .caps { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .cap  { background:#1e1e35; border:1px solid #2d2d44; border-radius:10px;
+            padding:10px 14px; font-size:12px; color:#94a3b8; }
+    .cap span { display:block; font-size:18px; margin-bottom:3px; }
+
+    /* Bubbles */
+    .msg { display:flex; gap:8px; animation:fadeUp .25s ease; }
+    .msg.user { flex-direction:row-reverse; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .avatar { width:32px; height:32px; border-radius:50%; display:flex;
+              align-items:center; justify-content:center; font-size:15px;
+              flex-shrink:0; margin-top:2px; }
+    .msg.user .avatar      { background:#22c55e; }
+    .msg.assistant .avatar { background:#1e1e35; border:1px solid #2d2d44; }
+    .bubble { max-width:72%; padding:11px 14px; border-radius:14px; font-size:14px;
+              line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+    .msg.user .bubble      { background:linear-gradient(135deg,#22c55e,#16a34a);
+                              color:#fff; border-bottom-right-radius:4px; }
+    .msg.assistant .bubble { background:#1e1e35; border:1px solid #2d2d44;
+                              color:#e2e8f0; border-bottom-left-radius:4px; }
+    .tool-badge { display:inline-flex; align-items:center; gap:4px; margin-top:7px;
+                  font-size:11px; color:#22c55e; background:#052e16;
+                  border:1px solid #166534; border-radius:20px; padding:2px 8px; }
+
+    /* Typing */
+    .typing { display:flex; gap:4px; align-items:center; padding:6px 0; }
+    .typing span { width:7px; height:7px; background:#22c55e; border-radius:50%;
+                   animation:bounce 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay:.2s; }
+    .typing span:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4}
+                        30%{transform:translateY(-6px);opacity:1} }
+
+    /* Input */
+    .input-area { padding:14px 18px; background:#1a1a2e; border-top:1px solid #2d2d44; }
+    .warn-box { background:#2d0a0a; border:1px solid #7f1d1d; border-radius:8px;
+                padding:10px 13px; font-size:13px; color:#fca5a5; margin-bottom:8px; }
+    .file-preview { display:flex; align-items:center; gap:8px; padding:7px 10px;
+                    background:#0f0f1a; border:1px solid #2d2d44; border-radius:8px;
+                    font-size:13px; margin-bottom:8px; color:#94a3b8; }
+    .file-preview button { margin-left:auto; background:none; border:none;
+                           color:#64748b; cursor:pointer; font-size:18px; }
+    .input-row { display:flex; gap:8px; align-items:flex-end; }
+    .btn-attach { width:40px; height:40px; background:#0f0f1a; border:1px solid #2d2d44;
+                  border-radius:8px; color:#94a3b8; font-size:17px; cursor:pointer;
+                  display:flex; align-items:center; justify-content:center;
+                  flex-shrink:0; transition:border-color .15s; }
+    .btn-attach:hover { border-color:#22c55e; color:#22c55e; }
+    textarea { flex:1; padding:10px 13px; background:#0f0f1a; border:1px solid #2d2d44;
+               border-radius:8px; color:#e2e8f0; font-size:14px; font-family:inherit;
+               resize:none; min-height:40px; max-height:130px;
+               transition:border-color .15s; line-height:1.5; }
+    textarea:focus { outline:none; border-color:#22c55e; }
+    textarea::placeholder { color:#475569; }
+    .btn-send { height:40px; padding:0 18px;
+                background:linear-gradient(135deg,#22c55e,#16a34a);
+                color:#fff; border:none; border-radius:8px; font-size:14px;
+                font-weight:600; cursor:pointer; flex-shrink:0; transition:opacity .2s; }
+    .btn-send:hover:not(:disabled) { opacity:.85; }
+    .btn-send:disabled { background:#2d2d44; color:#475569; cursor:not-allowed; }
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#2d2d44; border-radius:3px; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <h1>🦙 AI Agent (Ollama)</h1>
+    <div class="status-bar">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Checking Ollama...</span>
+    </div>
+    <button class="btn-new" id="btnNew">+ New Chat</button>
+  </div>
+  <div class="sb-body">
+    <div class="sess-lbl">Recent Chats</div>
+    <div id="sessionsList"></div>
+  </div>
+  <div class="model-row">
+    <label>Active Model</label>
+    <select id="modelSelect"><option>llama3.2</option></select>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="topbarTitle">New Chat</span>
+    <span class="topbar-sub">Free &nbsp;·&nbsp; Local &nbsp;·&nbsp; Private</span>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🦙</div>
+      <h2>AI Agent — Powered by Ollama</h2>
+      <p>100% free &amp; runs locally on your computer</p>
+      <div class="caps">
+        <div class="cap"><span>🔍</span>Web Search</div>
+        <div class="cap"><span>📁</span>File Ops</div>
+        <div class="cap"><span>💾</span>Memory</div>
+        <div class="cap"><span>🆓</span>Free Forever</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div id="warnBox" class="warn-box" style="display:none">
+      ⚠️ Ollama is not running. Open a terminal and type: <strong>ollama serve</strong>
+    </div>
+    <div id="filePreview" class="file-preview" style="display:none">
+      <span>📎</span>
+      <span id="fileName"></span>
+      <button id="btnClearFile">×</button>
+    </div>
+    <div class="input-row">
+      <input type="file" id="fileInput" style="display:none"/>
+      <button class="btn-attach" id="btnAttach">📎</button>
+      <textarea id="msgInput" rows="1" placeholder="Type your message… (Enter to send)"></textarea>
+      <button class="btn-send" id="sendBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var sessionId    = null;
+  var isLoading    = false;
+  var selectedFile = null;
+
+  // Wire up buttons safely here - no inline handlers
+  document.getElementById('btnNew').addEventListener('click', newSession);
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('btnAttach').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', onFileSelect);
+  document.getElementById('btnClearFile').addEventListener('click', clearFile);
+  document.getElementById('msgInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  document.getElementById('msgInput').addEventListener('input', function() {
+    autoResize(this);
+  });
+
+  // Start up
+  checkOllama();
+  loadSessions();
+  loadModels();
+  setInterval(checkOllama, 8000);
+
+  async function checkOllama() {
+    try {
+      var res  = await fetch('/api/health');
+      var data = await res.json();
+      var ok   = data.ollama_ready;
+      document.getElementById('statusDot').className    = ok ? 'dot ok' : 'dot';
+      document.getElementById('statusText').textContent = ok ? 'Ollama connected' : 'Ollama not running';
+      document.getElementById('warnBox').style.display  = ok ? 'none' : 'block';
+    } catch(e) {}
+  }
+
+  async function loadModels() {
+    try {
+      var res  = await fetch('/api/models');
+      var data = await res.json();
+      var sel  = document.getElementById('modelSelect');
+      if (data.models && data.models.length > 0) {
+        sel.innerHTML = '';
+        data.models.forEach(function(m) {
+          var o = document.createElement('option');
+          o.value       = m;
+          o.textContent = m;
+          sel.appendChild(o);
+        });
+      }
+    } catch(e) {}
+  }
+
+  async function loadSessions() {
+    try {
+      var res  = await fetch('/api/sessions');
+      var data = await res.json();
+      var list = document.getElementById('sessionsList');
+      list.innerHTML = '';
+      data.forEach(function(s) {
+        var el = document.createElement('div');
+        el.className = 'sess-item' + (s.id === sessionId ? ' active' : '');
+
+        var info = document.createElement('div');
+        info.className = 'sess-info';
+        info.innerHTML = '<div class="sess-name">Chat ' + s.id.slice(0,8) + '</div>' +
+                         '<div class="sess-meta">' + s.message_count + ' messages</div>';
+        info.addEventListener('click', (function(id){ return function(){ loadSession(id); }; })(s.id));
+
+        var del = document.createElement('button');
+        del.className   = 'btn-del';
+        del.textContent = '×';
+        del.addEventListener('click', (function(id){ return function(e){ delSession(id,e); }; })(s.id));
+
+        el.appendChild(info);
+        el.appendChild(del);
+        list.appendChild(el);
+      });
+    } catch(e) {}
+  }
+
+  function newSession() {
+    sessionId = null;
+    document.getElementById('topbarTitle').textContent = 'New Chat';
+    document.getElementById('messages').innerHTML =
+      '<div class="welcome" id="welcome">' +
+        '<div class="welcome-icon">🦙</div>' +
+        '<h2>AI Agent — Powered by Ollama</h2>' +
+        '<p>100% free &amp; runs locally on your computer</p>' +
+        '<div class="caps">' +
+          '<div class="cap"><span>🔍</span>Web Search</div>' +
+          '<div class="cap"><span>📁</span>File Ops</div>' +
+          '<div class="cap"><span>💾</span>Memory</div>' +
+          '<div class="cap"><span>🆓</span>Free Forever</div>' +
+        '</div>' +
+      '</div>';
+    loadSessions();
+  }
+
+  async function loadSession(sid) {
+    sessionId = sid;
+    document.getElementById('topbarTitle').textContent = 'Chat ' + sid.slice(0,8);
+    var res  = await fetch('/api/sessions/' + sid + '/history');
+    var data = await res.json();
+    var c    = document.getElementById('messages');
+    c.innerHTML = '';
+    data.history.forEach(function(m) { appendMsg(m.role, m.content, []); });
+    scrollDown();
+    loadSessions();
+  }
+
+  async function delSession(sid, e) {
+    e.stopPropagation();
+    await fetch('/api/sessions/' + sid, { method: 'DELETE' });
+    if (sessionId === sid) newSession();
+    else loadSessions();
+  }
+
+  async function sendMessage() {
+    if (isLoading) return;
+    var input = document.getElementById('msgInput');
+    var text  = input.value.trim();
+    if (!text && !selectedFile) return;
+
+    isLoading = true;
+    document.getElementById('sendBtn').disabled = true;
+    input.value = '';
+    autoResize(input);
+
+    var w = document.getElementById('welcome');
+    if (w) w.remove();
+
+    if (text) appendMsg('user', text, []);
+
+    // File upload
+    if (selectedFile) {
+      var fd = new FormData();
+      fd.append('file', selectedFile);
+      try {
+        var r = await fetch('/api/upload', { method: 'POST', body: fd });
+        var d = await r.json();
+        appendMsg('assistant', 'File uploaded: ' + d.filename + '\n\n' + d.summary, ['file_operations']);
+      } catch(err) {
+        appendMsg('assistant', 'File upload failed.', []);
+      }
+      clearFile();
+    }
+
+    // Chat message
+    if (text) {
+      var tid = 'typing_' + Date.now();
+      appendTyping(tid);
+      try {
+        var res = await fetch('/api/chat', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ message: text, session_id: sessionId })
+        });
+        var data = await res.json();
+        var el = document.getElementById(tid);
+        if (el) el.remove();
+
+        if (res.ok) {
+          sessionId = data.session_id;
+          document.getElementById('topbarTitle').textContent = 'Chat ' + sessionId.slice(0,8);
+          appendMsg('assistant', data.response, data.tools_used);
+        } else {
+          appendMsg('assistant', 'Error: ' + (data.detail || 'Something went wrong'), []);
+        }
+        loadSessions();
+      } catch(err) {
+        var el = document.getElementById(tid);
+        if (el) el.remove();
+        appendMsg('assistant', 'Cannot reach the server. Is app.py still running?', []);
+      }
+    }
+
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  function appendMsg(role, content, tools) {
+    var c   = document.getElementById('messages');
+    var div = document.createElement('div');
+    div.className = 'msg ' + role;
+
+    var avatar = document.createElement('div');
+    avatar.className   = 'avatar';
+    avatar.textContent = role === 'user' ? '👤' : '🦙';
+
+    var bubble = document.createElement('div');
+    bubble.className   = 'bubble';
+    bubble.textContent = content;   // textContent is safe - no XSS, no escaping needed
+
+    if (tools && tools.length > 0) {
+      var badge = document.createElement('div');
+      badge.className   = 'tool-badge';
+      badge.textContent = 'Tools: ' + tools.join(', ');
+      bubble.appendChild(badge);
+    }
+
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    c.appendChild(div);
+    scrollDown();
+  }
+
+  function appendTyping(id) {
+    var c   = document.getElementById('messages');
+    var div = document.createElement('div');
+    div.className = 'msg assistant';
+    div.id = id;
+
+    var avatar = document.createElement('div');
+    avatar.className   = 'avatar';
+    avatar.textContent = '🦙';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML  = '<div class="typing"><span></span><span></span><span></span></div>';
+
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    c.appendChild(div);
+    scrollDown();
+  }
+
+  function onFileSelect(e) {
+    selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+    document.getElementById('fileName').textContent       = selectedFile.name;
+    document.getElementById('filePreview').style.display = 'flex';
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value            = '';
+    document.getElementById('filePreview').style.display = 'none';
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  }
+
+  function scrollDown() {
+    var c = document.getElementById('messages');
+    c.scrollTop = c.scrollHeight;
+  }
+</script>
+</body>
+</html>
