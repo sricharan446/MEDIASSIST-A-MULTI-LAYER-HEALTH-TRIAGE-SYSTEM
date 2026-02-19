@@ -112,10 +112,22 @@ class MemoryManager:
     def _f(self, sid): return self.path / f"{sid}.json"
     def create_session(self):
         sid = str(uuid.uuid4())
-        json.dump({"id":sid,"created_at":datetime.now().isoformat(),
-                   "last_activity":datetime.now().isoformat(),"messages":[]},
-                  open(self._f(sid),"w"), indent=2)
+        json.dump({
+            "id": sid,
+            "name": "New Chat",
+            "created_at": datetime.now().isoformat(),
+            "last_activity": datetime.now().isoformat(),
+        "messages": []
+        },
+    open(self._f(sid),"w"), indent=2)
         return sid
+    def set_session_name(self, sid, name):
+        d = self._load(sid)
+        if not d:
+            return
+        d["name"] = name[:40]
+        json.dump(d, open(self._f(sid), "w"), indent=2)
+
     def add_message(self, sid, role, content, meta=None):
         d = self._load(sid) or {"id":sid,"created_at":datetime.now().isoformat(),
                                  "last_activity":datetime.now().isoformat(),"messages":[]}
@@ -134,10 +146,15 @@ class MemoryManager:
         for f in self.path.glob("*.json"):
             try:
                 d = json.load(open(f))
-                out.append({"id":d["id"],"created_at":d["created_at"],
-                             "last_activity":d["last_activity"],
-                             "message_count":len(d["messages"])})
-            except: pass
+                out.append({
+                    "id": d["id"],
+                    "name": d.get("name", "New Chat"),
+                    "created_at": d["created_at"],
+                    "last_activity": d["last_activity"],
+                    "message_count": len(d["messages"])
+                })
+            except:
+                pass
         return sorted(out, key=lambda x: x["last_activity"], reverse=True)
     def delete_session(self, sid):
         f = self._f(sid)
@@ -253,6 +270,10 @@ async def chat(req: ChatRequest):
 
         memory.add_message(sid, "user", req.message)
         memory.add_message(sid, "assistant", kg_response, {"tools_used": ["Knowledge Graph"]})
+        # auto name chat from first message
+        if len(history) == 0:
+            memory.set_session_name(sid, req.message[:30])
+
 
         return ChatResponse(
             response=kg_response,
