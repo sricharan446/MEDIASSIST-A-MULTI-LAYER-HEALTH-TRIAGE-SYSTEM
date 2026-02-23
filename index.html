@@ -1,397 +1,859 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>AI Agent (Ollama)</title>
+  <title>Lama — Local AI Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-           background: linear-gradient(135deg,#0f172a,#020617,#020617);
-           background-attachment: fixed;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
- }
- body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(34,197,94,.15), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(59,130,246,.12), transparent 40%);
-  pointer-events:none;
-  z-index:-1;
-}
+    /* ===================== DARK THEME (default) ===================== */
+    :root,
+    [data-theme="dark"] {
+      --bg:           #080b10;
+      --bg2:          #0d1117;
+      --bg3:          #111820;
+      --border:       rgba(255,255,255,0.06);
+      --border2:      rgba(255,255,255,0.12);
+      --accent:       #00e5a0;
+      --accent-dim:   rgba(0,229,160,0.12);
+      --accent-glow:  rgba(0,229,160,0.25);
+      --text:         #e8edf5;
+      --text2:        #7a8799;
+      --text3:        #3d4b5c;
+      --user-bubble:  #1a2744;
+      --user-border:  rgba(99,170,255,0.3);
+      --user-text:    #c8deff;
+      --ai-bubble:    #0d1621;
+      --danger:       #ff4560;
+      --purple:       #8b5cf6;
+      --blue:         #38bdf8;
+      --pink:         #f472b6;
+      --topbar-bg:    rgba(8,11,16,0.85);
+      --input-bg:     rgba(8,11,16,0.95);
+      --login-bg:     #080b10;
+      --shadow:       0 4px 20px rgba(0,0,0,0.35);
+      --toggle-track: #1e293b;
+      --glow1:        rgba(0,229,160,0.04);
+      --glow2:        rgba(99,102,241,0.05);
+    }
 
+    /* ===================== LIGHT THEME ===================== */
+    [data-theme="light"] {
+      --bg:           #f4f6f9;
+      --bg2:          #ffffff;
+      --bg3:          #eef1f5;
+      --border:       rgba(0,0,0,0.08);
+      --border2:      rgba(0,0,0,0.14);
+      --accent:       #00a876;
+      --accent-dim:   rgba(0,168,118,0.10);
+      --accent-glow:  rgba(0,168,118,0.20);
+      --text:         #111827;
+      --text2:        #4b5563;
+      --text3:        #9ca3af;
+      --user-bubble:  #dbeafe;
+      --user-border:  rgba(59,130,246,0.3);
+      --user-text:    #1e3a8a;
+      --ai-bubble:    #ffffff;
+      --danger:       #ef4444;
+      --purple:       #7c3aed;
+      --blue:         #0ea5e9;
+      --pink:         #db2777;
+      --topbar-bg:    rgba(255,255,255,0.92);
+      --input-bg:     rgba(244,246,249,0.98);
+      --login-bg:     #eef1f5;
+      --shadow:       0 2px 12px rgba(0,0,0,0.08);
+      --toggle-track: #d1d5db;
+      --glow1:        rgba(0,168,118,0.06);
+      --glow2:        rgba(99,102,241,0.04);
+    }
 
-    /* Sidebar */
+    /* Smooth theme transitions */
+    body, .sidebar, .main, .topbar, .input-area, .input-box,
+    .bubble, .cap, .login-card, .login-field input, .model-select,
+    .sess-item, .sb-footer, .sb-logo, #loginScreen {
+      transition: background-color 0.3s ease, border-color 0.3s ease,
+                  color 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; top: -30%; left: -10%;
+      width: 60%; height: 60%;
+      background: radial-gradient(ellipse, var(--glow1) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; bottom: -20%; right: -10%;
+      width: 50%; height: 50%;
+      background: radial-gradient(ellipse, var(--glow2) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ===================== THEME TOGGLE BUTTON ===================== */
+    .theme-toggle {
+      position: relative;
+      width: 42px; height: 22px;
+      background: var(--toggle-track);
+      border: 1px solid var(--border2);
+      border-radius: 100px;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      outline: none;
+      transition: background 0.3s;
+    }
+
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    [data-theme="light"] .theme-toggle::after {
+      transform: translateX(20px);
+    }
+
+    /* ===================== SIDEBAR ===================== */
     .sidebar {
-  width:260px;
-  backdrop-filter: blur(18px);
-  background: rgba(20,20,40,0.55);
-  border-right:1px solid rgba(255,255,255,0.08);
-  display:flex;
-  flex-direction:column;
-  flex-shrink:0;
-  box-shadow:0 0 40px rgba(0,0,0,.6);
-  box-shadow: 0 0 50px rgba(0,0,0,.6),
-            inset 0 0 20px rgba(255,255,255,.03);
+      width: 260px; min-width: 260px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: relative; z-index: 10;
+    }
 
-}
+    .sb-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
 
-    .sb-head  { padding:18px 14px 14px; border-bottom:1px solid #2d2d44; }
-    .sb-head h1 { font-size:17px; font-weight:700; margin-bottom:10px;
-                  background:linear-gradient(135deg,#22c55e,#16a34a);
-                  background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .status-bar { display:flex; align-items:center; gap:6px; font-size:12px;
-                  padding:6px 10px; border-radius:6px; background:#0f0f1a;
-                  border:1px solid #2d2d44; margin-bottom:10px; color:#94a3b8; }
-    .dot { width:8px; height:8px; border-radius:50%; background:#ef4444; flex-shrink:0; }
-    .dot.ok { background:#22c55e; box-shadow:0 0 6px #22c55e; }
-    .btn-new { width:100%; padding:9px;
-               background:linear-gradient(135deg,#22c55e,#16a34a);
-               color:#fff; border:none; border-radius:8px; cursor:pointer;
-               font-size:13px; font-weight:600; transition:opacity .2s; }
-    .btn-new:hover { opacity:.85; }
-    .sb-body { flex:1; overflow-y:auto; padding:10px; }
-    .sess-lbl { font-size:11px; color:#475569; text-transform:uppercase;
-                letter-spacing:1px; margin-bottom:6px; padding:0 4px; }
-    .sess-item { display:flex; align-items:center; padding:9px 10px;
-                 border-radius:8px; cursor:pointer; margin-bottom:3px; transition:background .15s; }
-    .sess-item:hover  { background:#2d2d44; }
-    .sess-item.active { background:#14532d; }
+    .logo-mark {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .logo-text span { color: var(--accent); }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(0,200,140,0.25);
+      border-radius: 100px;
+      padding: 4px 10px;
+      font-size: 10px; color: var(--accent);
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse-anim 2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse-anim {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.5; transform:scale(0.8); }
+    }
+
+    .btn-new {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 10px; margin-top: 14px;
+      background: var(--accent); color: #020a06;
+      border: none; border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transition: filter 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-new:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 4px 30px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .sb-body { flex:1; overflow-y:auto; padding:14px 12px; }
+
+    .sb-section-label {
+      font-size: 9px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 2px;
+      padding: 0 6px; margin-bottom: 8px;
+    }
+
+    .sess-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      cursor: pointer; border: 1px solid transparent;
+      margin-bottom: 3px;
+    }
+    .sess-item:hover {
+      background: var(--accent-dim);
+      border-color: var(--border);
+    }
+    .sess-item.active {
+      background: var(--accent-dim);
+      border-color: rgba(0,200,140,0.3);
+    }
+
+    .sess-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%; background: var(--text3); flex-shrink: 0;
+    }
+    .sess-item.active .sess-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
     .sess-info { flex:1; min-width:0; }
-    .sess-name { font-size:13px; font-weight:500; white-space:nowrap;
-                 overflow:hidden; text-overflow:ellipsis; }
-    .sess-meta { font-size:11px; color:#64748b; margin-top:2px; }
-    .btn-del { background:none; border:none; color:#475569; font-size:18px;
-               cursor:pointer; padding:0 4px; transition:color .15s; flex-shrink:0; }
-    .btn-del:hover { color:#ef4444; }
-    .model-row { padding:8px 14px; border-top:1px solid #2d2d44; }
-    .model-row label { font-size:11px; color:#64748b; display:block; margin-bottom:4px; }
-    .model-row select { width:100%; padding:6px 8px; background:#0f0f1a;
-                        border:1px solid #2d2d44; border-radius:6px;
-                        color:#e2e8f0; font-size:12px; cursor:pointer; }
-    .sidebar::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.05),transparent);
-  pointer-events:none;
-}
+    .sess-name {
+      font-size: 12px; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sess-item.active .sess-name { color: var(--accent); }
+    .sess-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
+    .btn-del {
+      background: none; border: none; color: var(--text3);
+      cursor: pointer; font-size: 14px; padding: 2px 4px;
+      border-radius: 4px; flex-shrink: 0; opacity: 0;
+      transition: color 0.15s;
+    }
+    .sess-item:hover .btn-del { opacity: 1; }
+    .btn-del:hover { color: var(--danger); }
 
-    /* Main */
-    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-    .topbar{
-  padding:13px 18px;
-  backdrop-filter: blur(20px);
-  background: rgba(20,20,40,0.55);
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
+    .sb-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
 
-    .topbar-title { font-size:15px; font-weight:600; 
-    text-shadow: 0 0 8px rgba(34,197,94,.4);
-}
-    .topbar-sub { font-size:11px; color:#64748b; margin-left:auto; }
+    .model-label {
+      font-size: 9px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;
+    }
 
-    /* Messages */
-    .messages { flex:1; overflow-y:auto; padding:20px 18px;
-                display:flex; flex-direction:column; gap:14px; 
-              background: linear-gradient(to bottom, rgba(2,6,23,.4), rgba(0,0,0,.7));
-backdrop-filter: blur(8px);
+    .model-select {
+      width: 100%; padding: 8px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; cursor: pointer; outline: none;
+      margin-bottom: 12px;
+    }
+    .model-select option { background: var(--bg3); color: var(--text); }
 
-}
+    .user-row { display: flex; align-items: center; gap: 8px; }
 
-    /* Welcome */
-    .welcome { margin:auto; text-align:center; padding:30px 20px; }
-    .welcome-icon { font-size:52px; margin-bottom:14px; }
-    .welcome h2 { font-size:26px; font-weight:700; margin-bottom:8px; }
-    .welcome p  { color:#94a3b8; margin-bottom:24px; }
-    .caps { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-    .cap  { background:#1e1e35; border:1px solid #2d2d44; border-radius:10px;
-            padding:10px 14px; font-size:12px; color:#94a3b8; }
-    .cap span { display:block; font-size:18px; margin-bottom:3px; }
+    .user-avatar {
+      width: 30px; height: 30px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
 
-    /* Bubbles */
-    .msg { display:flex; gap:8px; animation:fadeUp .25s ease; }
-    .msg.user { flex-direction:row-reverse; }
-    @keyframes fadeUp {
-  from {opacity:0; transform:translateY(14px) scale(.96);}
-  to   {opacity:1; transform:translateY(0) scale(1);}
-}
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 10px; color: var(--text3); }
 
-    .avatar { width:32px; height:32px; border-radius:50%; display:flex;
-              align-items:center; justify-content:center; font-size:15px;
-              flex-shrink:0; margin-top:2px; }
-    .msg.user .avatar      { background:#22c55e; }
-    .msg.assistant .avatar { background:#1e1e35; border:1px solid #2d2d44; }
-    .bubble { max-width:72%; padding:11px 14px; border-radius:14px; font-size:14px;
-              line-height:1.6; white-space:pre-wrap; word-break:break-word; }
-    .msg.user .bubble{
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color:#fff;
-  border-bottom-right-radius:4px;
-  box-shadow:0 4px 20px rgba(34,197,94,.3);
-}
+    .theme-icon { font-size: 13px; user-select: none; flex-shrink: 0; }
 
-    .msg.assistant .bubble{
-  background: rgba(30,30,60,0.45);
-  backdrop-filter: blur(14px);
-  border:1px solid rgba(255,255,255,0.08);
-  color:#e2e8f0;
-  border-bottom-left-radius:4px;
-}
+    .btn-logout {
+      background: none; border: 1px solid var(--border);
+      color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; padding: 4px 8px; border-radius: 6px;
+      cursor: pointer; flex-shrink: 0;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
-    .tool-badge {
-                  display:inline-flex;
-                  align-items:center;
-                  gap:6px;
-                  margin-top:7px;
-                  font-size:11px;
-                  border-radius:20px;
-                  padding:3px 10px;
-                  font-weight:500;
-                }
+    /* ===================== MAIN ===================== */
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative; }
 
-    .tool-rag { background:#052e16; color:#22c55e; border:1px solid #166534; }
-    .tool-kg { background:#1e1b4b; color:#a78bfa; border:1px solid #6d28d9; }
-    .tool-web { background:#082f49; color:#38bdf8; border:1px solid #0284c7; }
-    .tool-file { background:#3f1d2e; color:#f472b6; border:1px solid #db2777; }
+    .topbar {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      background: var(--topbar-bg);
+      backdrop-filter: blur(10px);
+      position: relative; z-index: 5;
+    }
 
-    /* Typing */
-    .typing { display:flex; gap:4px; align-items:center; padding:6px 0; }
-    .typing span { width:7px; height:7px; background:#22c55e; border-radius:50%;
-                   animation:bounce 1.2s infinite; }
-    .typing span:nth-child(2) { animation-delay:.2s; }
-    .typing span:nth-child(3) { animation-delay:.4s; }
-    @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4}
-                        30%{transform:translateY(-6px);opacity:1} }
+    .topbar-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 600;
+      color: var(--text); flex: 1;
+    }
 
-    /* Input */
-    .input-area{
-  padding:14px 18px;
-  backdrop-filter: blur(20px);
-  background: rgba(20,20,40,0.55);
-  border-top:1px solid rgba(255,255,255,0.08);
-}
+    .topbar-badge {
+      font-size: 9px; color: var(--text3);
+      border: 1px solid var(--border2);
+      border-radius: 100px; padding: 3px 8px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
 
-    .warn-box { background:#2d0a0a; border:1px solid #7f1d1d; border-radius:8px;
-                padding:10px 13px; font-size:13px; color:#fca5a5; margin-bottom:8px; }
-    .file-preview { display:flex; align-items:center; gap:8px; padding:7px 10px;
-                    background:#0f0f1a; border:1px solid #2d2d44; border-radius:8px;
-                    font-size:13px; margin-bottom:8px; color:#94a3b8; }
-    .file-preview button { margin-left:auto; background:none; border:none;
-                           color:#64748b; cursor:pointer; font-size:18px; }
-    .input-row { display:flex; gap:8px; align-items:flex-end; }
-    .btn-attach { width:40px; height:40px; background:#0f0f1a; border:1px solid #2d2d44;
-                  border-radius:8px; color:#94a3b8; font-size:17px; cursor:pointer;
-                  display:flex; align-items:center; justify-content:center;
-                  flex-shrink:0; transition:border-color .15s; }
-    .btn-attach:hover { border-color:#22c55e; color:#22c55e; }
-    textarea { flex:1; padding:10px 13px; background:#0f0f1a; border:1px solid #2d2d44;
-               border-radius:8px; color:#e2e8f0; font-size:14px; font-family:inherit;
-               resize:none; min-height:40px; max-height:130px;
-               transition:border-color .15s; line-height:1.5; }
-    textarea:focus { outline:none; border-color:#22c55e; }
-    textarea::placeholder { color:#475569; }
-    .btn-send { height:40px; padding:0 18px;
-                background:linear-gradient(135deg,#22c55e,#16a34a);
-                color:#fff; border:none; border-radius:8px; font-size:14px;
-                font-weight:600; cursor:pointer; flex-shrink:0; transition:opacity .2s; }
-    .btn-send:hover:not(:disabled) { opacity:.85; }
-    .btn-send:disabled { background:#2d2d44; color:#475569; cursor:not-allowed; }
-    ::-webkit-scrollbar { width:5px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:#2d2d44; border-radius:3px; }
+    /* ===================== MESSAGES ===================== */
+    .messages {
+      flex: 1; overflow-y: auto;
+      padding: 32px 24px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .welcome {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex: 1; text-align: center; padding: 40px 20px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .welcome-glyph {
+      width: 80px; height: 80px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; margin-bottom: 24px;
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    .welcome h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .welcome p { font-size: 12px; color: var(--text2); margin-bottom: 32px; }
+
+    .caps { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    .cap {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px; padding: 14px 16px;
+      text-align: center; width: 130px; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .cap:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+
+    .cap-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+    .cap-label { font-size: 11px; color: var(--text2); }
+    .cap:hover .cap-label { color: var(--accent); }
+
+    /* ===================== BUBBLES ===================== */
+    .msg {
+      display: flex; gap: 12px;
+      animation: msgIn 0.2s ease;
+    }
+
+    @keyframes msgIn {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .msg.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0; margin-top: 2px;
+    }
+    .msg.user .avatar {
+      background: var(--user-bubble);
+      border: 1px solid var(--user-border);
+    }
+    .msg.assistant .avatar {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+    }
+
+    .bubble-wrap { max-width: 68%; display: flex; flex-direction: column; }
+    .msg.user .bubble-wrap { align-items: flex-end; }
+
+    .bubble-meta {
+      font-size: 9px; color: var(--text3);
+      margin-bottom: 5px; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    .bubble {
+      padding: 13px 16px; border-radius: 14px;
+      font-size: 13px; line-height: 1.7;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    .msg.user .bubble {
+      background: var(--user-bubble);
+      border: 1px solid var(--user-border);
+      color: var(--user-text);
+      border-radius: 14px 4px 14px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .msg.assistant .bubble {
+      background: var(--ai-bubble);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 4px 14px 14px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    /* ===================== TOOL BADGES ===================== */
+    .tool-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+
+    .tbadge {
+      font-size: 9px; padding: 2px 8px; border-radius: 4px;
+      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .tb-rag  { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+    .tb-web  { background: rgba(56,189,248,0.1); color: var(--blue); border: 1px solid rgba(56,189,248,0.3); }
+    .tb-file { background: rgba(244,114,182,0.1); color: var(--pink); border: 1px solid rgba(244,114,182,0.3); }
+    .tb-mem  { background: rgba(139,92,246,0.1); color: var(--purple); border: 1px solid rgba(139,92,246,0.3); }
+
+    /* ===================== TYPING ===================== */
+    .typing-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+    .typing-dots span {
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; animation: dot-bounce 1.4s infinite; opacity: 0.5;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot-bounce {
+      0%,60%,100% { transform:translateY(0); opacity:0.4; }
+      30%          { transform:translateY(-6px); opacity:1; }
+    }
+
+    /* ===================== INPUT ===================== */
+    .input-area {
+      padding: 14px 20px;
+      background: var(--input-bg);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .input-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 4px 4px 4px 16px;
+      display: flex; align-items: flex-end; gap: 8px;
+    }
+    .input-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .input-box textarea {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.6;
+      padding: 10px 0; resize: none; max-height: 130px;
+    }
+    .input-box textarea::placeholder { color: var(--text3); }
+
+    .input-actions { display: flex; align-items: center; gap: 4px; padding: 6px; }
+
+    .btn-icon {
+      width: 36px; height: 36px;
+      background: none; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text3);
+      font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+    .btn-send {
+      height: 36px; padding: 0 16px;
+      background: var(--accent); color: #020a06;
+      border: none; border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: filter 0.2s, box-shadow 0.2s;
+    }
+    .btn-send:hover:not(:disabled) {
+      filter: brightness(1.1);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .btn-send:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
+
+    .input-hint { text-align: center; font-size: 10px; color: var(--text3); margin-top: 8px; }
+
+    .file-preview {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 8px; font-size: 11px; color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .file-preview button {
+      margin-left: auto; background: none; border: none;
+      color: var(--text3); cursor: pointer; font-size: 16px; line-height: 1;
+    }
+    .file-preview button:hover { color: var(--danger); }
+
+    /* ===================== LOGIN ===================== */
+    #loginScreen {
+      position: fixed; inset: 0;
+      background: var(--login-bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+
+    .login-wrap { width: 380px; animation: fadeIn 0.5s ease; }
+
+    .login-logo { text-align: center; margin-bottom: 20px; }
+    .login-icon {
+      font-size: 48px; display: block; margin-bottom: 12px;
+      filter: drop-shadow(0 0 16px var(--accent-glow));
+    }
+    .login-logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 30px; font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--text), var(--accent));
+      background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .login-logo p { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+    .login-theme-row {
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .login-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 16px; padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+
+    .login-field { margin-bottom: 14px; }
+    .login-field label {
+      display: block; font-size: 10px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;
+    }
+    .login-field input {
+      width: 100%; padding: 11px 14px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-field input:focus { border-color: var(--accent); }
+    .login-field input::placeholder { color: var(--text3); }
+
+    .login-btns { display: flex; gap: 8px; margin-top: 20px; }
+
+    .btn-login {
+      flex: 1; padding: 11px;
+      background: var(--accent); color: #020a06;
+      border: none; border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: filter 0.2s, box-shadow 0.2s;
+    }
+    .btn-login:hover { filter: brightness(1.1); box-shadow: 0 0 24px var(--accent-glow); }
+
+    .btn-signup {
+      flex: 1; padding: 11px;
+      background: none; color: var(--text2);
+      border: 1px solid var(--border2); border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-signup:hover { border-color: var(--accent); color: var(--accent); }
+
+    .login-msg {
+      text-align: center; font-size: 11px; color: var(--accent);
+      margin-top: 10px; min-height: 16px;
+    }
+
+    /* ===================== SCROLLBAR ===================== */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    #app { display: flex; height: 100vh; width: 100%; }
   </style>
 </head>
 <body>
 
-<!-- Sidebar -->
-<aside class="sidebar">
-  <div class="sb-head">
-    <h1>🦙 AI Agent (Ollama)</h1>
-    <div class="status-bar">
-      <div class="dot" id="statusDot"></div>
-      <span id="statusText">Checking Ollama...</span>
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <span class="login-icon">🦙</span>
+      <h1>Lama Agent</h1>
+      <p>100% local · free forever · private</p>
     </div>
-    <button class="btn-new" id="btnNew">+ New Chat</button>
-  </div>
-  <div class="sb-body">
-    <div class="sess-lbl">Recent Chats</div>
-    <div id="sessionsList"></div>
-  </div>
-  <div class="model-row">
-    <label>Active Model</label>
-    <select id="modelSelect"><option>llama3.2</option></select>
-  </div>
-</aside>
 
-<!-- Main -->
-<div class="main">
-  <div class="topbar">
-    <span class="topbar-title" id="topbarTitle">New Chat</span>
-    <span class="topbar-sub">Free &nbsp;·&nbsp; Local &nbsp;·&nbsp; Private</span>
-  </div>
+    <!-- Theme toggle on login -->
+    <div class="login-theme-row">
+      <span class="theme-icon" id="loginThemeIcon">☀️</span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Switch theme"></button>
+      <span style="font-size:10px; color:var(--text3)" id="loginThemeLabel">Light mode</span>
+    </div>
 
-  <div class="messages" id="messages">
-    <div class="welcome" id="welcome">
-      <div class="welcome-icon">🦙</div>
-      <h2>AI Agent — Powered by Ollama</h2>
-      <p>100% free &amp; runs locally on your computer</p>
-      <div class="caps">
-        <div class="cap"><span>🔍</span>Web Search</div>
-        <div class="cap"><span>📁</span>File Ops</div>
-        <div class="cap"><span>💾</span>Memory</div>
-        <div class="cap"><span>🆓</span>Free Forever</div>
+    <div class="login-card">
+      <div class="login-field">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="your_name" autocomplete="off"/>
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••"/>
+      </div>
+      <div class="login-btns">
+        <button class="btn-login" onclick="login()">Sign In</button>
+        <button class="btn-signup" onclick="signup()">Register</button>
+      </div>
+      <div class="login-msg" id="loginMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🦙</div>
+        <div class="logo-text">La<span>ma</span></div>
+      </div>
+      <div class="status-pill">
+        <span class="pulse" id="statusDot"></span>
+        <span id="statusText">connecting…</span>
+      </div>
+      <button class="btn-new" onclick="newSession()">＋ New Chat</button>
+    </div>
+
+    <div class="sb-body" id="sessionList">
+      <div class="sb-section-label">Recent Chats</div>
+    </div>
+
+    <div class="sb-footer">
+      <div class="model-label">Active Model</div>
+      <select class="model-select" id="modelSelect">
+        <option>llama3.2:latest</option>
+        <option>mistral:latest</option>
+        <option>gemma:7b</option>
+      </select>
+      <div class="user-row">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <div class="user-name" id="userDisplay">—</div>
+          <div class="user-plan">Free · Local · Private</div>
+        </div>
+        <!-- Theme toggle in app -->
+        <span class="theme-icon" id="appThemeIcon">☀️</span>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Switch theme"></button>
+        <button class="btn-logout" onclick="logout()">Exit</button>
       </div>
     </div>
   </div>
 
-  <div class="input-area">
-    <div id="warnBox" class="warn-box" style="display:none">
-      ⚠️ Ollama is not running. Open a terminal and type: <strong>ollama serve</strong>
+  <!-- Main chat -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">New Conversation</div>
+      <div class="topbar-badge">ollama</div>
+      <div class="topbar-badge" id="modelBadge">llama3.2</div>
     </div>
-    <div id="filePreview" class="file-preview" style="display:none">
-      <span>📎</span>
-      <span id="fileName"></span>
-      <button id="btnClearFile">×</button>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-glyph">🦙</div>
+        <h2>What can I help you with?</h2>
+        <p>Powered by Ollama · Runs entirely on your machine</p>
+        <div class="caps">
+          <div class="cap"><span class="cap-icon">🔍</span><div class="cap-label">Web Search</div></div>
+          <div class="cap"><span class="cap-icon">📁</span><div class="cap-label">File Ops</div></div>
+          <div class="cap"><span class="cap-icon">🧠</span><div class="cap-label">Memory</div></div>
+          <div class="cap"><span class="cap-icon">♾️</span><div class="cap-label">Free Forever</div></div>
+        </div>
+      </div>
     </div>
-    <div class="input-row">
-      <input type="file" id="fileInput" style="display:none"/>
-      <button class="btn-attach" id="btnAttach">📎</button>
-      <textarea id="msgInput" rows="1" placeholder="Type your message… (Enter to send)"></textarea>
-      <button class="btn-send" id="sendBtn">Send</button>
+
+    <div class="input-area">
+      <div id="filePreview" class="file-preview" style="display:none">
+        📎 <span id="fileName"></span>
+        <button onclick="clearFile()">×</button>
+      </div>
+      <div class="input-box">
+        <textarea
+          id="msgInput"
+          rows="1"
+          placeholder="Message Lama…"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"
+          oninput="autoResize(this)"
+        ></textarea>
+        <div class="input-actions">
+          <input type="file" id="fileInput" style="display:none" onchange="onFileSelect(event)"/>
+          <button class="btn-icon" onclick="document.getElementById('fileInput').click()" title="Attach file">📎</button>
+          <button class="btn-send" id="sendBtn" onclick="sendMessage()">Send ↑</button>
+        </div>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line · ⌘K new chat</div>
     </div>
   </div>
 </div>
 
 <script>
-  var sessionId    = null;
-  var isLoading    = false;
-  var selectedFile = null;
+  let sessionId = null, userToken = null, selectedFile = null, isLoading = false;
 
-  // Wire up buttons safely here - no inline handlers
-  document.getElementById('btnNew').addEventListener('click', newSession);
-  document.getElementById('sendBtn').addEventListener('click', sendMessage);
-  document.getElementById('btnAttach').addEventListener('click', function() {
-    document.getElementById('fileInput').click();
-  });
-  document.getElementById('fileInput').addEventListener('change', onFileSelect);
-  document.getElementById('btnClearFile').addEventListener('click', clearFile);
-  document.getElementById('msgInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  });
-  document.getElementById('msgInput').addEventListener('input', function() {
-    autoResize(this);
-  });
-
-  // Start up
-  checkOllama();
-  loadSessions();
-  loadModels();
-  setInterval(checkOllama, 8000);
-
-  async function checkOllama() {
-    try {
-      var res  = await fetch('/api/health');
-      var data = await res.json();
-      var ok   = data.ollama_ready;
-      document.getElementById('statusDot').className    = ok ? 'dot ok' : 'dot';
-      document.getElementById('statusText').textContent = ok ? 'Ollama connected' : 'Ollama not running';
-      document.getElementById('warnBox').style.display  = ok ? 'none' : 'block';
-    } catch(e) {}
+  /* ===================== THEME ===================== */
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    var isDark = theme === 'dark';
+    var icon = isDark ? '☀️' : '🌙';
+    var label = isDark ? 'Light mode' : 'Dark mode';
+    document.querySelectorAll('.theme-icon').forEach(function(el) { el.textContent = icon; });
+    var ll = document.getElementById('loginThemeLabel');
+    if (ll) ll.textContent = label;
   }
 
-  async function loadModels() {
-    try {
-      var res  = await fetch('/api/models');
-      var data = await res.json();
-      var sel  = document.getElementById('modelSelect');
-      if (data.models && data.models.length > 0) {
-        sel.innerHTML = '';
-        data.models.forEach(function(m) {
-          var o = document.createElement('option');
-          o.value       = m;
-          o.textContent = m;
-          sel.appendChild(o);
-        });
-      }
-    } catch(e) {}
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  }
+
+  /* ===================== HELPERS ===================== */
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  }
+
+  function scrollDown() {
+    var c = document.getElementById('messages');
+    c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+  }
+
+  /* ===================== SESSIONS ===================== */
+  function newSession() {
+    sessionId = null;
+    document.getElementById('topbarTitle').textContent = 'New Conversation';
+    var msgs = document.getElementById('messages');
+    msgs.innerHTML = '';
+    var w = document.createElement('div');
+    w.className = 'welcome'; w.id = 'welcome';
+    w.innerHTML = `
+      <div class="welcome-glyph">🦙</div>
+      <h2>What can I help you with?</h2>
+      <p>Powered by Ollama · Runs entirely on your machine</p>
+      <div class="caps">
+        <div class="cap"><span class="cap-icon">🔍</span><div class="cap-label">Web Search</div></div>
+        <div class="cap"><span class="cap-icon">📁</span><div class="cap-label">File Ops</div></div>
+        <div class="cap"><span class="cap-icon">🧠</span><div class="cap-label">Memory</div></div>
+        <div class="cap"><span class="cap-icon">♾️</span><div class="cap-label">Free Forever</div></div>
+      </div>`;
+    msgs.appendChild(w);
+    loadSessions();
   }
 
   async function loadSessions() {
+    userToken = localStorage.getItem('token');
+    if (!userToken) return;
     try {
-      var res  = await fetch('/api/sessions');
+      var res = await fetch('/api/sessions?token=' + userToken);
       var data = await res.json();
-      var list = document.getElementById('sessionsList');
-      list.innerHTML = '';
-      data.forEach(function(s) {
+      var list = document.getElementById('sessionList');
+      list.innerHTML = '<div class="sb-section-label">Recent Chats</div>';
+      var sessions = Array.isArray(data) ? data : (data.sessions || []);
+      sessions.forEach(function(s) {
         var el = document.createElement('div');
         el.className = 'sess-item' + (s.id === sessionId ? ' active' : '');
-
-        var info = document.createElement('div');
-        info.className = 'sess-info';
-        info.innerHTML = '<div class="sess-name">' + (s.name ? s.name : 'Chat ' + s.id.slice(0,6)) + '</div>' +
-                         '<div class="sess-meta">' + s.message_count + ' messages</div>';
-        info.addEventListener('click', (function(id){ return function(){ loadSession(id); }; })(s.id));
-
-        var del = document.createElement('button');
-        del.className   = 'btn-del';
-        del.textContent = '×';
-        del.addEventListener('click', (function(id){ return function(e){ delSession(id,e); }; })(s.id));
-
-        el.appendChild(info);
-        el.appendChild(del);
+        el.onclick = function() { loadSession(s.id); };
+        el.innerHTML = `
+          <span class="sess-dot"></span>
+          <div class="sess-info">
+            <div class="sess-name">${s.title || s.name || s.id.slice(0,14)}</div>
+            <div class="sess-meta">${s.message_count || 0} messages</div>
+          </div>
+          <button class="btn-del" onclick="delSession('${s.id}',event)">×</button>`;
         list.appendChild(el);
       });
     } catch(e) {}
   }
 
-  function newSession() {
-    sessionId = null;
-    document.getElementById('topbarTitle').textContent = 'New Chat';
-    document.getElementById('messages').innerHTML =
-      '<div class="welcome" id="welcome">' +
-        '<div class="welcome-icon">🦙</div>' +
-        '<h2>AI Agent — Powered by Ollama</h2>' +
-        '<p>100% free &amp; runs locally on your computer</p>' +
-        '<div class="caps">' +
-          '<div class="cap"><span>🔍</span>Web Search</div>' +
-          '<div class="cap"><span>📁</span>File Ops</div>' +
-          '<div class="cap"><span>💾</span>Memory</div>' +
-          '<div class="cap"><span>🆓</span>Free Forever</div>' +
-        '</div>' +
-      '</div>';
-    loadSessions();
-  }
-
   async function loadSession(sid) {
     sessionId = sid;
-    document.getElementById('topbarTitle').textContent = 'Chat ' + sid.slice(0,8);
-    var res  = await fetch('/api/sessions/' + sid + '/history');
-    var data = await res.json();
-    var c    = document.getElementById('messages');
-    c.innerHTML = '';
-    data.history.forEach(function(m) { appendMsg(m.role, m.content, []); });
-    scrollDown();
+    userToken = localStorage.getItem('token');
+    document.getElementById('topbarTitle').textContent = 'Chat ' + sid.slice(0, 8);
+    try {
+      var res = await fetch('/api/sessions/' + sid + '/history?token=' + userToken);
+      var data = await res.json();
+      var c = document.getElementById('messages');
+      c.innerHTML = '';
+      var history = data.history || (Array.isArray(data) ? data : []);
+      history.forEach(function(m) { appendMsg(m.role, m.content, m.tools_used || []); });
+      scrollDown();
+    } catch(e) {}
     loadSessions();
   }
 
   async function delSession(sid, e) {
     e.stopPropagation();
-    await fetch('/api/sessions/' + sid, { method: 'DELETE' });
+    try { await fetch('/api/sessions/' + sid + '?token=' + userToken, { method: 'DELETE' }); } catch(e) {}
     if (sessionId === sid) newSession();
     else loadSessions();
   }
 
+  /* ===================== MESSAGING ===================== */
   async function sendMessage() {
     if (isLoading) return;
     var input = document.getElementById('msgInput');
-    var text  = input.value.trim();
+    var text = input.value.trim();
     if (!text && !selectedFile) return;
 
     isLoading = true;
@@ -403,8 +865,34 @@ backdrop-filter: blur(8px);
     if (w) w.remove();
 
     if (text) appendMsg('user', text, []);
+    // ===== FILE UPLOAD =====
+if (selectedFile) {
+  const fd = new FormData();
+  fd.append("file", selectedFile);
 
-    // File upload
+  appendMsg("assistant", "Uploading file...", []);
+
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: fd
+    });
+
+    const data = await res.json();
+
+    appendMsg(
+      "assistant",
+      "📄 File uploaded: " + selectedFile.name + "\n" + data.message,
+      ["RAG"]
+    );
+
+  } catch (err) {
+    appendMsg("assistant", "❌ File upload failed", []);
+  }
+
+  clearFile();
+}
+
     if (selectedFile) {
       var fd = new FormData();
       fd.append('file', selectedFile);
@@ -418,23 +906,21 @@ backdrop-filter: blur(8px);
       clearFile();
     }
 
-    // Chat message
     if (text) {
       var tid = 'typing_' + Date.now();
       appendTyping(tid);
       try {
         var res = await fetch('/api/chat', {
-          method:  'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ message: text, session_id: sessionId })
+          body: JSON.stringify({ message: text, session_id: sessionId, token: userToken })
         });
         var data = await res.json();
         var el = document.getElementById(tid);
         if (el) el.remove();
-
         if (res.ok) {
           sessionId = data.session_id;
-          document.getElementById('topbarTitle').textContent = 'Chat ' + sessionId.slice(0,8);
+          document.getElementById('topbarTitle').textContent = 'Chat ' + sessionId.slice(0, 8);
           appendMsg('assistant', data.response, data.tools_used);
         } else {
           appendMsg('assistant', 'Error: ' + (data.detail || 'Something went wrong'), []);
@@ -443,7 +929,7 @@ backdrop-filter: blur(8px);
       } catch(err) {
         var el = document.getElementById(tid);
         if (el) el.remove();
-        appendMsg('assistant', 'Cannot reach the server. Is app.py still running?', []);
+        appendMsg('assistant', 'Cannot reach the server. Is app.py running?', []);
       }
     }
 
@@ -452,84 +938,203 @@ backdrop-filter: blur(8px);
   }
 
   function appendMsg(role, content, tools) {
-    var c   = document.getElementById('messages');
-    var div = document.createElement('div');
-    div.className = 'msg ' + role;
+    var c = document.getElementById('messages');
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
 
     var avatar = document.createElement('div');
-    avatar.className   = 'avatar';
+    avatar.className = 'avatar';
     avatar.textContent = role === 'user' ? '👤' : '🦙';
 
+    var bwrap = document.createElement('div');
+    bwrap.className = 'bubble-wrap';
+
+    var meta = document.createElement('div');
+    meta.className = 'bubble-meta';
+    meta.textContent = role === 'user' ? 'You' : 'Lama';
+
     var bubble = document.createElement('div');
-    bubble.className   = 'bubble';
-    bubble.textContent = content;   // textContent is safe - no XSS, no escaping needed
+    bubble.className = 'bubble';
+    bubble.textContent = content;
 
-    if (tools && tools.length > 0) {
-      var badge = document.createElement('div');
-      badge.className = 'tool-badge';
+    if (tools && tools.length) {
+      var badges = document.createElement('div');
+      badges.className = 'tool-badges';
+      badges.innerHTML = tools.map(function(t) {
+        var l = t.toLowerCase();
+        if (l.includes('rag'))  return '<span class="tbadge tb-rag">RAG</span>';
+        if (l.includes('web'))  return '<span class="tbadge tb-web">WEB</span>';
+        if (l.includes('file')) return '<span class="tbadge tb-file">FILE</span>';
+        if (l.includes('mem'))  return '<span class="tbadge tb-mem">MEM</span>';
+        return '<span class="tbadge">' + t + '</span>';
+      }).join('');
+      bubble.appendChild(badges);
+    }
 
-  badge.innerHTML = tools.map(function(t){
-    var lower = t.toLowerCase();
-    if(lower.includes("rag")) return '<span class="tool-rag">RAG</span>';
-    if(lower.includes("knowledge")) return '<span class="tool-kg">KG</span>';
-    if(lower.includes("web")) return '<span class="tool-web">WEB</span>';
-    if(lower.includes("file")) return '<span class="tool-file">FILE</span>';
-    return '<span>' + t + '</span>';
-  }).join(" ");
-
-  bubble.appendChild(badge);
-}
-
-
-    div.appendChild(avatar);
-    div.appendChild(bubble);
-    c.appendChild(div);
+    bwrap.appendChild(meta);
+    bwrap.appendChild(bubble);
+    wrap.appendChild(avatar);
+    wrap.appendChild(bwrap);
+    c.appendChild(wrap);
     scrollDown();
   }
 
   function appendTyping(id) {
-    var c   = document.getElementById('messages');
-    var div = document.createElement('div');
-    div.className = 'msg assistant';
-    div.id = id;
+    var c = document.getElementById('messages');
+    var wrap = document.createElement('div');
+    wrap.className = 'msg assistant'; wrap.id = id;
 
     var avatar = document.createElement('div');
-    avatar.className   = 'avatar';
-    avatar.textContent = '🦙';
+    avatar.className = 'avatar'; avatar.textContent = '🦙';
+
+    var bwrap = document.createElement('div');
+    bwrap.className = 'bubble-wrap';
+
+    var meta = document.createElement('div');
+    meta.className = 'bubble-meta'; meta.textContent = 'Lama';
 
     var bubble = document.createElement('div');
     bubble.className = 'bubble';
-    bubble.innerHTML  = '<div class="typing"><span></span><span></span><span></span></div>';
+    bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
 
-    div.appendChild(avatar);
-    div.appendChild(bubble);
-    c.appendChild(div);
+    bwrap.appendChild(meta);
+    bwrap.appendChild(bubble);
+    wrap.appendChild(avatar);
+    wrap.appendChild(bwrap);
+    c.appendChild(wrap);
     scrollDown();
   }
 
+  /* ===================== FILE ===================== */
   function onFileSelect(e) {
     selectedFile = e.target.files[0];
     if (!selectedFile) return;
-    document.getElementById('fileName').textContent       = selectedFile.name;
+    document.getElementById('fileName').textContent = selectedFile.name;
     document.getElementById('filePreview').style.display = 'flex';
   }
 
   function clearFile() {
     selectedFile = null;
-    document.getElementById('fileInput').value            = '';
+    document.getElementById('fileInput').value = '';
     document.getElementById('filePreview').style.display = 'none';
   }
 
-  function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  /* ===================== AUTH ===================== */
+  async function login() {
+    var u = document.getElementById('username').value;
+    var p = document.getElementById('password').value;
+    try {
+      var res = await fetch('/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      var data = await res.json();
+      if (res.ok) {
+        userToken = data.token;
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+        document.getElementById('userDisplay').textContent = data.username;
+        document.getElementById('loginScreen').style.display = 'none';
+        loadSessions();
+        checkOllama();
+        loadModels();
+      } else {
+        document.getElementById('loginMsg').textContent = data.detail || 'Invalid credentials';
+      }
+    } catch(e) {
+      document.getElementById('loginMsg').textContent = 'Server unreachable';
+    }
   }
 
-  function scrollDown() {
-  var c = document.getElementById('messages');
-  c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
-}
+  async function signup() {
+    var u = document.getElementById('username').value;
+    var p = document.getElementById('password').value;
+    try {
+      var res = await fetch('/api/signup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      var data = await res.json();
+      document.getElementById('loginMsg').textContent = res.ok
+        ? '✓ Account created. Sign in now.'
+        : (data.detail || 'Error');
+    } catch(e) {
+      document.getElementById('loginMsg').textContent = 'Server unreachable';
+    }
+  }
 
+  function logout() { localStorage.clear(); location.reload(); }
+
+  /* ===================== OLLAMA ===================== */
+  async function checkOllama() {
+    try {
+      var res = await fetch('/api/health');
+      var data = await res.json();
+      var dot = document.getElementById('statusDot');
+      var txt = document.getElementById('statusText');
+      var ok = data.ollama || data.ollama_ready;
+      if (ok) {
+        txt.textContent = 'ollama connected';
+        dot.style.background = 'var(--accent)';
+        dot.style.boxShadow = '0 0 8px var(--accent)';
+      } else {
+        txt.textContent = 'ollama offline';
+        dot.style.background = 'var(--danger)';
+        dot.style.boxShadow = '0 0 8px var(--danger)';
+      }
+    } catch(e) {
+      if (document.getElementById('statusText'))
+        document.getElementById('statusText').textContent = 'ollama offline';
+    }
+  }
+
+  async function loadModels() {
+    try {
+      var res = await fetch('/api/models');
+      var data = await res.json();
+      var sel = document.getElementById('modelSelect');
+      if (data.models && data.models.length > 0) {
+        sel.innerHTML = '';
+        data.models.forEach(function(m) {
+          var o = document.createElement('option');
+          o.value = m; o.textContent = m;
+          sel.appendChild(o);
+        });
+        document.getElementById('modelBadge').textContent = data.models[0].split(':')[0];
+      }
+    } catch(e) {}
+  }
+
+  /* ===================== INIT ===================== */
+  window.onload = function() {
+    // Restore saved theme (default dark)
+    var savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+
+    // Auto-login if token exists
+    var token = localStorage.getItem('token');
+    var username = localStorage.getItem('username');
+    if (token) {
+      userToken = token;
+      document.getElementById('loginScreen').style.display = 'none';
+      if (username) document.getElementById('userDisplay').textContent = username;
+      loadSessions();
+      checkOllama();
+      loadModels();
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    // Keyboard shortcut: Ctrl/Cmd+K = new chat
+    document.addEventListener('keydown', function(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault(); newSession();
+      }
+    });
+
+    // Periodic health check
+    setInterval(checkOllama, 30000);
+  };
 </script>
 </body>
 </html>

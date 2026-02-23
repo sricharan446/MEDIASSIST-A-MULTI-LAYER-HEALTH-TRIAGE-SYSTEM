@@ -1,0 +1,23 @@
+{
+  "id": "80739c0c-4f93-4d50-863c-7612ff63ca2c",
+  "user": "charan",
+  "created_at": "2026-02-23T14:56:15.263903",
+  "name": "What is Python",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is Python",
+      "time": "2026-02-23T14:56:15.317682"
+    },
+    {
+      "role": "assistant",
+      "content": "Python is related to: FastAPI",
+      "time": "2026-02-23T14:56:15.349678",
+      "meta": {
+        "tools_used": [
+          "Knowledge Graph"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "56a655f2-d5e2-4f71-80f4-18116d5129db",
+  "user": "harsha",
+  "created_at": "2026-02-23T14:27:09.764466",
+  "name": "Python",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Python",
+      "time": "2026-02-23T14:27:09.835011"
+    },
+    {
+      "role": "assistant",
+      "content": "Python is related to: FastAPI",
+      "time": "2026-02-23T14:27:09.866080",
+      "meta": {
+        "tools_used": [
+          "Knowledge Graph"
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "content": "Rag",
+      "time": "2026-02-23T14:27:14.788238"
+    },
+    {
+      "role": "assistant",
+      "content": "RAG is related to: ChromaDB, Embeddings",
+      "time": "2026-02-23T14:27:14.801064",
+      "meta": {
+        "tools_used": [
+          "Knowledge Graph"
+        ]
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 AI Agent - Single Server using Ollama (FREE & Local)
 Run: python app.py   then open http://localhost:8000
 """
+
 from knowledge_graph.graph import query_graph
 from rag.rag_engine import search_rag
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -19,6 +20,8 @@ import shutil
 import os
 from rag.rag_engine import add_document_to_rag
 import requests
+from fastapi import Depends
+import hashlib
 
 OLLAMA_URL  = os.getenv("OLLAMA_URL",  "http://localhost:11434")
 MODEL_NAME  = os.getenv("MODEL_NAME",  "llama3.2")
@@ -107,64 +110,94 @@ class FileOperationsTool(BaseTool):
 # ── Memory ───────────────────────────────────────────────────────────────────
 class MemoryManager:
     def __init__(self):
-        self.path = Path(MEMORY_PATH)
-        self.path.mkdir(parents=True, exist_ok=True)
-    def _f(self, sid): return self.path / f"{sid}.json"
-    def create_session(self):
-        sid = str(uuid.uuid4())
-        json.dump({
-            "id": sid,
-            "name": "New Chat",
-            "created_at": datetime.now().isoformat(),
-            "last_activity": datetime.now().isoformat(),
-        "messages": []
-        },
-    open(self._f(sid),"w"), indent=2)
-        return sid
-    def set_session_name(self, sid, name):
-        d = self._load(sid)
-        if not d:
-            return
-        d["name"] = name[:40]
-        json.dump(d, open(self._f(sid), "w"), indent=2)
+        self.base_path = Path("memory")
+        self.base_path.mkdir(exist_ok=True)
 
-    def add_message(self, sid, role, content, meta=None):
-        d = self._load(sid) or {"id":sid,"created_at":datetime.now().isoformat(),
-                                 "last_activity":datetime.now().isoformat(),"messages":[]}
-        msg = {"role":role,"content":content,"timestamp":datetime.now().isoformat()}
-        if meta: msg["metadata"] = meta
-        d["messages"].append(msg)
-        d["last_activity"] = datetime.now().isoformat()
-        d["messages"] = d["messages"][-50:]
-        json.dump(d, open(self._f(sid),"w"), indent=2)
-    def get_history(self, sid):
-        d = self._load(sid)
-        if not d: return None
-        return [{"role":m["role"],"content":m["content"]} for m in d["messages"]]
-    def list_sessions(self):
-        out = []
-        for f in self.path.glob("*.json"):
-            try:
-                d = json.load(open(f))
-                out.append({
-                    "id": d["id"],
-                    "name": d.get("name", "New Chat"),
-                    "created_at": d["created_at"],
-                    "last_activity": d["last_activity"],
-                    "message_count": len(d["messages"])
-                })
-            except:
-                pass
-        return sorted(out, key=lambda x: x["last_activity"], reverse=True)
-    def delete_session(self, sid):
-        f = self._f(sid)
-        if f.exists(): f.unlink(); return True
-        return False
-    def _load(self, sid):
-        f = self._f(sid)
-        if not f.exists(): return None
-        try: return json.load(open(f))
-        except: return None
+    def _user_path(self, username):
+        p = self.base_path / username
+        p.mkdir(exist_ok=True)
+        return p
+
+    def _session_file(self, username, sid):
+        return self._user_path(username) / f"{sid}.json"
+
+    # 🟢 create session
+    def create_session(self, username):
+        sid = str(uuid.uuid4())
+        data = {
+            "id": sid,
+            "user": username,
+            "created_at": datetime.now().isoformat(),
+            "name": "New Chat",
+            "messages": []
+        }
+        with open(self._session_file(username, sid), "w") as f:
+            json.dump(data, f, indent=2)
+        return sid
+    def set_session_name(self, username, sid, name):
+        fpath = self._session_file(username, sid)
+        if not fpath.exists():
+            return
+
+        data = json.load(open(fpath))
+        data["name"] = name[:40]  # limit length
+
+        with open(fpath, "w") as f:
+            json.dump(data, f, indent=2)
+
+    # 🟢 add message
+    def add_message(self, username, sid, role, content, meta=None):
+        fpath = self._session_file(username, sid)
+
+        if not fpath.exists():
+            return
+
+        data = json.load(open(fpath))
+        msg = {
+            "role": role,
+            "content": content,
+            "time": datetime.now().isoformat()
+        }
+        if meta:
+            msg["meta"] = meta
+
+        data["messages"].append(msg)
+
+        with open(fpath, "w") as f:
+            json.dump(data, f, indent=2)
+
+    # 🟢 history
+    def get_history(self, username, sid):
+        fpath = self._session_file(username, sid)
+        if not fpath.exists():
+            return []
+
+        data = json.load(open(fpath))
+        return [{"role":m["role"],"content":m["content"]} for m in data["messages"]]
+
+    # 🟢 list sessions
+    def list_sessions(self, username):
+        upath = self._user_path(username)
+        sessions = []
+
+        for f in upath.glob("*.json"):
+            d = json.load(open(f))
+            sessions.append({
+                "id": d["id"],
+                "name": d.get("name", "New Chat"),
+                "message_count": len(d["messages"]),
+                "created": d["created_at"]
+            })
+
+        return sessions
+
+    # 🟢 delete
+    def delete_session(self, username, sid):
+        fpath = self._session_file(username, sid)
+        if fpath.exists():
+            fpath.unlink()
+
+
 
 # ── Agent ────────────────────────────────────────────────────────────────────
 class AIAgent:
@@ -221,7 +254,24 @@ class AIAgent:
                         d = await r.json()
                         return any(MODEL_NAME in m["name"] for m in d.get("models",[]))
         except: pass
-        return False
+        return False# ================================
+
+USERS_FILE = "users.json"
+
+def load_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
+    return json.load(open(USERS_FILE))
+
+def save_users(users):
+    json.dump(users, open(USERS_FILE,"w"), indent=2)
+
+def hash_password(pw):
+    import hashlib
+    return hashlib.sha256(pw.encode()).hexdigest()
+class SignupRequest(BaseModel):
+    username: str
+    password: str
 
 # ── FastAPI ───────────────────────────────────────────────────────────────────
 app    = FastAPI()
@@ -230,9 +280,39 @@ memory = MemoryManager()
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["*"], allow_headers=["*"])
 
+
+# --- authentication routes moved here so `app` exists earlier
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/api/signup")
+def signup(req: SignupRequest):
+    users = load_users()
+
+    if req.username in users:
+        raise HTTPException(400, "User already exists")
+
+    users[req.username] = {"password": hash_password(req.password)}
+    save_users(users)
+    return {"status": "created"}
+
+@app.post("/api/login")
+def login(req: LoginRequest):
+    users = load_users()
+    if req.username not in users:
+        raise HTTPException(401, "Invalid user")
+    if users[req.username]["password"] != hash_password(req.password):
+        raise HTTPException(401, "Wrong password")
+    token = str(uuid.uuid4())
+    users[req.username]["token"] = token
+    save_users(users)
+    return {"token": token, "username": req.username}
+
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    token: str
 
 class ChatResponse(BaseModel):
     response: str; session_id: str; tools_used: List[str]; timestamp: str
@@ -242,11 +322,27 @@ async def health():
     ok = await agent.check()
     return {"status":"online","ollama":"connected" if ok else "not connected",
             "model":MODEL_NAME,"ollama_ready":ok}
-
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
-    sid = req.session_id or memory.create_session()
-    history = memory.get_history(sid) or []
+
+    # 🔐 AUTH CHECK
+    users = load_users()
+    valid_user = None
+
+    for username, data in users.items():
+        if data.get("token") == req.token:
+            valid_user = username
+            break
+
+    if not valid_user:
+        raise HTTPException(401, "Unauthorized - Please login")
+
+    username = valid_user
+
+    sid = req.session_id or memory.create_session(username)
+    history = memory.get_history(username, sid) or []
+    if len(history) == 0:
+        memory.set_session_name(username, sid, req.message)
 
     # ================================
     # 🟣 KNOWLEDGE GRAPH PRIORITY
@@ -268,12 +364,8 @@ async def chat(req: ChatRequest):
     if kg_node:
         kg_response = query_graph(kg_node)
 
-        memory.add_message(sid, "user", req.message)
-        memory.add_message(sid, "assistant", kg_response, {"tools_used": ["Knowledge Graph"]})
-        # auto name chat from first message
-        if len(history) == 0:
-            memory.set_session_name(sid, req.message[:30])
-
+        memory.add_message(username, sid, "user", req.message)
+        memory.add_message(username, sid, "assistant", kg_response, {"tools_used":["Knowledge Graph"]})
 
         return ChatResponse(
             response=kg_response,
@@ -294,7 +386,6 @@ async def chat(req: ChatRequest):
         rag_context = ""
 
     try:
-        # 🔥 IF DOCUMENT FOUND → DIRECT LLM (no tools)
         if rag_context:
             prompt = f"""
 You are an AI assistant. Answer using only this context.
@@ -308,11 +399,7 @@ Question:
 
             response = requests.post(
                 "http://localhost:11434/api/generate",
-                json={
-                    "model": "llama3",
-                    "prompt": prompt,
-                    "stream": False
-                }
+                json={"model":"llama3","prompt":prompt,"stream":False}
             )
 
             result_text = response.json()["response"]
@@ -323,7 +410,6 @@ Question:
             }
 
         else:
-            # 🟢 Normal agent if no KG or RAG
             result = await agent.process(req.message, history)
 
     except Exception as e:
@@ -333,10 +419,10 @@ Question:
         raise HTTPException(500, err)
 
     # ================================
-    # 💾 SAVE MEMORY
+    # 💾 SAVE MEMORY (FIXED)
     # ================================
-    memory.add_message(sid, "user", req.message)
-    memory.add_message(sid, "assistant", result["response"], {"tools_used": result["tools_used"]})
+    memory.add_message(username, sid, "user", req.message)
+    memory.add_message(username, sid, "assistant", result["response"], {"tools_used": result["tools_used"]})
 
     return ChatResponse(
         response=result["response"],
@@ -344,52 +430,77 @@ Question:
         tools_used=result["tools_used"],
         timestamp=datetime.now().isoformat()
     )
-
-
-
-@app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
-
-    os.makedirs("uploads", exist_ok=True)
-    file_path = os.path.join("uploads", file.filename)
-
-    # 🔥 IMPORTANT: read file properly
+@app.post("/api/upload/summary")
+async def upload_summary(file: UploadFile = File(...)):
+    # secondary route for summarization to avoid route collision
+    path = f"/tmp/{file.filename}"
     content = await file.read()
-
-    with open(file_path, "wb") as f:
-        f.write(content)
-
-    # now send to RAG
-    message = add_document_to_rag(file_path)
-
-    return {"message": message}
+    open(path, "wb").write(content)
+    r = await FileOperationsTool().execute(operation="read", file_path=path)
+    s = await agent.process(f"Summarize in 2 sentences:\n{str(r.get('content',''))[:2000]}")
+    return {"status": "success", "filename": file.filename,
+            "size": len(content), "summary": s["response"]}
 
 
 
 
 @app.get("/api/sessions")
-def list_sessions(): return memory.list_sessions()
+def list_sessions(token: str):
+
+    users = load_users()
+    username = None
+
+    for u, data in users.items():
+        if data.get("token") == token:
+            username = u
+            break
+
+    if not username:
+        raise HTTPException(401, "Unauthorized")
+
+    return memory.list_sessions(username)
 
 @app.get("/api/sessions/{sid}/history")
-def get_history(sid):
-    h = memory.get_history(sid)
-    if h is None: raise HTTPException(404,"Not found")
-    return {"session_id":sid,"history":h}
+def get_history(sid: str, token: str):
+
+    users = load_users()
+    username = None
+
+    for u, data in users.items():
+        if data.get("token") == token:
+            username = u
+            break
+
+    if not username:
+        raise HTTPException(401, "Unauthorized")
+
+    h = memory.get_history(username, sid)
+    if h is None:
+        raise HTTPException(404, "Not found")
+
+    return {"session_id": sid, "history": h}
+
 
 @app.delete("/api/sessions/{sid}")
-def del_session(sid):
-    if not memory.delete_session(sid): raise HTTPException(404,"Not found")
-    return {"status":"deleted"}
+def del_session(sid: str, token: str):
 
-@app.post("/api/upload")
-async def upload(file: UploadFile = File(...)):
-    path = f"/tmp/{file.filename}"
-    content = await file.read()
-    open(path,"wb").write(content)
-    r = await FileOperationsTool().execute(operation="read",file_path=path)
-    s = await agent.process(f"Summarize in 2 sentences:\n{str(r.get('content',''))[:2000]}")
-    return {"status":"success","filename":file.filename,
-            "size":len(content),"summary":s["response"]}
+    users = load_users()
+    username = None
+
+    # 🔐 find user from token
+    for u, data in users.items():
+        if data.get("token") == token:
+            username = u
+            break
+
+    if not username:
+        raise HTTPException(401, "Unauthorized")
+
+    # 🗑 delete session
+    if not memory.delete_session(username, sid):
+        raise HTTPException(404, "Not found")
+
+    return {"status": "deleted"}
 
 @app.get("/api/models")
 async def models():
@@ -399,6 +510,31 @@ async def models():
                 d = await r.json()
                 return {"models":[m["name"] for m in d.get("models",[])]}
     except: return {"models":[]}
+# ===============================
+# 📂 FILE UPLOAD → RAG STORAGE
+# ===============================
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...)):
+
+    os.makedirs("uploads", exist_ok=True)
+    file_path = os.path.join("uploads", file.filename)
+
+    content = await file.read()
+
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    # send file to RAG
+    try:
+        message = add_document_to_rag(file_path)
+    except Exception as e:
+        message = "File stored but RAG failed: " + str(e)
+
+    return {
+        "status": "success",
+        "filename": file.filename,
+        "message": message
+    }
 
 # ── Frontend ──────────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
