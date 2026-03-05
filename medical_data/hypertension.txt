@@ -1,0 +1,35 @@
+Disease: Hypertension (High Blood Pressure)
+
+Definition:
+Hypertension is a condition where blood pressure remains persistently elevated.
+
+Normal BP:
+- Normal: <120/80 mmHg
+- Elevated: 120–129/<80
+- Stage 1: 130–139/80–89
+- Stage 2: ≥140/90
+
+Symptoms:
+- Often no symptoms
+- Headache
+- Dizziness
+- Chest pain (in severe cases)
+
+Risk Factors:
+- Obesity
+- High salt diet
+- Smoking
+- Stress
+- Family history
+
+Treatment:
+- Reduce salt intake
+- Regular exercise
+- ACE inhibitors
+- Beta blockers
+- Diuretics
+
+Complications:
+- Stroke
+- Heart attack
+- Kidney failure

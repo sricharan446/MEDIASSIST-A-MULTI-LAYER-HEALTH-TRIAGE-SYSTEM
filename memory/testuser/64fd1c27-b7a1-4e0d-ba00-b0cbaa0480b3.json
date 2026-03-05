@@ -1,0 +1,23 @@
+{
+  "id": "64fd1c27-b7a1-4e0d-ba00-b0cbaa0480b3",
+  "user": "testuser",
+  "created_at": "2026-03-04T15:37:42.430141",
+  "name": "analyse the report",
+  "messages": [
+    {
+      "role": "user",
+      "content": "analyse the report",
+      "time": "2026-03-04T15:37:48.542649"
+    },
+    {
+      "role": "assistant",
+      "content": "Based on the symptoms provided, it is not possible to determine the specific disease being reported. However, I can try to identify the combination of symptoms that is most likely to indicate one of the listed diseases.\n\nHere's an analysis of the symptoms:\n\n* Frequent urination, excessive thirst, and slow wound healing are more commonly associated with Diabetes.\n* Headache, dizziness, chest pain, and nosebleeds are more commonly associated with Hypertension.\n* Severe headache, nausea, light sensitivity, and vomiting are more commonly associated with Migraine.\n* Sneezing, sore throat, mild fever, runny nose, and cough are more commonly associated with the Common Cold.\n* Fever, dry cough, breathing difficulty, loss of smell, and body pain are more commonly associated with COVID-19.\n\nHowever, it's worth noting that some of these symptoms can be present in multiple diseases, and a definitive diagnosis would require further testing and evaluation.",
+      "time": "2026-03-04T15:37:48.547067",
+      "meta": {
+        "tools_used": [
+          "RAG"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+Disease: Diabetes
+Symptoms:
+- frequent urination
+- excessive thirst
+- fatigue
+- blurred vision
+- slow wound healing
+
+Disease: Hypertension
+Symptoms:
+- headache
+- dizziness
+- chest pain
+- nosebleeds
+
+Disease: Migraine
+Symptoms:
+- severe headache
+- nausea
+- light sensitivity
+- vomiting
+
+Disease: Common Cold
+Symptoms:
+- sneezing
+- sore throat
+- mild fever
+- runny nose
+- cough
+
+Disease: COVID-19
+Symptoms:
+- fever
+- dry cough
+- breathing difficulty
+- loss of smell
+- body pain

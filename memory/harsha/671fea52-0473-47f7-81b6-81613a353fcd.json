@@ -1,0 +1,21 @@
+{
+  "id": "671fea52-0473-47f7-81b6-81613a353fcd",
+  "user": "harsha",
+  "created_at": "2026-02-24T17:24:36.210084",
+  "name": "Analyze the report",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Analyze the report",
+      "time": "2026-02-24T17:24:45.318571"
+    },
+    {
+      "role": "assistant",
+      "content": "### file_operations\n{\"tool\":\"analyze\", \"params\":{\"operation\":\"analyze\", \"file_path\":\"report.json\"}}",
+      "time": "2026-02-24T17:24:45.350367",
+      "meta": {
+        "tools_used": []
+      }
+    }
+  ]
+}

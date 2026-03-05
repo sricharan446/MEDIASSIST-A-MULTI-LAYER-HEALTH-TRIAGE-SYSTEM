@@ -1,0 +1,21 @@
+{
+  "id": "8119ca7d-e7d5-42ee-94ec-552fd3cdcced",
+  "user": "harsha",
+  "created_at": "2026-03-03T11:43:18.093864",
+  "name": "if prediction:\n    predicted, confidence",
+  "messages": [
+    {
+      "role": "user",
+      "content": "if prediction:\n    predicted, confidence = prediction\n\n    explanation_prompt = f\"\"\"\nExplain the disease {predicted} in simple medical terms.\nGive:\n- Severity (Low/Medium/High)\n- Basic precautions\n- When to see doctor\n\"\"\"\n\n    explanation = await agent.process(explanation_prompt, history)\n\n    final_response = f\"\"\"\n\ud83e\ude7a Possible Condition:\n{predicted.title()} (Confidence: {confidence}%)\n\n{explanation[\"response\"]}\n\n\u26a0\ufe0f Disclaimer:\nThis is AI guidance only. Please consult a doctor.\n\"\"\"\n\n    memory.add_message(username, sid, \"user\", req.message)\n    memory.add_message(username, sid, \"assistant\", final_response, {\"tools_used\":[\"Symptom Predictor\"]})\n\n    return ChatResponse(\n        response=final_response,\n        session_id=sid,\n        tools_used=[\"Symptom Predictor\"],\n        timestamp=datetime.now().isoformat()\n    )",
+      "time": "2026-03-03T11:43:26.950095"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"tool\":\"Symptom Predictor\",\"params\":{\"username\":\"username\",\"sid\":\"session_id\",\"history\":\"history\",\"req\":\"request\",\"memory\":\"memory\"}}",
+      "time": "2026-03-03T11:43:26.969065",
+      "meta": {
+        "tools_used": []
+      }
+    }
+  ]
+}

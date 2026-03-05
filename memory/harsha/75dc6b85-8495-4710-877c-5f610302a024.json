@@ -1,0 +1,51 @@
+{
+  "id": "75dc6b85-8495-4710-877c-5f610302a024",
+  "user": "harsha",
+  "created_at": "2026-03-03T12:32:52.976623",
+  "name": "explanation_prompt = f\"\"\"\nPatient Profil",
+  "messages": [
+    {
+      "role": "user",
+      "content": "explanation_prompt = f\"\"\"\nPatient Profile:\n{profile}\n\nPredicted Conditions:\n{prediction_list}\n\nExplain clearly considering patient age and medical history.\nProvide precautions and when to see doctor.\n\"\"\"",
+      "time": "2026-03-03T12:33:05.799859"
+    },
+    {
+      "role": "assistant",
+      "content": "Based on the patient profile and predicted conditions, here's an explanation that considers the patient's age and medical history:\n\n**Explanation:**\n\nOur analysis suggests that the patient is at risk for [condition1] and [condition2] due to their age [age] and medical history. Considering their age, [condition1] is particularly concerning as it can lead to [serious complication]. However, with proper precautions and monitoring, the risk can be mitigated.\n\n**Precautions:**\n\nTo minimize the risk of [condition1], we recommend the following precautions:\n\n* [Precaution1]: Take [precaution_action] at least [frequency] times a day.\n* [Precaution2]: Avoid [activity] for the next [duration] weeks.\n* [Precaution3]: Monitor [vital_sign] closely and report any changes to your doctor.\n\n**When to See Doctor:**\n\nIf you experience any of the following symptoms, please seek medical attention immediately:\n\n* [symptom1]: [severe symptom1]\n* [symptom2]: [severe symptom2]\n* [symptom3]: [severe symptom3]\n\nAdditionally, if you notice any unusual changes in your [vital_sign], please schedule an appointment with your doctor.\n\n**Follow-up:**\n\nPlease schedule a follow-up appointment with your doctor in [timeframe] weeks to re-evaluate your condition and adjust your treatment plan as needed.\n\n**Additional Advice:**\n\nIt's essential to maintain a healthy lifestyle, including a balanced diet, regular exercise, and adequate sleep, to help manage your condition. Additionally, consider keeping a symptom journal to track any changes in your condition and report them to your doctor.\n\nPlease note that this is a general explanation and not a substitute for professional medical advice. If you have any concerns or questions, please consult with your doctor.",
+      "time": "2026-03-03T12:33:05.821099",
+      "meta": {
+        "tools_used": []
+      }
+    },
+    {
+      "role": "user",
+      "content": "I feel dizziness and chest pain",
+      "time": "2026-03-03T12:33:17.390709"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\ud83d\udea8 EMERGENCY ALERT\n\nYour symptoms may indicate a serious or life-threatening condition.\n\n\ud83d\udd34 Risk Level: Critical\n\nPlease seek immediate medical attention.\nCall emergency services or visit the nearest hospital immediately.\n\n\u26a0\ufe0f Disclaimer:\nThis is AI guidance only. Do not delay professional medical care.\n",
+      "time": "2026-03-03T12:33:17.413668",
+      "meta": {
+        "tools_used": [
+          "Emergency Detector"
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "content": "age: 65\nknown_conditions: [\"diabetes\"]",
+      "time": "2026-03-03T12:34:31.984772"
+    },
+    {
+      "role": "assistant",
+      "content": "\ud83e\ude7a Medical Info for Diabetes:\n- symptom_of \u2192 High Sugar\n- symptom_of \u2192 Frequent Urination\n- treats \u2192 Insulin\n\n\u26a0\ufe0f This is AI guidance only. Consult a doctor for real diagnosis.",
+      "time": "2026-03-03T12:34:32.077853",
+      "meta": {
+        "tools_used": [
+          "Medical KG"
+        ]
+      }
+    }
+  ]
+}

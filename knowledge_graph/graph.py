@@ -1,19 +1,44 @@
 import networkx as nx
 
-# create graph
 G = nx.Graph()
 
-# add relationships
-G.add_edge("Python", "FastAPI", relation="framework")
-G.add_edge("FastAPI", "Backend", relation="used_for")
-G.add_edge("RAG", "ChromaDB", relation="uses")
-G.add_edge("RAG", "Embeddings", relation="based_on")
-G.add_edge("Ollama", "LLM", relation="type")
-G.add_edge("ChromaDB", "Vector Database", relation="type")
+# ==============================
+# Diseases and symptoms
+# ==============================
+G.add_edge("Fever", "Viral Infection", relation="symptom_of")
+G.add_edge("Cold", "Viral Infection", relation="symptom_of")
+G.add_edge("Cough", "Viral Infection", relation="symptom_of")
 
-def query_graph(node):
-    if node in G:
-        neighbors = list(G.neighbors(node))
-        return f"{node} is related to: {', '.join(neighbors)}"
-    else:
-        return "No knowledge found in graph."
+G.add_edge("Headache", "Migraine", relation="symptom_of")
+G.add_edge("Nausea", "Migraine", relation="symptom_of")
+
+G.add_edge("Chest Pain", "Heart Disease", relation="symptom_of")
+G.add_edge("High BP", "Heart Disease", relation="risk")
+
+G.add_edge("High Sugar", "Diabetes", relation="symptom_of")
+G.add_edge("Frequent Urination", "Diabetes", relation="symptom_of")
+
+# ==============================
+# Medicines
+# ==============================
+G.add_edge("Paracetamol", "Fever", relation="treats")
+G.add_edge("Dolo 650", "Fever", relation="treats")
+G.add_edge("Insulin", "Diabetes", relation="treats")
+G.add_edge("Aspirin", "Heart Disease", relation="treats")
+
+# ==============================
+def query_graph(term):
+    term = term.title()
+
+    if term not in G:
+        return "No medical knowledge found."
+
+    neighbors = list(G.neighbors(term))
+    response = f"🩺 Medical Info for {term}:\n"
+
+    for n in neighbors:
+        relation = G.get_edge_data(term, n)["relation"]
+        response += f"- {relation} → {n}\n"
+
+    response += "\n⚠️ This is AI guidance only. Consult a doctor for real diagnosis."
+    return response

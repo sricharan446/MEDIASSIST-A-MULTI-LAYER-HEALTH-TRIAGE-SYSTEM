@@ -1,0 +1,36 @@
+Disease: Diabetes Mellitus
+
+Definition:
+Diabetes is a chronic disease that occurs when blood glucose levels are too high due to insufficient insulin production or insulin resistance.
+
+Types:
+1. Type 1 Diabetes – Autoimmune destruction of insulin-producing cells.
+2. Type 2 Diabetes – Insulin resistance (most common).
+3. Gestational Diabetes – Occurs during pregnancy.
+
+Common Symptoms:
+- Frequent urination
+- Excessive thirst
+- Fatigue
+- Blurred vision
+- Slow wound healing
+
+Normal Lab Values:
+- Fasting blood sugar: 70–99 mg/dL
+- HbA1c: Below 5.7%
+
+Diagnosis:
+- Fasting glucose ≥ 126 mg/dL
+- HbA1c ≥ 6.5%
+
+Treatment:
+- Lifestyle modification
+- Metformin
+- Insulin therapy
+- Regular glucose monitoring
+
+Complications:
+- Kidney damage
+- Nerve damage
+- Heart disease
+- Vision problems

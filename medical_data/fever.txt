@@ -1,0 +1,32 @@
+Disease: Fever
+
+Definition:
+Fever is an elevation of body temperature above normal (98.6°F or 37°C).
+
+Normal Temperature:
+- 97°F – 99°F
+
+Causes:
+- Viral infection
+- Bacterial infection
+- Malaria
+- Dengue
+- COVID-19
+
+Symptoms:
+- Chills
+- Sweating
+- Headache
+- Body pain
+- Weakness
+
+Treatment:
+- Paracetamol
+- Hydration
+- Rest
+- Treat underlying infection
+
+When to see doctor:
+- Fever above 103°F
+- Fever lasting more than 3 days
+- Difficulty breathing

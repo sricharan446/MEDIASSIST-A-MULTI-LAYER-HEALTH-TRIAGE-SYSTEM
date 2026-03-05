@@ -1,0 +1,19 @@
+Medicine: Paracetamol
+Used for: Fever and mild pain
+Dose: 500–650 mg every 6–8 hours
+Precaution: Do not exceed 4000 mg per day
+
+Medicine: Metformin
+Used for: Type 2 Diabetes
+Dose: As prescribed (usually 500 mg once or twice daily)
+Side effects: Stomach upset
+
+Medicine: Amlodipine
+Used for: High blood pressure
+Dose: 5 mg daily
+Side effects: Swelling of legs
+
+Medicine: Azithromycin
+Used for: Bacterial infections
+Dose: 500 mg once daily for 3 days
+Precaution: Complete full course

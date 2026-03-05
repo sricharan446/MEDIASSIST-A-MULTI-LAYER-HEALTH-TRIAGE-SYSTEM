@@ -13,5 +13,13 @@
   "harsha": {
     "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "token": "6c3d833a-1715-42df-8e64-3fee4db6f88b"
+  },
+  "Cherry": {
+    "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "token": "a0544eaa-1a1a-4302-97af-925cba322bf5"
+  },
+  "testuser": {
+    "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "token": "603f4bc7-827d-4c8e-afb9-3cdd281fc47d"
   }
 }

@@ -643,23 +643,40 @@
       <span style="font-size:10px; color:var(--text3)" id="loginThemeLabel">Light mode</span>
     </div>
 
-    <div class="login-card">
-      <div class="login-field">
-        <label>Username</label>
-        <input type="text" id="username" placeholder="your_name" autocomplete="off"/>
-      </div>
-      <div class="login-field">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="••••••••"/>
-      </div>
-      <div class="login-btns">
-        <button class="btn-login" onclick="login()">Sign In</button>
-        <button class="btn-signup" onclick="signup()">Register</button>
-      </div>
-      <div class="login-msg" id="loginMsg"></div>
-    </div>
+<div class="login-card">
+  <div class="login-field">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="your_name" autocomplete="off"/>
   </div>
+
+  <div class="login-field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••"/>
+  </div>
+
+  <!-- 🔵 NEW: AGE FIELD -->
+  <div class="login-field">
+    <label>Age</label>
+    <input type="number" id="ageInput" placeholder="Enter your age"/>
+  </div>
+
+  <!-- 🔵 NEW: KNOWN CONDITIONS FIELD -->
+  <div class="login-field">
+    <label>Known Conditions</label>
+    <input type="text" id="conditionsInput" 
+           placeholder="e.g. diabetes, hypertension"/>
+  </div>
+
+  <div class="login-btns">
+    <button class="btn-login" onclick="login()">Sign In</button>
+    <button class="btn-signup" onclick="signup()">Register</button>
+  </div>
+
+  <div class="login-msg" id="loginMsg"></div>
 </div>
+</div>
+</div>
+
 
 <!-- MAIN APP -->
 <div id="app">
@@ -851,26 +868,33 @@
 
   /* ===================== MESSAGING ===================== */
   async function sendMessage() {
+
     if (isLoading) return;
-    var input = document.getElementById('msgInput');
-    var text = input.value.trim();
+
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+
     if (!text && !selectedFile) return;
 
     isLoading = true;
     document.getElementById('sendBtn').disabled = true;
+
     input.value = '';
     autoResize(input);
 
-    var w = document.getElementById('welcome');
-    if (w) w.remove();
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
 
-    if (text) appendMsg('user', text, []);
+    // Show user message only if text exists
+    if (text) {
+        appendMsg('user', text, []);
+    }
     // ===== FILE UPLOAD =====
 if (selectedFile) {
   const fd = new FormData();
   fd.append("file", selectedFile);
 
-  appendMsg("assistant", "Uploading file...", []);
+  appendMsg("assistant", "📄 Processing medical report...", []);
 
   try {
     const res = await fetch("/api/upload", {
@@ -880,11 +904,23 @@ if (selectedFile) {
 
     const data = await res.json();
 
-    appendMsg(
-      "assistant",
-      "📄 File uploaded: " + selectedFile.name + "\n" + data.message,
-      ["RAG"]
-    );
+    if (data.status === "success") {
+
+  appendMsg(
+    "assistant",
+    "🧾 Medical Report Analysis:\n\n" + data.analysis,
+    ["Medical AI"]
+  );
+
+} else {
+
+  appendMsg(
+    "assistant",
+    "❌ File analysis failed: " + (data.message || "Unknown error"),
+    []
+  );
+
+}
 
   } catch (err) {
     appendMsg("assistant", "❌ File upload failed", []);
@@ -893,20 +929,7 @@ if (selectedFile) {
   clearFile();
 }
 
-    if (selectedFile) {
-      var fd = new FormData();
-      fd.append('file', selectedFile);
-      try {
-        var r = await fetch('/api/upload', { method: 'POST', body: fd });
-        var d = await r.json();
-        appendMsg('assistant', 'File uploaded: ' + d.filename + '\n\n' + d.summary, ['file_operations']);
-      } catch(err) {
-        appendMsg('assistant', 'File upload failed.', []);
-      }
-      clearFile();
-    }
-
-    if (text) {
+    if (text && !selectedFile) {
       var tid = 'typing_' + Date.now();
       appendTyping(tid);
       try {
@@ -1020,31 +1043,47 @@ if (selectedFile) {
   }
 
   /* ===================== AUTH ===================== */
-  async function login() {
-    var u = document.getElementById('username').value;
-    var p = document.getElementById('password').value;
+async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const ageInput = document.getElementById("ageInput");
+    const conditionsInput = document.getElementById("conditionsInput");
+
+    const age = ageInput ? parseInt(ageInput.value) || 30 : 30;
+    const conditions = conditionsInput && conditionsInput.value
+        ? conditionsInput.value.split(",").map(c => c.trim())
+        : [];
+
     try {
-      var res = await fetch('/api/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: u, password: p })
-      });
-      var data = await res.json();
-      if (res.ok) {
-        userToken = data.token;
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.username);
-        document.getElementById('userDisplay').textContent = data.username;
-        document.getElementById('loginScreen').style.display = 'none';
-        loadSessions();
-        checkOllama();
-        loadModels();
-      } else {
-        document.getElementById('loginMsg').textContent = data.detail || 'Invalid credentials';
-      }
-    } catch(e) {
-      document.getElementById('loginMsg').textContent = 'Server unreachable';
+        const response = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                age: age,
+                known_conditions: conditions
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("username", username);  // ✅ IMPORTANT
+            location.reload();
+        } else {
+            document.getElementById("loginMsg").innerText =
+                data.detail || "Login failed";
+        }
+
+    } catch (error) {
+        document.getElementById("loginMsg").innerText =
+            "Server not reachable";
     }
-  }
+}
+
 
   async function signup() {
     var u = document.getElementById('username').value;
