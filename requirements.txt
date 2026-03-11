@@ -1,8 +1,33 @@
+# ── Web framework ──────────────────────────────────────────
 fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
 python-multipart
+python-dotenv
+
+# ── HTTP & scraping ────────────────────────────────────────
 aiohttp
 beautifulsoup4
-python-dotenv
+
+# ── Google Gemini (new SDK — NOT google-generativeai) ──────
+google-genai
+
+# ── RAG & embeddings ───────────────────────────────────────
+chromadb
+sentence-transformers
+
+# ── Knowledge graph ────────────────────────────────────────
+networkx
+
+# ── PDF reading ────────────────────────────────────────────
+pymupdf
+pdfplumber
+pypdf
+
+# ── Image OCR (optional) ───────────────────────────────────
+# Requires Tesseract OCR installed on your OS first:
+#   Windows: https://github.com/UB-Mannheim/tesseract/wiki
+#   Linux:   sudo apt install tesseract-ocr
+# pytesseract
+# Pillow

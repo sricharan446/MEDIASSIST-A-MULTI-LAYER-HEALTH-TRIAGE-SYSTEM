@@ -1,0 +1,23 @@
+{
+  "id": "67abcebf-184f-4001-88a4-402ea7fcf56e",
+  "user": "sanni",
+  "created_at": "2026-03-06T22:44:40.423878",
+  "name": "Summarise the report",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Summarise the report",
+      "time": "2026-03-06T22:44:41.843625"
+    },
+    {
+      "role": "assistant",
+      "content": "The provided context lists several diseases and their associated symptoms. It does not contain a report to summarize.",
+      "time": "2026-03-06T22:44:41.861224",
+      "meta": {
+        "tools_used": [
+          "RAG"
+        ]
+      }
+    }
+  ]
+}

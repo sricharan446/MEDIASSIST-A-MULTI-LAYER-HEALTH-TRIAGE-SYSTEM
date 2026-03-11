@@ -1,7 +1,24 @@
-venv/
+# ── Secrets & credentials ─────────────────────────────────────
+.env
+users.json
+
+# ── Runtime data (auto-generated) ────────────────────────────
+memory/
+uploads/
+chroma_db/
 __pycache__/
 *.pyc
-.env
-uploads/
-chromadb/
-*.db
+*.pyo
+*.pyd
+
+# ── Virtual environments ──────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ── IDE & OS files ────────────────────────────────────────────
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db

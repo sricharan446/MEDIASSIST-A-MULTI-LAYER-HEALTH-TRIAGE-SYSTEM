@@ -1,0 +1,38 @@
+{
+  "id": "113b6c22-77e3-4d43-9953-01475e6d832b",
+  "user": "testuser",
+  "created_at": "2026-03-05T15:18:00.961513",
+  "name": "Hello",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello",
+      "time": "2026-03-05T15:18:02.645517"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. How can I help you today regarding Diabetes Mellitus?",
+      "time": "2026-03-05T15:18:02.687134",
+      "meta": {
+        "tools_used": [
+          "RAG"
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "content": "I have severe leg pain",
+      "time": "2026-03-05T15:18:22.074261"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\ud83e\ude7a Possible Conditions:\n1. Muscle Strain (59%)\n\n\ud83d\udcca Risk Level: \ud83d\udfe1 Moderate\n\n\ud83e\ude7a Most Likely Condition:\nMuscle Strain: This is a common cause of severe leg pain, often resulting from overexertion, sudden movements, or injury. The muscles in the legs can be easily strained during physical activity.\n\n\ud83d\udd0d Other Possible Conditions:\n1.  **Sciatica:** Irritation or compression of the sciatic nerve can cause severe pain that radiates down the leg, often starting in the lower back or buttock.\n2.  **Deep Vein Thrombosis (DVT):** A blood clot in a deep vein, usually in the leg, can cause pain, swelling, and warmth. This is a serious condition that requires immediate medical attention.\n3.  **Peripheral Artery Disease (PAD):** Narrowing of the arteries in the legs can reduce blood flow, leading to leg pain, cramping, or fatigue, especially during exercise (claudication).\n\n\ud83d\udcca Risk Level:\nModerate\n\n\ud83d\udd0e Why This Risk Level:\nThe patient is reporting severe leg pain, which, while potentially a muscle strain, also carries the possibility of more serious conditions like DVT or PAD. Given the age of 30 and no known pre-existing conditions, the risk is not immediately critical but warrants careful consideration due to the severity of the symptom.\n\n\ud83d\udc8a Immediate Precautions:\n*   **Rest:** Avoid activities that worsen the pain.\n*   **Ice:** Apply ice packs to the affected area for 15-20 minutes at a time, several times a day, to help reduce inflammation.\n*   **Elevation:** If there is swelling, try to elevate the leg when resting.\n*   **Gentle Stretching:** If pain allows, very gentle stretching might be considered, but avoid anything that increases discomfort.\n\n\ud83c\udfe5 When to See a Doctor:\n*   If the pain is excruciating and unbearable.\n*   If there is significant swelling, redness, or warmth in the leg.\n*   If you develop shortness of breath or chest pain (which could indicate a blood clot has traveled to the lungs).\n*   If the pain does not improve with rest and home care within a few days.\n*   If you have any numbness or tingling in the leg or foot.\n\n\u26a0\ufe0f Disclaimer:\nThis is AI-generated health guidance and not a medical diagnosis.\nConsult a qualified healthcare professional for medical advice.\n\n\u26a0\ufe0f Disclaimer:\nThis is AI guidance only. Please consult a doctor.\n",
+      "time": "2026-03-05T15:18:22.116681",
+      "meta": {
+        "tools_used": [
+          "Symptom Predictor"
+        ]
+      }
+    }
+  ]
+}

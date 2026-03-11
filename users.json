@@ -20,6 +20,13 @@
   },
   "testuser": {
     "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-    "token": "603f4bc7-827d-4c8e-afb9-3cdd281fc47d"
+    "token": "613020a0-2d82-444a-99c4-865da234115a"
+  },
+  "sanni": {
+    "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+  },
+  "Test_user1": {
+    "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "token": "405d63d1-72d0-48aa-81f8-65eb1d0f0412"
   }
 }
