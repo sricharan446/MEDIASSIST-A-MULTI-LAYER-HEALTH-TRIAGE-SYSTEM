@@ -17,8 +17,28 @@ venv/
 env/
 .env/
 
-# ── IDE & OS files ────────────────────────────────────────────
+# ── IDE & OS files ────────────────────────────────────────────────
 .idea/
 .vscode/
 *.DS_Store
 Thumbs.db
+
+# ── Test & Coverage ───────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# ── Build & Distribution ──────────────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Environment file variants ──────────────────────────────────────────────────
+.env.local
+.env.*.local

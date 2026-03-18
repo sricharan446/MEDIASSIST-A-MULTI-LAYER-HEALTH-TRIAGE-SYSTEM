@@ -1,4 +1,6 @@
 {
-  "age": 30,
-  "known_conditions": []
+  "age": 20,
+  "known_conditions": [
+    "NA"
+  ]
 }

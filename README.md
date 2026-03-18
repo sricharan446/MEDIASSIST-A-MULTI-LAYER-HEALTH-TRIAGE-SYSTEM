@@ -2,7 +2,7 @@
 
 ## ✅ What Changed
 - **Before**: 2 servers needed (backend on port 8000 + frontend on port 3000)
-- **Now**: Just 1 Python file! Open http://mediassist.local and you're done
+- **Now**: Just 1 Python file! Open http://localhost:8000 and you're done
 
 ---
 
@@ -63,7 +63,7 @@ You'll see:
 ✅ API Key loaded
 
 🚀 Starting server...
-   Open your browser: http://mediassist.local
+   Open your browser: http://localhost:8000
 
    Press CTRL+C to stop
 ==================================================
@@ -73,7 +73,7 @@ You'll see:
 
 ## 🌐 Open in Browser
 
-Go to: **http://mediassist.local**
+Go to: **http://localhost:8000**
 
 That's it! No second terminal, no Node.js, no npm needed.
 
