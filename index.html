@@ -936,11 +936,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow-y: auto;
+      padding: 24px 16px;
       z-index: 9999;
     }
 
     .login-wrap {
-      width: 380px;
+      width: min(420px, 100%);
       animation: fadeIn 0.5s ease;
     }
 
@@ -987,6 +989,8 @@
       border-radius: 16px;
       padding: 28px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      max-height: calc(100vh - 64px);
+      overflow-y: auto;
     }
 
     .login-field {
@@ -1002,7 +1006,8 @@
       margin-bottom: 6px;
     }
 
-    .login-field input {
+    .login-field input,
+    .login-field select {
       width: 100%;
       padding: 11px 14px;
       background: var(--bg3);
@@ -1015,7 +1020,8 @@
       transition: border-color 0.2s;
     }
 
-    .login-field input:focus {
+    .login-field input:focus,
+    .login-field select:focus {
       border-color: var(--accent);
     }
 
@@ -1073,6 +1079,50 @@
       color: var(--accent);
       margin-top: 10px;
       min-height: 16px;
+    }
+
+    .login-section-note {
+      font-size: 11px;
+      color: var(--text2);
+      margin: 2px 0 16px;
+      line-height: 1.5;
+    }
+
+    .login-profile-panel {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .login-profile-summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      user-select: none;
+    }
+
+    .login-profile-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .login-profile-summary::before {
+      content: '+ ';
+      color: var(--accent);
+    }
+
+    .login-profile-panel[open] .login-profile-summary::before {
+      content: '- ';
+    }
+
+    .login-profile-help {
+      font-size: 10px;
+      color: var(--text3);
+      margin-bottom: 12px;
+      line-height: 1.5;
     }
 
     /* ===================== SCROLLBAR ===================== */
@@ -1245,7 +1295,7 @@
       color: var(--danger);
     }
 
-    /* ===================== PRACTO BOOKING BUTTON ===================== */
+    /* ===================== DOCTOR FINDER BUTTON ===================== */
     .practo-btn-wrap { margin-top: 12px; }
     .practo-btn {
       display: inline-flex; align-items: center; gap: 8px;
@@ -1264,6 +1314,249 @@
       transform: translateY(-1px);
     }
     .practo-specialty { font-size: 10px; color: var(--text3); margin-top: 4px; margin-left: 2px; }
+    .doctor-link-row { display:flex; flex-direction:column; gap:8px; }
+
+    .profile-panel {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .profile-panel.open {
+      display: block;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .profile-grid input,
+    .profile-grid select {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-profile,
+    .btn-save-profile {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .btn-save-profile {
+      border-color: rgba(0, 200, 140, 0.35);
+      color: var(--accent);
+    }
+
+    .profile-msg {
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--text3);
+      min-height: 12px;
+    }
+
+    .followup-card {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+    }
+
+    .followup-title {
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .followup-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .followup-grid label {
+      display: block;
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 4px;
+    }
+
+    .followup-grid input {
+      width: 100%;
+      padding: 9px 10px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .followup-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .followup-submit {
+      padding: 8px 12px;
+      background: var(--accent);
+      color: #02110b;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .safety-card {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 69, 96, 0.08);
+      border: 1px solid rgba(255, 69, 96, 0.35);
+    }
+
+    .safety-title {
+      font-size: 11px;
+      color: #ff6b7d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .safety-list {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .source-badges {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .sbadge {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      background: var(--bg3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .btn-handoff {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .btn-handoff:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .hospital-card {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(255, 69, 96, 0.07);
+      border: 1px solid rgba(255, 69, 96, 0.25);
+    }
+
+    .hospital-title {
+      font-size: 11px;
+      color: #ff6b7d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .hospital-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .hospital-calls {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .hospital-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .hospital-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .hospital-link.call-link {
+      background: rgba(255, 69, 96, 0.08);
+      border-color: rgba(255, 69, 96, 0.3);
+    }
+
+    .hospital-link.call-link:hover {
+      border-color: #ff6b7d;
+      color: #ff6b7d;
+      background: rgba(255, 69, 96, 0.12);
+    }
+
+    .hospital-meta {
+      font-size: 10px;
+      color: var(--text3);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
 
   </style>
 </head>
@@ -1296,18 +1589,82 @@
           <label>Password</label>
           <input type="password" id="password" placeholder="••••••••" />
         </div>
-
-        <!-- 🔵 NEW: AGE FIELD -->
-        <div class="login-field">
-          <label>Age</label>
-          <input type="number" id="ageInput" placeholder="Enter your age" />
+        <div class="login-section-note">
+          Register creates your account with username and password only. Add the optional health profile below if you want sign-in context for triage.
         </div>
 
-        <!-- 🔵 NEW: KNOWN CONDITIONS FIELD -->
-        <div class="login-field">
-          <label>Known Conditions</label>
-          <input type="text" id="conditionsInput" placeholder="e.g. diabetes, hypertension" />
-        </div>
+        <details class="login-profile-panel">
+          <summary class="login-profile-summary">Optional Health Profile</summary>
+          <div class="login-profile-help">
+            These details are used during sign in and later assessments. Registration does not save them until you sign in.
+          </div>
+
+          <div class="login-field">
+            <label>Age</label>
+            <input type="number" id="ageInput" placeholder="Enter your age" />
+          </div>
+
+          <div class="login-field">
+            <label>Gender</label>
+            <select id="genderInput" onchange="syncPregnancyOptions('', this.value)">
+              <option value="unknown">Unknown</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="login-field">
+            <label>Known Conditions</label>
+            <input type="text" id="conditionsInput" placeholder="e.g. diabetes, hypertension" />
+          </div>
+
+          <div class="login-field">
+            <label>Allergies</label>
+            <input type="text" id="allergiesInput" placeholder="e.g. penicillin, peanuts" />
+          </div>
+
+          <div class="login-field">
+            <label>Current Medications</label>
+            <input type="text" id="medicationsInput" placeholder="e.g. metformin, amlodipine" />
+          </div>
+
+          <div class="login-field">
+            <label>Pregnancy Status</label>
+            <select id="pregnancyInput">
+              <option value="unknown">Unknown</option>
+              <option value="not_applicable">Not applicable</option>
+              <option value="not_pregnant">Not pregnant</option>
+              <option value="pregnant">Pregnant</option>
+            </select>
+          </div>
+
+          <div class="login-field">
+            <label>Smoking Status</label>
+            <select id="smokingInput">
+              <option value="unknown">Unknown</option>
+              <option value="never">Never</option>
+              <option value="former">Former</option>
+              <option value="current">Current</option>
+            </select>
+          </div>
+
+          <div class="login-field">
+            <label>Alcohol Use</label>
+            <select id="alcoholInput">
+              <option value="unknown">Unknown</option>
+              <option value="never">Never</option>
+              <option value="occasional">Occasional</option>
+              <option value="regular">Regular</option>
+            </select>
+          </div>
+
+          <div class="login-field">
+            <label>Past History</label>
+            <input type="text" id="historyInput" placeholder="e.g. asthma, surgery, thyroid issues" />
+          </div>
+        </details>
 
         <div class="login-btns">
           <button class="btn-login" onclick="login()">Sign In</button>
@@ -1354,6 +1711,48 @@
           <button class="theme-toggle" onclick="toggleTheme()" title="Switch theme"></button>
           <button class="btn-logout" onclick="logout()">Exit</button>
         </div>
+        <div class="profile-actions">
+          <button class="btn-profile" onclick="toggleProfilePanel()">Profile</button>
+        </div>
+        <div class="profile-panel" id="profilePanel">
+          <div class="model-label">Health Profile</div>
+          <div class="profile-grid">
+            <input type="number" id="profileAge" placeholder="Age" />
+            <select id="profileGender" onchange="syncPregnancyOptions('profile', this.value)">
+              <option value="unknown">Gender: Unknown</option>
+              <option value="male">Gender: Male</option>
+              <option value="female">Gender: Female</option>
+              <option value="other">Gender: Other</option>
+              <option value="prefer_not_to_say">Gender: Prefer not to say</option>
+            </select>
+            <input type="text" id="profileConditions" placeholder="Known conditions" />
+            <input type="text" id="profileAllergies" placeholder="Allergies" />
+            <input type="text" id="profileMedications" placeholder="Current medications" />
+            <select id="profilePregnancy">
+              <option value="unknown">Pregnancy: Unknown</option>
+              <option value="not_applicable">Pregnancy: Not applicable</option>
+              <option value="not_pregnant">Pregnancy: Not pregnant</option>
+              <option value="pregnant">Pregnancy: Pregnant</option>
+            </select>
+            <select id="profileSmoking">
+              <option value="unknown">Smoking: Unknown</option>
+              <option value="never">Smoking: Never</option>
+              <option value="former">Smoking: Former</option>
+              <option value="current">Smoking: Current</option>
+            </select>
+            <select id="profileAlcohol">
+              <option value="unknown">Alcohol: Unknown</option>
+              <option value="never">Alcohol: Never</option>
+              <option value="occasional">Alcohol: Occasional</option>
+              <option value="regular">Alcohol: Regular</option>
+            </select>
+            <input type="text" id="profileHistory" placeholder="Past history" />
+          </div>
+          <div class="profile-actions">
+            <button class="btn-save-profile" onclick="saveProfile()">Save Profile</button>
+          </div>
+          <div class="profile-msg" id="profileMsg"></div>
+        </div>
       </div>
     </div>
 
@@ -1363,6 +1762,7 @@
         <div class="topbar-title" id="topbarTitle">New Conversation</div>
         <div class="topbar-badge">gemini</div>
         <div class="topbar-badge" id="modelBadge">gemini-2.5-flash-lite</div>
+        <button class="btn-handoff" onclick="showHandoffSummary()">Handoff</button>
       </div>
 
       <div class="messages" id="messages">
@@ -1419,6 +1819,8 @@
             <input type="file" id="fileInput" style="display:none" onchange="onFileSelect(event)" />
             <button class="btn-icon" onclick="document.getElementById('fileInput').click()"
               title="Attach file">📎</button>
+            <button class="btn-icon" id="voiceBtn" onclick="toggleVoiceRecording()"
+              title="Record voice message">🎤</button>
             <button class="btn-send" id="sendBtn" onclick="sendMessage()">Send ↑</button>
           </div>
         </div>
@@ -1431,7 +1833,7 @@
   </div>
 
   <script>
-    let sessionId = null, userToken = null, selectedFile = null, isLoading = false;
+    let sessionId = null, userToken = null, selectedFile = null, isLoading = false, pendingFollowup = null;
 
     /* ===================== THEME ===================== */
     function applyTheme(theme) {
@@ -1477,9 +1879,246 @@
       c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
     }
 
+    function splitCsv(value) {
+      if (!value) return [];
+      return value.split(',').map(function (item) { return item.trim(); }).filter(Boolean);
+    }
+
+    function profileFieldId(prefix, field) {
+      var loginMap = {
+        Age: 'ageInput',
+        Gender: 'genderInput',
+        Conditions: 'conditionsInput',
+        Allergies: 'allergiesInput',
+        Medications: 'medicationsInput',
+        Pregnancy: 'pregnancyInput',
+        Smoking: 'smokingInput',
+        Alcohol: 'alcoholInput',
+        History: 'historyInput'
+      };
+      if (!prefix) return loginMap[field];
+      return prefix + field;
+    }
+
+    function collectProfilePayload(prefix) {
+      return {
+        age: parseInt(document.getElementById(profileFieldId(prefix, 'Age')).value, 10) || 30,
+        gender: document.getElementById(profileFieldId(prefix, 'Gender')).value,
+        known_conditions: splitCsv(document.getElementById(profileFieldId(prefix, 'Conditions')).value),
+        allergies: splitCsv(document.getElementById(profileFieldId(prefix, 'Allergies')).value),
+        current_medications: splitCsv(document.getElementById(profileFieldId(prefix, 'Medications')).value),
+        pregnancy_status: document.getElementById(profileFieldId(prefix, 'Pregnancy')).value,
+        smoking_status: document.getElementById(profileFieldId(prefix, 'Smoking')).value,
+        alcohol_use: document.getElementById(profileFieldId(prefix, 'Alcohol')).value,
+        past_history: splitCsv(document.getElementById(profileFieldId(prefix, 'History')).value)
+      };
+    }
+
+    function applyProfileToForm(profile, prefix) {
+      if (!profile) return;
+      document.getElementById(profileFieldId(prefix, 'Age')).value = profile.age || 30;
+      document.getElementById(profileFieldId(prefix, 'Gender')).value = profile.gender || 'unknown';
+      document.getElementById(profileFieldId(prefix, 'Conditions')).value = (profile.known_conditions || []).join(', ');
+      document.getElementById(profileFieldId(prefix, 'Allergies')).value = (profile.allergies || []).join(', ');
+      document.getElementById(profileFieldId(prefix, 'Medications')).value = (profile.current_medications || []).join(', ');
+      document.getElementById(profileFieldId(prefix, 'Pregnancy')).value = profile.pregnancy_status || 'unknown';
+      document.getElementById(profileFieldId(prefix, 'Smoking')).value = profile.smoking_status || 'unknown';
+      document.getElementById(profileFieldId(prefix, 'Alcohol')).value = profile.alcohol_use || 'unknown';
+      document.getElementById(profileFieldId(prefix, 'History')).value = (profile.past_history || []).join(', ');
+    }
+
+    function clearFollowupCard() {
+      pendingFollowup = null;
+      document.querySelectorAll('.followup-card').forEach(function (card) { card.remove(); });
+    }
+
+    function syncPregnancyOptions(prefix, gender) {
+      var pregnancySelect = document.getElementById(profileFieldId(prefix, 'Pregnancy'));
+      if (!pregnancySelect) return;
+      if (gender === 'male') {
+        pregnancySelect.value = 'not_applicable';
+        pregnancySelect.disabled = true;
+      } else {
+        pregnancySelect.disabled = false;
+        if (pregnancySelect.value === 'not_applicable' && gender === 'female') {
+          pregnancySelect.value = 'unknown';
+        }
+      }
+    }
+
+    function renderFollowupCard(questions) {
+      clearFollowupCard();
+      if (!questions || !questions.length) return;
+      pendingFollowup = questions;
+
+      var c = document.getElementById('messages');
+      var card = document.createElement('div');
+      card.className = 'followup-card';
+
+      var title = document.createElement('div');
+      title.className = 'followup-title';
+      title.textContent = 'Continue Assessment';
+      card.appendChild(title);
+
+      var grid = document.createElement('div');
+      grid.className = 'followup-grid';
+      questions.forEach(function (item) {
+        var field = document.createElement('div');
+        field.innerHTML =
+          '<label for="followup_' + item.id + '">' + item.question + '</label>' +
+          '<input id="followup_' + item.id + '" placeholder="' + (item.placeholder || 'Type your answer') + '">';
+        grid.appendChild(field);
+      });
+      card.appendChild(grid);
+
+      var actions = document.createElement('div');
+      actions.className = 'followup-actions';
+      actions.innerHTML = '<button class="followup-submit" onclick="submitFollowupAnswers()">Continue Assessment</button>';
+      card.appendChild(actions);
+
+      c.appendChild(card);
+      scrollDown();
+    }
+
+    function renderSafetyCard(alerts) {
+      document.querySelectorAll('.safety-card').forEach(function (card) { card.remove(); });
+      if (!alerts || !alerts.length) return;
+      var c = document.getElementById('messages');
+      var card = document.createElement('div');
+      card.className = 'safety-card';
+      var title = document.createElement('div');
+      title.className = 'safety-title';
+      title.textContent = 'Medication Safety Warnings';
+      card.appendChild(title);
+
+      var list = document.createElement('div');
+      list.className = 'safety-list';
+      alerts.forEach(function (alert) {
+        var row = document.createElement('div');
+        row.textContent = '• ' + alert;
+        list.appendChild(row);
+      });
+      card.appendChild(list);
+      c.appendChild(card);
+      scrollDown();
+    }
+
+    async function showEmergencyHospitalFinder() {
+      document.querySelectorAll('.hospital-card').forEach(function (card) { card.remove(); });
+
+      var c = document.getElementById('messages');
+      var card = document.createElement('div');
+      card.className = 'hospital-card';
+      card.innerHTML =
+        '<div class="hospital-title">Emergency Hospital Finder</div>' +
+        '<div class="hospital-actions" id="hospitalActions">' +
+          '<a class="hospital-link" href="https://www.google.com/search?q=hospitals+near+me" target="_blank" rel="noopener noreferrer">' +
+            '<span>🔍 Google Search: hospitals near me</span><span>→</span>' +
+          '</a>' +
+          '<a class="hospital-link" href="https://www.google.com/maps/search/hospitals+near+me" target="_blank" rel="noopener noreferrer">' +
+            '<span>🏥 Hospitals Near Me</span><span>→</span>' +
+          '</a>' +
+        '</div>' +
+        '<div class="hospital-calls">' +
+          '<a class="hospital-link call-link" href="tel:108"><span>📞 Call 108 Ambulance</span><span>→</span></a>' +
+          '<a class="hospital-link call-link" href="tel:112"><span>📞 Call 112 Emergency</span><span>→</span></a>' +
+          '<a class="hospital-link call-link" href="tel:102"><span>📞 Call 102 Ambulance</span><span>→</span></a>' +
+          '<a class="hospital-link call-link" href="tel:911"><span>📞 Call 911</span><span>→</span></a>' +
+        '</div>' +
+        '<div class="hospital-meta" id="hospitalMeta">Trying to use your location for more precise nearby hospital links.</div>';
+      c.appendChild(card);
+      scrollDown();
+
+      if (!navigator.geolocation) {
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async function (position) {
+          try {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+            var res = await fetch('/api/nearby-hospitals?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng) + '&city=Your%20Location');
+            var data = await res.json();
+            if (!res.ok || !data.links) return;
+
+            var actions = document.getElementById('hospitalActions');
+            var meta = document.getElementById('hospitalMeta');
+            if (!actions) return;
+
+            var orderedKeys = ['google_maps', 'google_search'];
+            actions.innerHTML = orderedKeys.filter(function (key) { return data.links[key]; }).map(function (key) {
+              var item = data.links[key];
+              return '<a class="hospital-link" href="' + item.url + '" target="_blank" rel="noopener noreferrer">' +
+                '<span>' + (item.emoji || '') + ' ' + item.name + '</span><span>→</span>' +
+              '</a>';
+            }).join('');
+
+            if (meta) {
+              meta.textContent = 'Location detected. Open Google Maps or Google Search for nearby hospitals immediately if this is urgent.';
+            }
+          } catch (e) { }
+        },
+        function () { },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      );
+    }
+
+    function submitFollowupAnswers() {
+      if (!pendingFollowup || !pendingFollowup.length) return;
+      var parts = [];
+      pendingFollowup.forEach(function (item) {
+        var input = document.getElementById('followup_' + item.id);
+        if (input && input.value.trim()) {
+          parts.push(item.id + ': ' + input.value.trim());
+        }
+      });
+      if (!parts.length) return;
+      var input = document.getElementById('msgInput');
+      input.value = parts.join('\n');
+      autoResize(input);
+      sendMessage();
+    }
+
+    function toggleProfilePanel() {
+      document.getElementById('profilePanel').classList.toggle('open');
+    }
+
+    async function loadProfile() {
+      if (!userToken) return;
+      try {
+        var res = await fetch('/api/profile?token=' + userToken);
+        var data = await res.json();
+        if (res.ok && data.profile) {
+          applyProfileToForm(data.profile, 'profile');
+          syncPregnancyOptions('profile', data.profile.gender || 'unknown');
+        }
+      } catch (e) { }
+    }
+
+    async function saveProfile() {
+      var msg = document.getElementById('profileMsg');
+      msg.textContent = 'Saving...';
+      try {
+        var res = await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: userToken,
+            profile: collectProfilePayload('profile')
+          })
+        });
+        var data = await res.json();
+        msg.textContent = res.ok ? 'Profile saved' : (data.detail || 'Save failed');
+      } catch (e) {
+        msg.textContent = 'Save failed';
+      }
+    }
+
     /* ===================== SESSIONS ===================== */
     function newSession() {
       sessionId = null;
+      clearFollowupCard();
       document.getElementById('topbarTitle').textContent = 'New Conversation';
       var msgs = document.getElementById('messages');
       msgs.innerHTML = '';
@@ -1541,7 +2180,13 @@
         var c = document.getElementById('messages');
         c.innerHTML = '';
         var history = data.history || (Array.isArray(data) ? data : []);
-        history.forEach(function (m) { appendMsg(m.role, m.content, m.tools_used || []); });
+        history.forEach(function (m) { appendMsg(m.role, m.content, m.tools_used || [], m.sources || []); });
+        if (data.pending_followup && data.pending_followup.questions) {
+          pendingFollowup = data.pending_followup.questions;
+          renderFollowupCard(data.pending_followup.questions);
+        } else {
+          clearFollowupCard();
+        }
         scrollDown();
       } catch (e) { }
       loadSessions();
@@ -1599,7 +2244,14 @@
           var upEl = document.getElementById(uploadMsgId);
           if (upEl) upEl.remove();
           if (data.status === "success") {
-            appendMsg("assistant", "🧾 Medical Report Analysis:\n\n" + data.analysis, ["Medical AI"]);
+            var uploadText = "🧾 Medical Report Analysis:\n\n" + data.analysis;
+            if (data.trend_summary) {
+              uploadText += "\n\n📈 Trend Summary:\n" + data.trend_summary;
+            }
+            appendMsg("assistant", uploadText, ["Medical AI", "Lab Trends"], [
+              { type: 'uploaded_report', label: 'Uploaded Report' },
+              { type: 'lab_history', label: 'Lab Trend Engine' }
+            ]);
           } else {
             appendMsg("assistant", "❌ File analysis failed: " + (data.message || "Unknown error"), []);
           }
@@ -1629,7 +2281,16 @@
           if (res.ok) {
             sessionId = data.session_id;
             document.getElementById('topbarTitle').textContent = text.slice(0, 40) || 'New Chat';
-            appendMsg('assistant', data.response, data.tools_used);
+            appendMsg('assistant', data.response, data.tools_used, data.sources || []);
+            if (data.needs_followup) {
+              renderFollowupCard(data.followup_questions || []);
+            } else {
+              clearFollowupCard();
+            }
+            renderSafetyCard(data.safety_alerts || []);
+            if (data.show_hospital_finder) {
+              showEmergencyHospitalFinder();
+            }
             if (data.practo_url) { showPractoButton(data.practo_url); }
           } else {
             appendMsg('assistant', 'Error: ' + (data.detail || 'Something went wrong'), []);
@@ -1646,7 +2307,31 @@
       document.getElementById('sendBtn').disabled = false;
     }
 
-    function appendMsg(role, content, tools) {
+    async function showHandoffSummary() {
+      if (!sessionId || !userToken) return;
+      var tid = 'handoff_' + Date.now();
+      appendTyping(tid);
+      try {
+        var res = await fetch('/api/handoff-summary?token=' + userToken + '&session_id=' + sessionId);
+        var data = await res.json();
+        var el = document.getElementById(tid);
+        if (el) el.remove();
+        if (res.ok) {
+          appendMsg('assistant', data.summary, ['Handoff Summary'], [
+            { type: 'handoff', label: 'Doctor Handoff' },
+            { type: 'profile', label: 'Structured Profile' }
+          ]);
+        } else {
+          appendMsg('assistant', 'Error: ' + (data.detail || 'Could not build handoff summary'), []);
+        }
+      } catch (e) {
+        var el = document.getElementById(tid);
+        if (el) el.remove();
+        appendMsg('assistant', 'Could not build handoff summary right now.', []);
+      }
+    }
+
+    function appendMsg(role, content, tools, sources) {
       var c = document.getElementById('messages');
       var wrap = document.createElement('div');
       wrap.className = 'msg ' + role;
@@ -1709,6 +2394,15 @@
         bubble.appendChild(badges);
       }
 
+      if (sources && sources.length) {
+        var sourceBadges = document.createElement('div');
+        sourceBadges.className = 'source-badges';
+        sourceBadges.innerHTML = sources.map(function (source) {
+          return '<span class="sbadge">' + (source.label || source.type || 'Source') + '</span>';
+        }).join('');
+        bubble.appendChild(sourceBadges);
+      }
+
       bwrap.appendChild(meta);
       bwrap.appendChild(bubble);
       wrap.appendChild(avatar);
@@ -1761,14 +2455,7 @@
     async function login() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-
-      const ageInput = document.getElementById("ageInput");
-      const conditionsInput = document.getElementById("conditionsInput");
-
-      const age = ageInput ? parseInt(ageInput.value) || 30 : 30;
-      const conditions = conditionsInput && conditionsInput.value
-        ? conditionsInput.value.split(",").map(c => c.trim())
-        : [];
+      const profile = collectProfilePayload('');
 
       try {
         const response = await fetch("/api/login", {
@@ -1777,8 +2464,15 @@
           body: JSON.stringify({
             username: username,
             password: password,
-            age: age,
-            known_conditions: conditions
+            age: profile.age,
+            gender: profile.gender,
+            known_conditions: profile.known_conditions,
+            allergies: profile.allergies,
+            current_medications: profile.current_medications,
+            pregnancy_status: profile.pregnancy_status,
+            smoking_status: profile.smoking_status,
+            alcohol_use: profile.alcohol_use,
+            past_history: profile.past_history
           })
         });
 
@@ -1873,12 +2567,16 @@
   function showPractoButton(practoUrl) {
     if (!practoUrl) return;
 
-    // Extract slug from URL: practo.com/hyderabad/{slug}
+    // Legacy function name retained; now renders location-based doctor search links.
     var slug = 'general-physician';
-    var match = practoUrl.match(/practo\.com\/[^/]+\/([^/?]+)/);
-    if (match) slug = match[1];
+    var match = practoUrl.match(/maps\/search\/([^/?]+)/);
+    if (match) {
+      slug = decodeURIComponent(match[1]).replace(/\+/g, ' ').replace(/ near me$/i, '').trim().replace(/\s+/g, '-');
+    }
     var displayName = SPECIALTY_DISPLAY[slug] || slug.replace(/-/g, ' ')
       .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    var mapsUrl = practoUrl;
+    var searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(displayName + ' doctor near me');
 
     var c = document.getElementById('messages');
     var wrap = document.createElement('div');
@@ -1896,11 +2594,17 @@
     var inner = document.createElement('div');
     inner.className = 'practo-btn-wrap';
     inner.innerHTML =
-      '<a class="practo-btn" href="' + practoUrl + '" target="_blank" rel="noopener noreferrer">' +
-        '🩺 Book a ' + displayName + ' in Hyderabad' +
-        '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
-      '</a>' +
-      '<div class="practo-specialty">Opens Practo · Hyderabad · ' + displayName + ' listings · Click Allow Location for nearest doctors</div>';
+      '<div class="doctor-link-row">' +
+        '<a class="practo-btn" href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer">' +
+          '🗺️ Find a ' + displayName + ' on Google Maps' +
+          '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
+        '</a>' +
+        '<a class="practo-btn" href="' + searchUrl + '" target="_blank" rel="noopener noreferrer">' +
+          '🔍 Search ' + displayName + ' near me' +
+          '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
+        '</a>' +
+      '</div>' +
+      '<div class="practo-specialty">Uses Google Maps and Google Search to find nearby doctors for ' + displayName + '</div>';
 
     bwrap.appendChild(meta);
     bwrap.appendChild(inner);
@@ -1915,6 +2619,7 @@
       // Restore saved theme (default dark)
       var savedTheme = localStorage.getItem('theme') || 'dark';
       applyTheme(savedTheme);
+      syncPregnancyOptions('', document.getElementById('genderInput') ? document.getElementById('genderInput').value : 'unknown');
 
       // Auto-login if token exists
       var token = localStorage.getItem('token');
@@ -1924,6 +2629,7 @@
         document.getElementById('loginScreen').style.display = 'none';
         if (username) document.getElementById('userDisplay').textContent = username;
         loadSessions();
+        loadProfile();
         checkGemini();
         loadModels();
       } else {
@@ -1940,6 +2646,97 @@
       // Periodic health check
       setInterval(checkGemini, 30000);
     };
+
+    /* ===================== VOICE RECORDING ===================== */
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+
+    async function toggleVoiceRecording() {
+      const voiceBtn = document.getElementById('voiceBtn');
+      
+      if (!isRecording) {
+        // Start recording
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+          
+          mediaRecorder.onstop = async () => {
+            // Convert audio to base64
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const reader = new FileReader();
+            
+            reader.onloadend = async () => {
+              const base64Audio = reader.result.split(',')[1]; // Remove data:audio/wav;base64, prefix
+              
+              // Send to backend
+              const langCode = localStorage.getItem('userLanguage') || 'en';
+              const tid = 'voice_' + Date.now();
+              appendTyping(tid);
+              
+              try {
+                const res = await fetch('/api/voice-input?token=' + userToken + '&language=' + langCode, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ audio_base64: base64Audio })
+                });
+                
+                const data = await res.json();
+                const el = document.getElementById(tid);
+                if (el) el.remove();
+                
+                if (res.ok && data.status === 'success') {
+                  const transcribedText = data.transcription.text;
+                  const confidence = (data.transcription.confidence * 100).toFixed(1);
+                  
+                  // Set the transcribed text in the input
+                  document.getElementById('msgInput').value = transcribedText;
+                  autoResize(document.getElementById('msgInput'));
+                  updateCharCount(document.getElementById('msgInput'));
+                  
+                  // Show notification
+                  appendMsg('assistant', `🎤 **Voice Transcription** (${confidence}% confidence)\\n\\n"${transcribedText}"\\n\\n(Click Send to process this message)`, ['Voice Input'], [
+                    { type: 'voice_input', label: 'Speech-to-Text' }
+                  ]);
+                } else {
+                  const errorMsg = data.message || 'Could not transcribe audio';
+                  appendMsg('assistant', '❌ Voice error: ' + errorMsg, []);
+                }
+              } catch (err) {
+                const el = document.getElementById(tid);
+                if (el) el.remove();
+                appendMsg('assistant', '❌ Voice service error. Please try again.', []);
+              }
+            };
+            
+            reader.readAsDataURL(audioBlob);
+          };
+          
+          mediaRecorder.start();
+          isRecording = true;
+          voiceBtn.style.background = 'rgba(255, 69, 96, 0.2)';
+          voiceBtn.style.color = '#ff4560';
+          voiceBtn.textContent = '⏹️';
+          
+        } catch (err) {
+          appendMsg('assistant', '❌ Microphone access denied. Please allow microphone permissions.', []);
+        }
+      } else {
+        // Stop recording
+        isRecording = false;
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        
+        voiceBtn.style.background = '';
+        voiceBtn.style.color = '';
+        voiceBtn.textContent = '🎤';
+      }
+    }
   </script>
 </body>
 

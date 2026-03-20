@@ -28,6 +28,18 @@ pypdf
 # ── Image OCR (optional) ───────────────────────────────────
 # Requires Tesseract OCR installed on your OS first:
 #   Windows: https://github.com/UB-Mannheim/tesseract/wiki
-#   Linux:   sudo apt install tesseract-ocr
-# pytesseract
-# Pillow
+
+# ── Security & Encryption ──────────────────────────────────
+cryptography
+
+# ── Voice Processing ──────────────────────────────────────
+SpeechRecognition
+pydub
+Pillow
+
+# For advanced Google Cloud Speech-to-Text (optional):
+# google-cloud-speech
+#
+# For audio processing:
+# librosa
+# pytesseract (requires Tesseract OCR installed)

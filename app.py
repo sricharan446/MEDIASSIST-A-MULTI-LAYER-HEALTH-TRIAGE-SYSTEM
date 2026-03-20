@@ -53,7 +53,6 @@ from abc import ABC, abstractmethod
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
 from bs4 import BeautifulSoup
 import fitz  # PyMuPDF
 
@@ -61,7 +60,24 @@ from google import genai
 from google.genai import types
 
 from knowledge_graph.graph import query_graph
+from lab_services import analyze_lab_values, compare_lab_records, extract_lab_metrics, summarize_metric_snapshot
+from med_safety import assess_medication_safety, build_safety_summary, check_drug_interactions
+from models import ChatRequest, ChatResponse, LoginRequest, ProfileRequest, SignupRequest, VoiceRequest, ExpertConsultation
 from rag.rag_engine import search_rag, add_document_to_rag
+from services.profile import normalize_profile, profile_from_login
+from services.triage import (
+    build_followup_prompt,
+    combine_messages_for_assessment,
+    maybe_create_followup_state,
+    merge_followup_answers,
+    needs_more_followup,
+)
+from services.analytics import add_health_metric, get_health_trends, get_dashboard_summary, generate_health_report
+from services.notifications import notification_manager
+from services.security import security_manager
+from services.voice_handler import voice_handler
+from services.expert_consultation import expert_manager
+from services.language import language_manager
 
 # ── Config ────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -94,7 +110,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet once daily at night",
                 "duration": "3–5 days",
                 "purpose": "Relieves runny nose, sneezing, watery eyes",
-                "buy_url": "https://pharmeasy.in/search/all?name=cetirizine+10mg"
+                "buy_url": "https://www.1mg.com/search/all?name=cetirizine+10mg"
             },
             {
                 "name": "Paracetamol 500mg",
@@ -103,7 +119,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1–2 tablets every 4–6 hours as needed",
                 "duration": "Until fever/pain subsides (max 3 days)",
                 "purpose": "Reduces fever and body ache",
-                "buy_url": "https://pharmeasy.in/search/all?name=paracetamol+500mg"
+                "buy_url": "https://www.1mg.com/search/all?name=paracetamol+500mg"
             }
         ]
     },
@@ -116,7 +132,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 capsule twice daily with food",
                 "duration": "5 days — start within 48 hrs of symptom onset",
                 "purpose": "Reduces duration and severity of influenza",
-                "buy_url": "https://pharmeasy.in/search/all?name=oseltamivir+75mg"
+                "buy_url": "https://www.1mg.com/search/all?name=oseltamivir+75mg"
             },
             {
                 "name": "Paracetamol 650mg",
@@ -125,7 +141,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet every 6 hours",
                 "duration": "Until fever subsides",
                 "purpose": "Controls high fever and body ache in flu",
-                "buy_url": "https://pharmeasy.in/search/all?name=paracetamol+650mg"
+                "buy_url": "https://www.1mg.com/search/all?name=paracetamol+650mg"
             }
         ]
     },
@@ -138,7 +154,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet every 6 hours",
                 "duration": "As needed — under doctor supervision",
                 "purpose": "Manages COVID fever and body ache",
-                "buy_url": "https://pharmeasy.in/search/all?name=paracetamol+650mg"
+                "buy_url": "https://www.1mg.com/search/all?name=paracetamol+650mg"
             },
             {
                 "name": "Vitamin D3 + Zinc Supplement",
@@ -147,7 +163,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "As directed on pack (typically once daily)",
                 "duration": "2–4 weeks",
                 "purpose": "Supports immune system during COVID recovery",
-                "buy_url": "https://pharmeasy.in/search/all?name=vitamin+d3+zinc"
+                "buy_url": "https://www.1mg.com/search/all?name=vitamin+d3+zinc"
             }
         ]
     },
@@ -160,7 +176,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet twice daily with meals",
                 "duration": "Long-term — do not stop without doctor advice",
                 "purpose": "Controls blood sugar levels in Type 2 Diabetes",
-                "buy_url": "https://pharmeasy.in/search/all?name=metformin+500mg"
+                "buy_url": "https://www.1mg.com/search/all?name=metformin+500mg"
             }
         ]
     },
@@ -173,7 +189,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet once daily (morning)",
                 "duration": "Long-term — do not stop without doctor advice",
                 "purpose": "Lowers high blood pressure",
-                "buy_url": "https://pharmeasy.in/search/all?name=amlodipine+5mg"
+                "buy_url": "https://www.1mg.com/search/all?name=amlodipine+5mg"
             }
         ]
     },
@@ -186,7 +202,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet at onset of migraine; repeat after 2 hrs if needed",
                 "duration": "As needed (max 2 tablets per 24 hrs)",
                 "purpose": "Relieves migraine headache and associated nausea",
-                "buy_url": "https://pharmeasy.in/search/all?name=sumatriptan+50mg"
+                "buy_url": "https://www.1mg.com/search/all?name=sumatriptan+50mg"
             },
             {
                 "name": "Naproxen 500mg",
@@ -195,7 +211,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet twice daily with food",
                 "duration": "2–3 days during migraine episode",
                 "purpose": "Reduces migraine pain and inflammation",
-                "buy_url": "https://pharmeasy.in/search/all?name=naproxen+500mg"
+                "buy_url": "https://www.1mg.com/search/all?name=naproxen+500mg"
             }
         ]
     },
@@ -208,7 +224,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "Paracetamol every 6 hrs; Vitamin C once daily",
                 "duration": "5–7 days",
                 "purpose": "Manages fever and supports immune recovery",
-                "buy_url": "https://pharmeasy.in/search/all?name=paracetamol+vitamin+c"
+                "buy_url": "https://www.1mg.com/search/all?name=paracetamol+vitamin+c"
             }
         ]
     },
@@ -221,7 +237,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "4 tablets twice daily for 3 days (with food)",
                 "duration": "3 days — must complete the full course",
                 "purpose": "Kills malaria parasite (Plasmodium falciparum)",
-                "buy_url": "https://pharmeasy.in/search/all?name=artemether+lumefantrine"
+                "buy_url": "https://www.1mg.com/search/all?name=artemether+lumefantrine"
             }
         ]
     },
@@ -234,7 +250,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet every 6 hours",
                 "duration": "Until fever subsides — under strict doctor supervision",
                 "purpose": "Reduces high fever in dengue. ⚠️ AVOID Ibuprofen and Aspirin",
-                "buy_url": "https://pharmeasy.in/search/all?name=paracetamol+650mg"
+                "buy_url": "https://www.1mg.com/search/all?name=paracetamol+650mg"
             },
             {
                 "name": "ORS Sachets (Oral Rehydration Salts)",
@@ -243,7 +259,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 sachet dissolved in 1 litre water — sip throughout the day",
                 "duration": "Until fever and weakness subside",
                 "purpose": "Prevents dehydration, critical in dengue management",
-                "buy_url": "https://pharmeasy.in/search/all?name=ors+sachet"
+                "buy_url": "https://www.1mg.com/search/all?name=ors+sachet"
             }
         ]
     },
@@ -256,7 +272,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet twice daily after meals",
                 "duration": "3–5 days",
                 "purpose": "Reduces muscle pain and inflammation",
-                "buy_url": "https://pharmeasy.in/search/all?name=diclofenac+paracetamol"
+                "buy_url": "https://www.1mg.com/search/all?name=diclofenac+paracetamol"
             },
             {
                 "name": "Volini / Diclofenac Gel (Topical)",
@@ -265,7 +281,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "Apply a thin layer on the affected area 3–4 times daily",
                 "duration": "5–7 days",
                 "purpose": "Directly relieves muscle pain and stiffness at the site",
-                "buy_url": "https://pharmeasy.in/search/all?name=diclofenac+gel"
+                "buy_url": "https://www.1mg.com/search/all?name=diclofenac+gel"
             }
         ]
     },
@@ -278,7 +294,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet once daily in the morning",
                 "duration": "Long-term — do not stop abruptly, taper under doctor guidance",
                 "purpose": "Reduces anxiety, panic attacks, and generalised anxiety disorder",
-                "buy_url": "https://pharmeasy.in/search/all?name=escitalopram+10mg"
+                "buy_url": "https://www.1mg.com/search/all?name=escitalopram+10mg"
             },
             {
                 "name": "Clonazepam 0.5mg (short-term only)",
@@ -287,7 +303,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "0.5mg once or twice daily as needed (short-term only)",
                 "duration": "2–4 weeks maximum — strictly under doctor prescription",
                 "purpose": "Fast-acting relief of acute anxiety and panic",
-                "buy_url": "https://pharmeasy.in/search/all?name=clonazepam+0.5mg"
+                "buy_url": "https://www.1mg.com/search/all?name=clonazepam+0.5mg"
             }
         ]
     },
@@ -300,7 +316,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet once daily on an empty stomach",
                 "duration": "3–6 months — under doctor guidance",
                 "purpose": "Treats iron-deficiency anaemia",
-                "buy_url": "https://pharmeasy.in/search/all?name=ferrous+sulphate+200mg"
+                "buy_url": "https://www.1mg.com/search/all?name=ferrous+sulphate+200mg"
             },
             {
                 "name": "Vitamin B12 (Methylcobalamin 500mcg)",
@@ -309,7 +325,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet once daily",
                 "duration": "3 months or as advised by doctor",
                 "purpose": "Treats B12-deficiency anaemia and nerve damage",
-                "buy_url": "https://pharmeasy.in/search/all?name=methylcobalamin+500mcg"
+                "buy_url": "https://www.1mg.com/search/all?name=methylcobalamin+500mcg"
             }
         ]
     },
@@ -322,7 +338,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 sachet dissolved in 1 litre water — sip throughout the day",
                 "duration": "Until diarrhoea / vomiting stops",
                 "purpose": "Prevents and treats dehydration from diarrhoea and vomiting",
-                "buy_url": "https://pharmeasy.in/search/all?name=ors+sachet"
+                "buy_url": "https://www.1mg.com/search/all?name=ors+sachet"
             },
             {
                 "name": "Ondansetron 4mg",
@@ -331,7 +347,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet every 8 hours for nausea / vomiting",
                 "duration": "1–2 days",
                 "purpose": "Controls nausea and vomiting",
-                "buy_url": "https://pharmeasy.in/search/all?name=ondansetron+4mg"
+                "buy_url": "https://www.1mg.com/search/all?name=ondansetron+4mg"
             },
             {
                 "name": "Racecadotril 100mg",
@@ -340,7 +356,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet three times daily before meals",
                 "duration": "3–5 days",
                 "purpose": "Reduces severity and duration of acute diarrhoea",
-                "buy_url": "https://pharmeasy.in/search/all?name=racecadotril+100mg"
+                "buy_url": "https://www.1mg.com/search/all?name=racecadotril+100mg"
             }
         ]
     },
@@ -353,7 +369,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1–2 puffs as needed during an attack",
                 "duration": "As needed (rescue inhaler — not for daily preventive use)",
                 "purpose": "Rapidly opens airways during an asthma attack",
-                "buy_url": "https://pharmeasy.in/search/all?name=salbutamol+inhaler"
+                "buy_url": "https://www.1mg.com/search/all?name=salbutamol+inhaler"
             },
             {
                 "name": "Budesonide 200mcg Inhaler",
@@ -362,7 +378,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1–2 puffs twice daily (morning and night)",
                 "duration": "Long-term preventive — do not stop without doctor advice",
                 "purpose": "Reduces airway inflammation and prevents asthma attacks",
-                "buy_url": "https://pharmeasy.in/search/all?name=budesonide+inhaler"
+                "buy_url": "https://www.1mg.com/search/all?name=budesonide+inhaler"
             }
         ]
     },
@@ -375,7 +391,7 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 capsule twice daily with food",
                 "duration": "5–7 days — complete the full course",
                 "purpose": "Treats bacterial urinary tract infection",
-                "buy_url": "https://pharmeasy.in/search/all?name=nitrofurantoin+100mg"
+                "buy_url": "https://www.1mg.com/search/all?name=nitrofurantoin+100mg"
             },
             {
                 "name": "Phenazopyridine 200mg (Uristat)",
@@ -384,14 +400,14 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "dosage": "1 tablet three times daily after meals",
                 "duration": "2 days (pain relief only — not an antibiotic)",
                 "purpose": "Relieves burning, urgency, and discomfort during urination",
-                "buy_url": "https://pharmeasy.in/search/all?name=phenazopyridine"
+                "buy_url": "https://www.1mg.com/search/all?name=phenazopyridine"
             }
         ]
     }
 }
 
 
-def format_medication_card(disease: str, quantity: int = 1) -> str:
+def format_medication_card(disease: str, quantity: int = 1, safety_report: dict = None) -> str:
     """Return a formatted Markdown medication card for the given disease name with quantity support."""
     key  = disease.lower().strip()
     meds = DISEASE_MEDICATIONS.get(key)
@@ -403,18 +419,32 @@ def format_medication_card(disease: str, quantity: int = 1) -> str:
         "**Always consult a qualified doctor before taking any medication.** "
         "Some of these may require a prescription.\n"
     ]
+    if safety_report and (safety_report.get("warnings") or safety_report.get("safer_alternatives")):
+        lines.append("### ⚠️ Medication Safety Check")
+        for warning in build_safety_summary(safety_report):
+            lines.append(f"- {warning}")
+        lines.append("")
     for med in meds["medicines"]:
         lines.append(f"### 🔹 {med['name']}")
+        med_status = (safety_report or {}).get("medication_status", {}).get(med["name"], {})
+        if med_status.get("status") == "blocked":
+            lines.append("- **Safety:** BLOCKED for your current profile. Do not self-start this without clinician review.")
+        elif med_status.get("status") == "caution":
+            lines.append("- **Safety:** Use caution. Review the warnings below before considering this medication.")
+        else:
+            lines.append("- **Safety:** No major profile conflicts detected by the local safety checker.")
         lines.append(f"- **Type:** {med['type']}")
         lines.append(f"- **Composition:** {med['composition']}")
         lines.append(f"- **Dosage:** {med['dosage']}")
         lines.append(f"- **Duration:** {med['duration']}")
         lines.append(f"- **Purpose:** {med['purpose']}")
-        # Build pharmacy links — correct URL patterns for each site
+        for warning in med_status.get("warnings", []):
+            lines.append(f"- **Warning:** {warning}")
+        # Build the order link using 1mg only
         med_name     = med['name'].replace("+", " ").split("(")[0].strip()
         encoded_name = urllib.parse.quote_plus(med_name)
-        pharmeasy_link = f"https://pharmeasy.in/search/all?name={encoded_name}"
-        lines.append(f"- **🛒 Buy on 1mg (Tata):** [Click to order]({pharmeasy_link})")
+        order_link = f"https://www.1mg.com/search/all?name={encoded_name}"
+        lines.append(f"- [Click to order]({order_link})")
         lines.append("")
     return "\n".join(lines)
 
@@ -434,7 +464,7 @@ response with a medication section in EXACTLY this Markdown format:
 - **Dosage:** [how much and how often]
 - **Duration:** [how long to take it]
 - **Purpose:** [what it treats in this context]
-- **🛒 Buy on PharmEasy:** [https://pharmeasy.in/search/all?name=medicine+name+url+encoded]
+- [Click to order](https://www.1mg.com/search/all?name=medicine+name+url+encoded)
 
 Repeat the block above for each relevant medicine (maximum 3 medicines).
 If the condition requires prescription-only medicines, clearly state that a prescription is needed.
@@ -505,9 +535,10 @@ SPECIALTY_DISPLAY: dict = {
 }
 
 
-def build_practo_url(specialty_slug: str, city: str = "hyderabad") -> str:
-    """Build a direct Practo doctor listing URL — practo.com/{city}/{specialty-slug}"""
-    return f"https://www.practo.com/{city}/{specialty_slug}"
+def build_practo_url(specialty_slug: str, city: str = "") -> str:
+    """Build a Google Maps doctor search URL without hard-coding a city."""
+    specialty_query = urllib.parse.quote_plus(f"{specialty_slug.replace('-', ' ')} near me")
+    return f"https://www.google.com/maps/search/{specialty_query}"
 
 # ── Gemini call with retry ────────────────────────────────────────────────────
 async def gemini_generate(model: str, contents: str, temperature: float = 0.7,
@@ -632,44 +663,6 @@ def check_emergency(user_text: str) -> bool:
     ]
     text_lower = user_text.lower()
     return any(kw in text_lower for kw in emergency_keywords)
-
-
-# ── Lab Value Analyzer ────────────────────────────────────────────────────────
-def analyze_lab_values(text: str) -> List[str]:
-    """Extract and flag abnormal lab values from report text."""
-    findings = []
-    checks = [
-        (r"HbA1c[:\s]+([\d\.]+)",      lambda v: f"HbA1c is high ({v}%) → Diabetes risk" if v >= 6.5
-                                                  else (f"HbA1c borderline ({v}%) → Prediabetes risk" if v >= 5.7 else None)),
-        (r"Creatinine[:\s]+([\d\.]+)",  lambda v: f"Creatinine elevated ({v}) → Kidney concern" if v > 1.3 else None),
-        (r"Hemoglobin[:\s]+([\d\.]+)",  lambda v: f"Hemoglobin low ({v}) → Possible anemia" if v < 12 else None),
-        (r"Cholesterol[:\s]+([\d\.]+)", lambda v: f"Cholesterol high ({v}) → Heart disease risk" if v > 200 else None),
-        (r"Vitamin D[:\s]+([\d\.]+)",   lambda v: f"Vitamin D deficiency ({v}) → Bone health risk" if v < 20 else None),
-        (r"TSH[:\s]+([\d\.]+)",         lambda v: f"TSH elevated ({v}) → Possible hypothyroidism" if v > 4
-                                                  else (f"TSH low ({v}) → Possible hyperthyroidism" if v < 0.4 else None)),
-        (r"WBC[:\s]+([\d\.]+)",         lambda v: f"WBC elevated ({v}) → Possible infection" if v > 11000 else None),
-        (r"RBC[:\s]+([\d\.]+)",         lambda v: f"RBC low ({v}) → Possible anemia" if v < 4 else None),
-        (r"Platelets[:\s]+([\d\.]+)",   lambda v: f"Platelets low ({v}) → Bleeding risk" if v < 150000
-                                                  else (f"Platelets high ({v}) → Clotting risk" if v > 450000 else None)),
-    ]
-    for pattern, evaluator in checks:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            try:
-                result = evaluator(float(match.group(1)))
-                if result:
-                    findings.append(result)
-            except ValueError:
-                pass
-
-    # Blood pressure — named label and raw numeric pattern
-    bp = re.search(r"(?:Blood Pressure|BP)[:\s]*(\d{2,3})/(\d{2,3})|(\d{2,3})/(\d{2,3})", text, re.IGNORECASE)
-    if bp:
-        sys_val  = int(bp.group(1) or bp.group(3))
-        dias_val = int(bp.group(2) or bp.group(4))
-        if sys_val >= 140 or dias_val >= 90:
-            findings.append(f"Blood Pressure high ({sys_val}/{dias_val}) → Hypertension risk")
-    return findings
 
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
@@ -797,6 +790,14 @@ class MemoryManager:
     def _session_file(self, username: str, sid: str) -> Path:
         return self._user_path(username) / f"{sid}.json"
 
+    def _read_json(self, path: Path) -> dict:
+        with open(path) as f:
+            return json.load(f)
+
+    def _write_json(self, path: Path, data: dict):
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+
     def create_session(self, username: str) -> str:
         existing = self.list_sessions(username)
         if len(existing) >= MAX_SESSIONS:
@@ -805,25 +806,33 @@ class MemoryManager:
                 self.delete_session(username, old["id"])
         sid  = str(uuid.uuid4())
         data = {"id": sid, "user": username, "created_at": datetime.now().isoformat(),
-                "name": "New Chat", "messages": []}
-        with open(self._session_file(username, sid), "w") as f:
-            json.dump(data, f, indent=2)
+                "name": "New Chat", "messages": [], "diagnostic_state": None}
+        self._write_json(self._session_file(username, sid), data)
         return sid
 
     def set_session_name(self, username: str, sid: str, name: str):
         fpath = self._session_file(username, sid)
         if not fpath.exists(): return
-        with open(fpath) as _f:
-            data = json.load(_f)
+        data = self._read_json(fpath)
         data["name"] = name[:40]
-        with open(fpath, "w") as f:
-            json.dump(data, f, indent=2)
+        self._write_json(fpath, data)
+
+    def get_session(self, username: str, sid: str) -> Optional[dict]:
+        fpath = self._session_file(username, sid)
+        if not fpath.exists():
+            return None
+        data = self._read_json(fpath)
+        if "diagnostic_state" not in data:
+            data["diagnostic_state"] = None
+        return data
+
+    def save_session(self, username: str, sid: str, data: dict):
+        self._write_json(self._session_file(username, sid), data)
 
     def add_message(self, username: str, sid: str, role: str, content: str, meta: dict = None):
         fpath = self._session_file(username, sid)
         if not fpath.exists(): return
-        with open(fpath) as _f:
-            data = json.load(_f)
+        data = self._read_json(fpath)
         msg  = {"role": role, "content": content, "time": datetime.now().isoformat()}
         if meta:
             msg["meta"] = meta
@@ -831,25 +840,35 @@ class MemoryManager:
         # FIX 16: Cap stored messages at 50 to prevent unbounded file growth
         if len(data["messages"]) > 50:
             data["messages"] = data["messages"][-50:]
-        with open(fpath, "w") as f:
-            json.dump(data, f, indent=2)
+        self._write_json(fpath, data)
 
     def get_history(self, username: str, sid: str) -> List[dict]:
         fpath = self._session_file(username, sid)
         if not fpath.exists(): return []
-        with open(fpath) as _f:
-            data = json.load(_f)
-        # FIX 21: Return only last 20 messages as Gemini context (not full history)
+        data = self._read_json(fpath)
         msgs = data.get("messages", [])[-20:]
-        return [{"role": m["role"], "content": m["content"]} for m in msgs]
+        return [
+            {
+                "role": m["role"],
+                "content": m["content"],
+                "tools_used": (m.get("meta") or {}).get("tools_used", []),
+                "sources": (m.get("meta") or {}).get("sources", []),
+            }
+            for m in msgs
+        ]
+
+    def get_message_context(self, username: str, sid: str) -> List[dict]:
+        return [
+            {"role": item["role"], "content": item["content"]}
+            for item in self.get_history(username, sid)
+        ]
 
     def list_sessions(self, username: str) -> List[dict]:
         sessions = []
         for f in self._user_path(username).glob("*.json"):
-            if f.name in ("profile.json", "last_report.json"): continue
+            if f.name in ("profile.json", "last_report.json", "lab_history.json"): continue
             try:
-                with open(f) as _jf:
-                    d = json.load(_jf)
+                d = self._read_json(f)
                 if "id" not in d: continue
                 msgs = d.get("messages", [])
                 # FIX 17: Include last_activity timestamp from last message
@@ -867,14 +886,12 @@ class MemoryManager:
 
     def save_profile(self, username: str, profile_data: dict):
         fpath = self._user_path(username) / "profile.json"
-        with open(fpath, "w") as f:
-            json.dump(profile_data, f, indent=2)
+        self._write_json(fpath, profile_data)
 
     def load_profile(self, username: str) -> Optional[dict]:
         fpath = self._user_path(username) / "profile.json"
         if not fpath.exists(): return None
-        with open(fpath) as _f:
-            return json.load(_f)
+        return self._read_json(fpath)
 
     def delete_session(self, username: str, sid: str) -> bool:
         fpath = self._session_file(username, sid)
@@ -885,14 +902,43 @@ class MemoryManager:
 
     def save_report(self, username: str, report: dict):
         fpath = self._user_path(username) / "last_report.json"
-        with open(fpath, "w") as f:
-            json.dump(report, f, indent=2)
+        self._write_json(fpath, report)
 
     def load_report(self, username: str):
         fpath = self._user_path(username) / "last_report.json"
         if not fpath.exists(): return None
-        with open(fpath) as f:
-            return json.load(f)
+        return self._read_json(fpath)
+
+    def save_lab_record(self, username: str, record: dict):
+        fpath = self._user_path(username) / "lab_history.json"
+        history = []
+        if fpath.exists():
+            history = self._read_json(fpath)
+            if not isinstance(history, list):
+                history = []
+        history.append(record)
+        history = history[-30:]
+        self._write_json(fpath, history)
+
+    def load_lab_history(self, username: str) -> List[dict]:
+        fpath = self._user_path(username) / "lab_history.json"
+        if not fpath.exists():
+            return []
+        history = self._read_json(fpath)
+        return history if isinstance(history, list) else []
+
+    def get_diagnostic_state(self, username: str, sid: str) -> Optional[dict]:
+        session = self.get_session(username, sid)
+        if not session:
+            return None
+        return session.get("diagnostic_state")
+
+    def set_diagnostic_state(self, username: str, sid: str, state: Optional[dict]):
+        session = self.get_session(username, sid)
+        if not session:
+            return
+        session["diagnostic_state"] = state
+        self.save_session(username, sid, session)
 
 
 # ── AI Agent ──────────────────────────────────────────────────────────────────
@@ -1026,36 +1072,6 @@ load_medical_data()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
-# ── Pydantic Models ───────────────────────────────────────────────────────────
-class SignupRequest(BaseModel):
-    username: str
-    password: str
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-    age: Optional[int] = None
-    known_conditions: Optional[List[str]] = []
-
-class ChatRequest(BaseModel):
-    message: str = ""
-    session_id: Optional[str] = None
-    token: str
-    model: Optional[str] = None
-
-class ChatResponse(BaseModel):
-    response: str
-    session_id: str
-    tools_used: List[str]
-    timestamp: str
-    show_hospital_finder: bool = False
-    practo_url: str = ""
-
-class ProfileRequest(BaseModel):
-    token: str          # FIX 13: token required for auth
-    profile: dict
-
-
 # ── Auth Routes ───────────────────────────────────────────────────────────────
 @app.post("/api/signup")
 async def signup(req: SignupRequest):
@@ -1083,10 +1099,9 @@ async def login(req: LoginRequest):
     token                       = str(uuid.uuid4())
     users[req.username]["token"] = token
     await save_users(users)
-    memory.save_profile(req.username, {
-        "age": req.age or 30,
-        "known_conditions": req.known_conditions or []
-    })
+    existing_profile = memory.load_profile(req.username)
+    payload = req.model_dump() if hasattr(req, "model_dump") else req.dict()
+    memory.save_profile(req.username, profile_from_login(payload, existing=existing_profile))
     return {"token": token, "username": req.username}
 
 @app.post("/api/logout")
@@ -1109,8 +1124,110 @@ async def save_profile_endpoint(req: ProfileRequest):
     username = await get_current_user(token=req.token)
     if not req.profile:
         raise HTTPException(400, "Invalid profile data")
-    memory.save_profile(username, req.profile)
+    existing_profile = memory.load_profile(username)
+    memory.save_profile(username, normalize_profile(req.profile, existing=existing_profile))
     return {"status": "Profile saved"}
+
+
+@app.get("/api/profile")
+async def get_profile(username: str = Depends(get_current_user)):
+    return {"profile": normalize_profile(memory.load_profile(username))}
+
+
+@app.get("/api/lab-history")
+async def get_lab_history(username: str = Depends(get_current_user)):
+    history = memory.load_lab_history(username)
+    latest = history[-1] if history else None
+    previous = history[-2] if len(history) > 1 else None
+    trends = compare_lab_records(latest.get("metrics", []), previous.get("metrics", [])) if latest and previous else []
+    return {
+        "history": history,
+        "latest": latest,
+        "trends": trends,
+    }
+
+
+def build_sources(*items: Dict[str, Any]) -> List[Dict[str, Any]]:
+    sources = []
+    for item in items:
+        if not item:
+            continue
+        sources.append(item)
+    return sources
+
+
+def build_handoff_summary(username: str, sid: str) -> str:
+    session = memory.get_session(username, sid)
+    if not session:
+        raise HTTPException(404, "Session not found")
+
+    profile = normalize_profile(memory.load_profile(username))
+    messages = session.get("messages", [])
+    user_messages = [m["content"] for m in messages if m.get("role") == "user"]
+    assistant_messages = [m for m in messages if m.get("role") == "assistant"]
+    latest_assistant = assistant_messages[-1] if assistant_messages else None
+    latest_meta = (latest_assistant or {}).get("meta", {})
+    latest_tools = latest_meta.get("tools_used", [])
+    latest_sources = latest_meta.get("sources", [])
+
+    lab_history = memory.load_lab_history(username)
+    latest_lab = lab_history[-1] if lab_history else None
+    previous_lab = lab_history[-2] if len(lab_history) > 1 else None
+    trend_lines = compare_lab_records(latest_lab.get("metrics", []), previous_lab.get("metrics", [])) if latest_lab and previous_lab else []
+
+    recent_user_summary = user_messages[-3:] if user_messages else []
+    latest_response = latest_assistant["content"] if latest_assistant else "No assistant summary available yet."
+
+    lines = [
+        "Patient Summary",
+        f"User: {username}",
+        f"Age: {profile.get('age', 'Unknown')}",
+        f"Gender: {profile.get('gender', 'unknown')}",
+        f"Known Conditions: {', '.join(profile.get('known_conditions', [])) or 'None recorded'}",
+        f"Allergies: {', '.join(profile.get('allergies', [])) or 'None recorded'}",
+        f"Current Medications: {', '.join(profile.get('current_medications', [])) or 'None recorded'}",
+        f"Pregnancy Status: {profile.get('pregnancy_status', 'unknown')}",
+        "",
+        "Recent User Inputs:",
+    ]
+    if recent_user_summary:
+        for item in recent_user_summary:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- No recent user messages recorded.")
+
+    lines.extend([
+        "",
+        "Latest Assistant Assessment:",
+        latest_response,
+        "",
+        f"Pipeline Sources: {', '.join(source.get('label', source.get('type', 'Unknown')) for source in latest_sources) or 'Not recorded'}",
+        f"Tools Used: {', '.join(latest_tools) or 'None'}",
+    ])
+
+    safety_alerts = latest_meta.get("safety_alerts", [])
+    if safety_alerts:
+        lines.append("")
+        lines.append("Medication Safety Alerts:")
+        for alert in safety_alerts:
+            lines.append(f"- {alert}")
+
+    if latest_lab:
+        lines.append("")
+        lines.append(f"Latest Lab Snapshot ({latest_lab.get('filename', 'uploaded report')}):")
+        lines.append(latest_lab.get("snapshot", "No structured metrics extracted."))
+    if trend_lines:
+        lines.append("")
+        lines.append("Lab Trend Summary:")
+        for trend in trend_lines:
+            lines.append(f"- {trend}")
+
+    report = memory.load_report(username)
+    if report:
+        lines.append("")
+        lines.append(f"Last Uploaded Report: {report.get('filename', 'Unknown file')}")
+
+    return "\n".join(lines)
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
@@ -1147,7 +1264,17 @@ async def get_history(sid: str, username: str = Depends(get_current_user)):
     if not memory._session_file(username, sid).exists():
         raise HTTPException(404, "Session not found")
     h = memory.get_history(username, sid)
-    return {"session_id": sid, "history": h}
+    return {
+        "session_id": sid,
+        "history": h,
+        "pending_followup": memory.get_diagnostic_state(username, sid),
+    }
+
+
+@app.get("/api/handoff-summary")
+async def get_handoff_summary(session_id: str = Query(...), username: str = Depends(get_current_user)):
+    summary = build_handoff_summary(username, session_id)
+    return {"session_id": session_id, "summary": summary}
 
 @app.delete("/api/sessions/{sid}")
 async def del_session(sid: str, username: str = Depends(get_current_user)):
@@ -1159,14 +1286,11 @@ async def del_session(sid: str, username: str = Depends(get_current_user)):
 # ── Chat ──────────────────────────────────────────────────────────────────────
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
-
-    # ── Auth ──
-    users    = await load_users()
+    users = await load_users()
     username = next((u for u, d in users.items() if d.get("token") == req.token), None)
     if not username:
         raise HTTPException(401, "Unauthorized — please login")
 
-    # ── Input validation ──
     if not req.message or not req.message.strip():
         raise HTTPException(400, "Message cannot be empty")
     req.message = req.message.strip()
@@ -1175,13 +1299,11 @@ async def chat(req: ChatRequest):
 
     active_model = req.model if req.model else MODEL_NAME
 
-    # ── Session ──
-    sid     = req.session_id or memory.create_session(username)
-    history = memory.get_history(username, sid) or []
+    sid = req.session_id or memory.create_session(username)
+    history = memory.get_message_context(username, sid) or []
     if not history:
         memory.set_session_name(username, sid, req.message)
 
-    # ── Emergency Check ──
     if check_emergency(req.message):
         emg_lower   = req.message.lower()
         emg_slug    = next((slug for kw, slug in EMERGENCY_SPECIALTY.items() if kw in emg_lower), "general-physician")
@@ -1197,26 +1319,85 @@ async def chat(req: ChatRequest):
             "📍 **Finding nearby hospitals for you…**\n\n"
             "⚠️ Disclaimer: This is AI guidance only. Do not delay professional medical care."
         )
+        sources = build_sources(
+            {"type": "emergency_detector", "label": "Emergency Detector"},
+            {"type": "profile", "label": "Structured Profile"},
+        )
+        memory.set_diagnostic_state(username, sid, None)
         memory.add_message(username, sid, "user", req.message)
         memory.add_message(username, sid, "assistant", emergency_response,
-                           {"tools_used": ["Emergency Detector"]})
+                           {"tools_used": ["Emergency Detector"], "sources": sources})
         return ChatResponse(response=emergency_response, session_id=sid,
                             tools_used=["Emergency Detector"],
                             show_hospital_finder=True,
                             practo_url=emg_practo_url,
-                            timestamp=datetime.now().isoformat())
+                            timestamp=datetime.now().isoformat(),
+                            sources=sources)
 
-    # ── Uploaded Report Context ──
+    pending_followup = memory.get_diagnostic_state(username, sid)
+    if pending_followup and pending_followup.get("pending_followup"):
+        updated_state = merge_followup_answers(pending_followup, req.message)
+        memory.add_message(username, sid, "user", req.message)
+        if needs_more_followup(updated_state):
+            followup_response = build_followup_prompt(updated_state)
+            sources = build_sources(
+                {"type": "followup_triage", "label": "Follow-up Triage"},
+                {"type": "profile", "label": "Structured Profile"},
+            )
+            memory.set_diagnostic_state(username, sid, updated_state)
+            memory.add_message(
+                username,
+                sid,
+                "assistant",
+                followup_response,
+                {
+                    "tools_used": ["Follow-up Triage"],
+                    "followup_questions": updated_state.get("questions", []),
+                    "sources": sources,
+                },
+            )
+            return ChatResponse(
+                response=followup_response,
+                session_id=sid,
+                tools_used=["Follow-up Triage"],
+                timestamp=datetime.now().isoformat(),
+                needs_followup=True,
+                followup_questions=updated_state.get("questions", []),
+                sources=sources,
+            )
+        req.message = combine_messages_for_assessment(updated_state, req.message)
+        history = memory.get_message_context(username, sid) or []
+        memory.set_diagnostic_state(username, sid, None)
+
+    profile = normalize_profile(memory.load_profile(username))
+    age = profile.get("age", 30)
+    gender = profile.get("gender", "unknown")
+    known_conditions = profile.get("known_conditions", [])
+
     report_keywords = ["report", "result", "findings", "uploaded", "my file", "summarise",
                        "summarize", "lab", "test", "scan", "document", "analysis", "blood test",
-                       "what does", "explain my", "tell me about my"]
+                       "what does", "explain my", "tell me about my", "trend", "compare", "previous"]
     user_report = USER_REPORTS.get(username) or memory.load_report(username)
     if user_report and any(kw in req.message.lower() for kw in report_keywords):
+        lab_history = memory.load_lab_history(username)
+        latest_record = lab_history[-1] if lab_history else None
+        previous_record = lab_history[-2] if len(lab_history) > 1 else None
+        trend_context = "No prior report available for trend comparison."
+        metrics_context = ""
+        if latest_record:
+            metrics_context = summarize_metric_snapshot(latest_record.get("metrics", []))
+        if latest_record and previous_record:
+            trend_lines = compare_lab_records(latest_record.get("metrics", []), previous_record.get("metrics", []))
+            if trend_lines:
+                trend_context = "\n".join(trend_lines)
         prompt = (
             f"You are a medical AI assistant. The user has uploaded a medical report.\n\n"
             f"Uploaded Report ({user_report['filename']}):\n{user_report['text']}\n\n"
+            f"Structured Metrics Snapshot:\n{metrics_context or 'No structured metrics extracted.'}\n\n"
+            f"Trend Comparison With Previous Report:\n{trend_context}\n\n"
             f"User question: {req.message}\n\n"
-            "Answer specifically based on the uploaded report. Reference actual values where relevant."
+            "Answer specifically based on the uploaded report. Reference actual values where relevant. "
+            "If the user asks about change over time, explicitly discuss the trend comparison."
         )
         try:
             text   = await gemini_generate(active_model, prompt)
@@ -1224,16 +1405,19 @@ async def chat(req: ChatRequest):
         except Exception as e:
             logger.error(f"Gemini report error: {e}")
             raise HTTPException(500, "AI service temporarily unavailable. Please try again.")
+        sources = build_sources(
+            {"type": "uploaded_report", "label": "Uploaded Report"},
+            {"type": "lab_history", "label": "Lab Trend Engine"} if latest_record else None,
+            {"type": "profile", "label": "Structured Profile"},
+        )
         memory.add_message(username, sid, "user", req.message)
         memory.add_message(username, sid, "assistant", result["response"],
-                           {"tools_used": result["tools_used"]})
+                           {"tools_used": result["tools_used"], "sources": sources})
         return ChatResponse(response=result["response"], session_id=sid,
                             tools_used=result["tools_used"],
                             practo_url=build_practo_url("general-physician"),
-                            timestamp=datetime.now().isoformat())
-    profile          = memory.load_profile(username) or {}
-    age              = profile.get("age", 30)
-    known_conditions = profile.get("known_conditions", [])
+                            timestamp=datetime.now().isoformat(),
+                            sources=sources)
 
     # ── Symptom Prediction ──
     prediction_list = predict_disease_from_symptoms(req.message)
@@ -1247,10 +1431,50 @@ async def chat(req: ChatRequest):
     prediction_list.sort(key=lambda x: x[1], reverse=True)
     prediction_list = prediction_list[:3]
 
+    followup_state = maybe_create_followup_state(req.message, prediction_list, raw_match_count, profile)
+    if followup_state:
+        followup_response = build_followup_prompt(followup_state)
+        sources = build_sources(
+            {"type": "followup_triage", "label": "Follow-up Triage"},
+            {"type": "symptom_predictor", "label": "Symptom Predictor"},
+            {"type": "profile", "label": "Structured Profile"},
+        )
+        memory.set_diagnostic_state(username, sid, followup_state)
+        memory.add_message(username, sid, "user", req.message)
+        memory.add_message(
+            username,
+            sid,
+            "assistant",
+            followup_response,
+            {
+                "tools_used": ["Follow-up Triage"],
+                "followup_questions": followup_state.get("questions", []),
+                "sources": sources,
+            },
+        )
+        return ChatResponse(
+            response=followup_response,
+            session_id=sid,
+            tools_used=["Follow-up Triage"],
+            timestamp=datetime.now().isoformat(),
+            needs_followup=True,
+            followup_questions=followup_state.get("questions", []),
+            sources=sources,
+        )
+
     # Flood guard: if 5 diseases all scored simultaneously, likely a manipulated/
     # symptom-stuffed input — skip predictor and fall through to Gemini directly
     if raw_match_count <= 4 and prediction_list:
         top_disease, top_confidence = prediction_list[0]
+        medication_data = DISEASE_MEDICATIONS.get(top_disease.lower(), {}).get("medicines", [])
+        safety_report = assess_medication_safety(medication_data, profile) if medication_data else {
+            "warnings": [],
+            "safer_alternatives": [],
+            "medication_status": {},
+            "blocked_medicines": [],
+            "safe": True,
+        }
+        safety_alerts = build_safety_summary(safety_report)
 
         def categorize_risk(c):
             if c >= 85: return "🔴 Critical"
@@ -1267,6 +1491,7 @@ async def chat(req: ChatRequest):
 
 Patient Profile:
 - Age: {age}
+- Gender: {gender.title() if gender else 'Unknown'}
 - Known Conditions: {', '.join(known_conditions) if known_conditions else 'None'}
 
 Reported Symptoms: {req.message}
@@ -1299,7 +1524,7 @@ Respond EXACTLY in this format:
         conditions_text = "\n".join(
             [f"{i+1}. {d.title()} ({c}%)" for i, (d, c) in enumerate(prediction_list)]
         )
-        med_card = format_medication_card(top_disease)
+        med_card = format_medication_card(top_disease, safety_report=safety_report)
 
         final_response = (
             f"🩺 Possible Conditions:\n{conditions_text}\n\n"
@@ -1307,15 +1532,26 @@ Respond EXACTLY in this format:
             f"{explanation['response']}"
             f"{med_card}"
         )
+        sources = build_sources(
+            {"type": "symptom_predictor", "label": "Symptom Predictor"},
+            {"type": "profile", "label": "Structured Profile"},
+            {"type": "medication_safety", "label": "Medication Safety"} if safety_alerts else None,
+        )
         memory.add_message(username, sid, "user", req.message)
         memory.add_message(username, sid, "assistant", final_response,
-                           {"tools_used": ["Symptom Predictor"]})
+                           {
+                               "tools_used": ["Symptom Predictor", "Medication Safety"] if safety_alerts else ["Symptom Predictor"],
+                               "sources": sources,
+                               "safety_alerts": safety_alerts,
+                           })
         symptom_slug    = DISEASE_SPECIALTY.get(top_disease.lower(), "general-physician")
         symptom_display = SPECIALTY_DISPLAY.get(symptom_slug, "General Physician")
         return ChatResponse(response=final_response, session_id=sid,
-                            tools_used=["Symptom Predictor"],
+                            tools_used=["Symptom Predictor", "Medication Safety"] if safety_alerts else ["Symptom Predictor"],
                             practo_url=build_practo_url(symptom_slug),
-                            timestamp=datetime.now().isoformat())
+                            timestamp=datetime.now().isoformat(),
+                            safety_alerts=safety_alerts,
+                            sources=sources)
 
     # ── Knowledge Graph ──
     medical_terms = [
@@ -1381,13 +1617,18 @@ Respond EXACTLY in this format:
             result = None
 
         if result:
+            sources = build_sources(
+                {"type": "knowledge_graph", "label": "Medical KG"},
+                {"type": "profile", "label": "Structured Profile"},
+            )
             memory.add_message(username, sid, "user", req.message)
             memory.add_message(username, sid, "assistant", result["response"],
-                               {"tools_used": result["tools_used"]})
+                               {"tools_used": result["tools_used"], "sources": sources})
             return ChatResponse(response=result["response"], session_id=sid,
                                 tools_used=result["tools_used"],
                                 practo_url=build_practo_url("general-physician"),
-                                timestamp=datetime.now().isoformat())
+                                timestamp=datetime.now().isoformat(),
+                                sources=sources)
 
     # ── RAG Search ──
     rag_context = ""
@@ -1410,21 +1651,30 @@ Respond EXACTLY in this format:
             )
             text   = await gemini_generate(active_model, prompt)
             result = {"response": text, "tools_used": ["RAG"]}
+            sources = build_sources(
+                {"type": "rag", "label": "Medical Knowledge Base"},
+                {"type": "profile", "label": "Structured Profile"},
+            )
         else:
             result = await agent.process(req.message, history, model=active_model)
+            sources = build_sources(
+                {"type": "gemini_fallback", "label": "Direct Gemini Reasoning"},
+                {"type": "profile", "label": "Structured Profile"},
+            )
     except Exception as e:
         logger.error(f"Gemini chat error: {e}")
         raise HTTPException(500, "AI service temporarily unavailable. Please try again.")
 
     memory.add_message(username, sid, "user", req.message)
     memory.add_message(username, sid, "assistant", result["response"],
-                       {"tools_used": result.get("tools_used", [])})
+                       {"tools_used": result.get("tools_used", []), "sources": sources})
     return ChatResponse(
         response=result["response"],
         session_id=sid,
         tools_used=result.get("tools_used", []),
         practo_url=build_practo_url("general-physician"),
-        timestamp=datetime.now().isoformat()
+        timestamp=datetime.now().isoformat(),
+        sources=sources
     )
 
 
@@ -1483,13 +1733,37 @@ async def upload_file(file: UploadFile = File(...), token: str = Query(None)):
             return {"status": "error", "message": "No readable text found in the file"}
 
         report_text = extracted_text[:8000]
+        metrics = extract_lab_metrics(extracted_text)
+        findings = analyze_lab_values(extracted_text)
+        trend_summary = "No prior report available for comparison."
+        metric_snapshot = summarize_metric_snapshot(metrics)
 
         if upload_username:
-            report_obj = {"text": report_text, "filename": file.filename}
+            history = memory.load_lab_history(upload_username)
+            previous_record = history[-1] if history else None
+            if previous_record:
+                trend_lines = compare_lab_records(metrics, previous_record.get("metrics", []))
+                if trend_lines:
+                    trend_summary = "\n".join(trend_lines)
+                else:
+                    trend_summary = "Comparable values were found, but no significant change was detected."
+            report_obj = {
+                "text": report_text,
+                "filename": file.filename,
+                "metrics": metrics,
+                "findings": findings,
+                "trend_summary": trend_summary,
+            }
             USER_REPORTS[upload_username] = report_obj
             memory.save_report(upload_username, report_obj)
+            memory.save_lab_record(upload_username, {
+                "filename": file.filename,
+                "timestamp": datetime.now().isoformat(),
+                "metrics": metrics,
+                "findings": findings,
+                "snapshot": metric_snapshot,
+            })
 
-        findings      = analyze_lab_values(extracted_text)
         findings_text = "\n".join(findings) if findings else "No abnormal lab values detected."
 
         medical_prompt = f"""You are an expert medical AI trained to interpret laboratory reports.
@@ -1497,15 +1771,22 @@ async def upload_file(file: UploadFile = File(...), token: str = Query(None)):
 Medical Report:
 {report_text}
 
+Structured Metrics:
+{metric_snapshot}
+
 Detected Lab Findings:
 {findings_text}
+
+Trend Comparison:
+{trend_summary}
 
 Instructions:
 1. Explain what this report contains.
 2. Highlight abnormal or concerning values.
 3. Explain what those values mean in simple language.
-4. Suggest possible health risks.
-5. Provide general health precautions.
+4. Compare the latest values to the previous report if trend data exists.
+5. Suggest possible health risks.
+6. Provide general health precautions.
 
 Respond strictly in this format:
 
@@ -1517,6 +1798,9 @@ Respond strictly in this format:
 
 🩺 Possible Health Risks:
 (list possible risks)
+
+📈 Trend Summary:
+(compare against prior report if available, otherwise say no prior comparison is available)
 
 💊 Health Advice:
 (simple precautions)
@@ -1532,7 +1816,14 @@ Respond strictly in this format:
             logger.error(f"Gemini upload error: {e}")
             return {"status": "error", "message": "AI analysis temporarily unavailable. Report saved — ask about it in chat."}
 
-        return {"status": "success", "analysis": analysis, "lab_findings": findings, "summary": analysis}
+        return {
+            "status": "success",
+            "analysis": analysis,
+            "lab_findings": findings,
+            "summary": analysis,
+            "trend_summary": trend_summary,
+            "metrics": metrics,
+        }
 
     except Exception as e:
         logger.error(f"Upload error: {e}")
@@ -1593,32 +1884,407 @@ async def nearby_hospitals(lat: float = Query(...), lng: float = Query(...), cit
 @app.get("/api/pharmacy-links")
 async def pharmacy_links(medicine: str = Query(...), strips: int = Query(1)):
     """
-    Returns pharmacy order links for the given medicine name and strip count.
+    Returns the 1mg order link for the given medicine name and strip count.
     """
     query = urllib.parse.quote_plus(medicine)
     return {
         "medicine": medicine,
         "strips": strips,
         "links": {
-            "pharmeasy": {
-                "name": "PharmEasy",
-                "emoji": "🟣",
-                "url": f"https://pharmeasy.in/search/all?name={query}",
-                "desc": "Fast delivery · Trusted pharmacy",
-            },
             "1mg": {
-                "name": "1mg (Tata)",
-                "emoji": "🔴",
+                "name": "1mg",
                 "url": f"https://www.1mg.com/search/all?name={query}",
-                "desc": "Doctor consults + medicines",
-            },
-            "netmeds": {
-                "name": "Netmeds",
-                "emoji": "🟢",
-                "url": f"https://www.netmeds.com/catalogsearch/result/all?q={query}",
-                "desc": "Pan-India delivery",
+                "label": "Click to order",
             },
         },
+    }
+
+
+# ── New Feature Endpoints (v4) ─────────────────────────────────────────────────
+
+# ────────────────────── MEDICATION INTERACTIONS ───────────────────────────────
+@app.post("/api/check-drug-interactions")
+async def check_drug_interactions_endpoint(token: str = Query(...), medications: List[str] = Query(...)):
+    """Check for drug-drug interactions in a medication list"""
+    username = await get_current_user(token)
+    
+    # Log audit event
+    security_manager.log_audit_event(username, "CHECK_DRUG_INTERACTIONS", "medications", details={"meds_count": len(medications)})
+    
+    interactions = check_drug_interactions(medications)
+    return {
+        "username": username,
+        "medications": medications,
+        "interactions": interactions,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+# ────────────────────── HEALTH ANALYTICS & TRENDS ────────────────────────────
+@app.get("/api/health-dashboard")
+async def get_health_dashboard(token: str = Query(...)):
+    """Get user's health dashboard with metrics and analytics"""
+    username = await get_current_user(token)
+    
+    security_manager.log_audit_event(username, "VIEW_HEALTH_DASHBOARD", "dashboard")
+    
+    dashboard = get_dashboard_summary(username)
+    return {
+        "username": username,
+        "dashboard": dashboard,
+    }
+
+
+@app.post("/api/health-metric")
+async def add_health_metric_endpoint(token: str = Query(...), metric: str = Query(...), 
+                                     value: float = Query(...), unit: str = Query(...),
+                                     status: str = Query("normal")):
+    """Add a health metric to user's analytics"""
+    username = await get_current_user(token)
+    
+    add_health_metric(username, metric, value, unit, status)
+    security_manager.log_audit_event(username, "ADD_HEALTH_METRIC", metric, details={"value": value})
+    
+    return {
+        "status": "success",
+        "metric": metric,
+        "value": value,
+        "unit": unit,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get("/api/health-trends")
+async def get_health_trends_endpoint(token: str = Query(...), metric: str = Query(None), days: int = Query(30)):
+    """Get health trends for a specific metric or all metrics"""
+    username = await get_current_user(token)
+    
+    security_manager.log_audit_event(username, "VIEW_HEALTH_TRENDS", "trends")
+    
+    trends = get_health_trends(username, metric, days)
+    return {
+        "username": username,
+        "trends": trends,
+    }
+
+
+@app.get("/api/health-report")
+async def get_health_report_endpoint(token: str = Query(...)):
+    """Generate a health report for the user"""
+    username = await get_current_user(token)
+    
+    security_manager.log_audit_event(username, "GENERATE_HEALTH_REPORT", "report")
+    
+    report = generate_health_report(username)
+    return {
+        "username": username,
+        "report": report,
+    }
+
+
+# ────────────────────── NOTIFICATIONS ─────────────────────────────────────────
+@app.get("/api/notifications")
+async def get_notifications(token: str = Query(...), unread_only: bool = Query(False)):
+    """Get notifications for the user"""
+    username = await get_current_user(token)
+    
+    notifications = notification_manager.get_user_notifications(username, unread_only)
+    return {
+        "username": username,
+        "notifications": notifications,
+        "count": len(notifications),
+    }
+
+
+@app.post("/api/mark-notification-read")
+async def mark_notification_read(token: str = Query(...), notification_id: str = Query(...)):
+    """Mark a notification as read"""
+    username = await get_current_user(token)
+    
+    success = notification_manager.mark_notification_as_read(username, notification_id)
+    
+    return {
+        "status": "success" if success else "failed",
+        "notification_id": notification_id,
+    }
+
+
+@app.post("/api/notification-preferences")
+async def update_notification_preferences(token: str = Query(...), 
+                                         email_enabled: bool = Query(True),
+                                         sms_enabled: bool = Query(False),
+                                         medication_reminders: bool = Query(True),
+                                         follow_up_reminders: bool = Query(True)):
+    """Update notification preferences for the user"""
+    username = await get_current_user(token)
+    
+    # Load and update profile
+    profile_file = Path("memory") / username / "profile.json"
+    profile = {}
+    if profile_file.exists():
+        with open(profile_file, "r") as f:
+            profile = json.load(f)
+    
+    profile["notification_preferences"] = {
+        "email_enabled": email_enabled,
+        "sms_enabled": sms_enabled,
+        "medication_reminders": medication_reminders,
+        "follow_up_reminders": follow_up_reminders,
+    }
+    
+    profile_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(profile_file, "w") as f:
+        json.dump(profile, f, indent=2)
+    
+    security_manager.log_audit_event(username, "UPDATE_NOTIFICATION_PREFERENCES", "preferences")
+    
+    return {
+        "status": "success",
+        "preferences": profile["notification_preferences"],
+    }
+
+
+# ────────────────────── VOICE INPUT/OUTPUT ───────────────────────────────────
+@app.post("/api/voice-input")
+async def process_voice_input(req: VoiceRequest):
+    """Convert voice input (audio) to text"""
+    username = await get_current_user(req.token)
+    
+    result = await voice_handler.process_voice_input(req.audio_base64, req.language or "en")
+    
+    if result["status"] == "success":
+        security_manager.log_audit_event(username, "VOICE_INPUT", "audio_transcription")
+    
+    return result
+
+
+@app.post("/api/voice-output")
+async def generate_voice_output(token: str = Query(...), text: str = Query(...), 
+                               language: str = Query("en"), voice_style: str = Query("neutral")):
+    """Convert text response to voice output (TTS)"""
+    username = await get_current_user(token)
+    
+    result = await voice_handler.generate_voice_output(text, language, voice_style)
+    
+    if result["status"] == "success":
+        security_manager.log_audit_event(username, "VOICE_OUTPUT", "text_to_speech")
+    
+    return result
+
+
+@app.get("/api/voice-languages")
+async def get_voice_languages():
+    """Get list of supported voice languages"""
+    return {
+        "languages": voice_handler.get_supported_languages(),
+        "voice_styles": voice_handler.get_voice_styles(),
+    }
+
+
+# ────────────────────── EXPERT CONSULTATION ───────────────────────────────────
+@app.get("/api/experts")
+async def get_available_experts(token: str = Query(...), category: str = Query("all")):
+    """Get list of available experts"""
+    username = await get_current_user(token)
+    
+    security_manager.log_audit_event(username, "VIEW_EXPERTS", "expert_list")
+    
+    experts = expert_manager.get_available_experts(category)
+    return {
+        "username": username,
+        "experts": experts,
+        "count": len(experts),
+    }
+
+
+@app.post("/api/request-consultation")
+async def request_consultation(req: ExpertConsultation):
+    """Request a consultation with an expert"""
+    username = await get_current_user(req.token)
+    
+    consultation = expert_manager.request_consultation(
+        username,
+        "dr_001",  # Default to first available doctor
+        req.question,
+        req.category,
+        req.preferred_language or "en"
+    )
+    
+    # Send notification
+    notification_manager.send_notification(
+        username,
+        f"Your consultation request has been received. Estimated response time: 15-30 minutes",
+        notification_type="consultation",
+        channels=["in-app"]
+    )
+    
+    security_manager.log_audit_event(username, "REQUEST_CONSULTATION", "consultation", details={"category": req.category})
+    
+    return {
+        "status": "success",
+        "consultation": consultation,
+    }
+
+
+@app.get("/api/my-consultations")
+async def get_my_consultations(token: str = Query(...)):
+    """Get all consultations for the user"""
+    username = await get_current_user(token)
+    
+    consultations = expert_manager.get_consultations(username)
+    
+    return {
+        "username": username,
+        "consultations": consultations,
+        "count": len(consultations),
+    }
+
+
+@app.post("/api/close-consultation")
+async def close_consultation_endpoint(token: str = Query(...), consultation_id: str = Query(...),
+                                     rating: int = Query(None), feedback: str = Query(None)):
+    """Close a consultation and provide feedback"""
+    username = await get_current_user(token)
+    
+    success = expert_manager.close_consultation(username, consultation_id, rating, feedback)
+    
+    security_manager.log_audit_event(username, "CLOSE_CONSULTATION", "consultation", details={"rating": rating})
+    
+    return {
+        "status": "success" if success else "failed",
+        "consultation_id": consultation_id,
+    }
+
+
+@app.post("/api/schedule-appointment")
+async def schedule_appointment(token: str = Query(...), expert_id: str = Query(...),
+                              date: str = Query(...), time: str = Query(...), reason: str = Query(...)):
+    """Schedule an appointment with an expert"""
+    username = await get_current_user(token)
+    
+    appointment = expert_manager.schedule_appointment(username, expert_id, date, time, reason)
+    
+    # Send notification
+    notification_manager.send_notification(
+        username,
+        f"Appointment scheduled for {date} at {time}. Meeting link: {appointment['meeting_link']}",
+        notification_type="appointment",
+        priority="high",
+        channels=["in-app", "email"]
+    )
+    
+    security_manager.log_audit_event(username, "SCHEDULE_APPOINTMENT", "appointment", details={"date": date, "time": time})
+    
+    return {
+        "status": "success",
+        "appointment": appointment,
+    }
+
+
+# ────────────────────── MULTI-LANGUAGE SUPPORT ────────────────────────────────
+@app.get("/api/ui-strings")
+async def get_ui_strings(language: str = Query("en")):
+    """Get UI strings for the specified language"""
+    strings = language_manager.get_ui_strings(language)
+    
+    return {
+        "language": language,
+        "strings": strings,
+    }
+
+
+@app.get("/api/supported-languages")
+async def get_supported_languages():
+    """Get list of supported languages"""
+    return {
+        "languages": language_manager.get_supported_languages(),
+    }
+
+
+# ────────────────────── DATA PRIVACY & SECURITY ───────────────────────────────
+@app.get("/api/export-data")
+async def export_user_data(token: str = Query(...)):
+    """Export all user data for GDPR compliance"""
+    username = await get_current_user(token)
+    
+    exported_data = security_manager.export_user_data(username)
+    
+    security_manager.log_audit_event(username, "EXPORT_DATA", "gdpr_export")
+    
+    return {
+        "status": "success",
+        "data_export": exported_data,
+    }
+
+
+@app.post("/api/delete-account")
+async def delete_user_account(token: str = Query(...)):
+    """Delete user account and all associated data"""
+    username = await get_current_user(token)
+    
+    # Log before deletion
+    security_manager.log_audit_event("admin", "DELETE_ACCOUNT", username, details={"user_deleted": username})
+    
+    # Delete user data
+    success = security_manager.delete_user_data(username)
+    
+    if success:
+        # Invalidate token
+        users = await load_users()
+        if username in users:
+            del users[username]
+            await save_users(users)
+    
+    return {
+        "status": "success" if success else "failed",
+        "message": "Your account and all associated data have been deleted." if success else "Deletion failed.",
+    }
+
+
+@app.get("/api/audit-log")
+async def get_audit_log(token: str = Query(...)):
+    """Get user's audit log for security monitoring"""
+    username = await get_current_user(token)
+    
+    audit_log = security_manager.get_audit_log(username)
+    
+    return {
+        "username": username,
+        "audit_log": audit_log,
+    }
+
+
+# ────────────────────── ENHANCED PROFILE ──────────────────────────────────────
+@app.post("/api/update-profile-extended")
+async def update_profile_extended(token: str = Query(...), profile_data: Dict[str, Any] = None):
+    """Update extended profile with new fields"""
+    username = await get_current_user(token)
+    
+    if profile_data is None:
+        profile_data = {}
+    
+    # Load existing profile
+    profile_file = Path("memory") / username / "profile.json"
+    profile = {}
+    if profile_file.exists():
+        with open(profile_file, "r") as f:
+            profile = json.load(f)
+    
+    # Update with new data
+    profile.update(profile_data)
+    
+    # Normalize and save
+    profile = normalize_profile(profile_data, profile)
+    
+    profile_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(profile_file, "w") as f:
+        json.dump(profile, f, indent=2)
+    
+    security_manager.log_audit_event(username, "UPDATE_EXTENDED_PROFILE", "profile")
+    
+    return {
+        "status": "success",
+        "profile": profile,
     }
 
 
