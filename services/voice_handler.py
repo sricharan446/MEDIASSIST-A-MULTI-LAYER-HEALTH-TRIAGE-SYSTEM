@@ -1,6 +1,6 @@
 """
 Voice Input/Output Handler
-Enables voice-based queries and responses with real speech-to-text
+Enables voice-based queries and responses with real speech-to-text and text-to-speech
 """
 
 import json
@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 import speech_recognition as sr
 from pydub import AudioSegment
-
+from gtts import gTTS
 
 class VoiceHandler:
     """
@@ -131,37 +131,62 @@ class VoiceHandler:
     
     async def generate_voice_output(self, text: str, language: str = "en", voice_style: str = "default") -> Dict[str, Any]:
         """
-        Convert text response to voice output (text-to-speech)
-        
-        NOTE: This currently returns a placeholder. For production, integrate:
-        - Google Cloud Text-to-Speech API (highest quality)
-        - Azure Speech Services
-        - AWS Polly
-        - ESpeakNG (open-source, offline)
+        Convert text response to voice output (text-to-speech) using Google gTTS
         
         Args:
             text: Text to convert to speech
-            language: Language code (en, es, fr, de, hi, etc.)
+            language: Language code (en, es, fr, de, hi, ta, te, kn, etc.)
             voice_style: Voice style (neutral, friendly, professional, calm, energetic)
+                        Note: gTTS doesn't support individual styles, but we log the preference
         
         Returns:
             Audio data in base64 format with metadata
         """
         try:
-            # Placeholder implementation - ready for TTS service integration
-            # For now, return structured response indicating TTS is available
+            # Truncate very long text to avoid TTS limits
+            if len(text) > 5000:
+                text = text[:5000] + "... [text truncated]"
             
-            # Estimate audio duration based on speaking speed (~150 chars per minute)
-            estimated_duration = len(text) / 150
+            # Language code mapping for gTTS
+            language_code_map = {
+                "en": "en",
+                "es": "es",
+                "fr": "fr",
+                "de": "de",
+                "hi": "hi",
+                "ta": "ta",
+                "te": "te",
+                "kn": "kn",
+                "mr": "mr",
+                "gu": "gu",
+            }
+            
+            lang_code = language_code_map.get(language, "en")
+            
+            # Generate speech using gTTS
+            tts = gTTS(text=text, lang=lang_code, slow=False)
+            
+            # Save to bytes buffer
+            audio_buffer = io.BytesIO()
+            tts.write_to_fp(audio_buffer)
+            audio_buffer.seek(0)
+            
+            # Convert to base64
+            audio_base64 = base64.b64encode(audio_buffer.getvalue()).decode('utf-8')
+            
+            # Estimate duration based on words (average: 150 words per minute)
+            word_count = len(text.split())
+            estimated_duration = (word_count / 150) * 60  # in seconds
             
             audio_response = {
-                "audio_base64": "SGVsbG8gV29ybGQ=",  # Placeholder: "Hello World" in base64
+                "audio_base64": audio_base64,
                 "language": language,
+                "language_code": lang_code,
                 "voice_style": voice_style,
                 "text_length": len(text),
                 "estimated_duration_seconds": round(estimated_duration, 2),
                 "timestamp": datetime.now().isoformat(),
-                "note": "To use real TTS, integrate Google Cloud, Azure, or AWS speech services",
+                "provider": "gTTS (Google Translate TTS)",
             }
             
             return {
@@ -169,9 +194,12 @@ class VoiceHandler:
                 "audio": audio_response,
             }
         except Exception as e:
+            import traceback
             return {
                 "status": "error",
-                "message": str(e),
+                "message": f"Text-to-speech error: {str(e)}",
+                "error_code": "tts_error",
+                "details": traceback.format_exc()
             }
     
     def log_voice_interaction(self, username: str, interaction_type: str, 

@@ -20,13 +20,14 @@ User Message → Emergency Check → Symptom Predictor → Followup Triage
 - ✅ Session management (50 sessions/user with 20-message history cap)
 - ✅ Doctor handoff summaries with full diagnostic context
 
-**Advanced Features (v4):**
+**Advanced Features (v4.1):**
 - ✅ Health analytics with metric tracking & trends
 - ✅ Drug interaction checking (40+ documented interactions)
 - ✅ Expert consultation booking & appointment scheduling
 - ✅ Notification system (in-app + simulated email/SMS)
-- ✅ Multi-language support (8 languages)
+- ✅ Multi-language support (8 languages UI + 10+ voice languages)
 - ✅ **Real speech-to-text** (Google Speech Recognition API)
+- ✅ **Real text-to-speech** (Google Translate TTS via gTTS)
 - ✅ GDPR compliance (data export, account deletion)
 - ✅ Audit logging (500 entries/user)
 
@@ -47,6 +48,14 @@ User Message → Emergency Check → Symptom Predictor → Followup Triage
 - **Confidence Scoring**: Know how accurate the transcription is
 - **Mobile Friendly**: Works on phones and tablets
 - **Secure**: Token-authenticated, audit logged
+
+### 🔊 Voice Output (Text-to-Speech) ✨
+- **Real Text-to-Speech**: Google Translate TTS (gTTS) - Free, no API key required
+- **Audio Playback**: Listen to responses directly in chat
+- **10+ Languages**: Supports all 10+ languages for both input and output
+- **MP3 Generation**: High-quality audio synthesis
+- **Browser Compatible**: Works on all modern browsers
+- **Duration Estimation**: Automatic duration calculation for UX
 
 ### 🔔 Notification System
 - **Types**: Medication reminders, follow-up reminders, emergency alerts, appointment notifications
@@ -111,11 +120,11 @@ POST   /api/close-consultation  - Close with rating/feedback
 POST   /api/schedule-appointment - Book appointment with meeting link
 ```
 
-### Voice (Real Speech-to-Text ✨)
+### Voice (Real Speech-to-Text & Text-to-Speech ✨)
 ```
 POST   /api/voice-input         - Speech-to-text (Google Speech Recognition API ✨)
-POST   /api/voice-output        - Text-to-speech (placeholder - ready for integration)
-GET    /api/voice-languages     - List 8 supported languages
+POST   /api/voice-output        - Text-to-speech (Google Translate TTS via gTTS ✨)
+GET    /api/voice-languages     - List 10+ supported languages
 ```
 
 ### Language & Localization
@@ -270,10 +279,9 @@ users.json                      (Auth store - credentials)
 - Handoff summary generation
 - Multi-language UI (8 languages)
 - **Real speech-to-text** (Google Speech Recognition API, 10+ languages, browser microphone integration)
+- **Real text-to-speech** (Google Translate TTS via gTTS, 10+ languages, MP3 generation)
 
 ### ⚠️ Partially Implemented
-- **Text-to-Speech (TTS)**: Endpoint exists but returns placeholder audio
-  - Ready for Google Cloud TTS, Azure Speech, or AWS Polly integration
   
 - **Expert Consultations**: 
   - Booking structure works
@@ -316,6 +324,11 @@ users.json                      (Auth store - credentials)
 - **pdfplumber** (PDF analysis)
 - **BeautifulSoup4** (HTML scraping)
 - **Pillow** (image handling)
+
+### Voice & Audio
+- **SpeechRecognition** (Google Speech Recognition API - STT)
+- **gTTS** (Google Translate TTS - Text-to-Speech, free, no API key)
+- **pydub** (audio format conversion & handling)
 
 ### Security
 - **cryptography** (Fernet AES-128 encryption)
@@ -400,12 +413,11 @@ python app.py
 ## Known Limitations
 
 1. **Medical Data Sparse**: symptom_disease_map is minimal (good for demo, needs expansion)
-2. **Voice Output Placeholder**: Returns mock audio, not real TTS
-3. **Expert List Static**: 3 doctors hardcoded, no dynamic registry
-4. **RAG Threshold Conservative**: 1.2 (L2 distance) may miss some documents
-5. **Session Storage**: Fixed 50-session cap per user
-6. **Message History**: Only latest 20 messages stored (older ones discarded)
-7. **No Batch Operations**: Each upload/analysis is single-file only
+2. **Expert List Static**: 3 doctors hardcoded, no dynamic registry
+3. **RAG Threshold Conservative**: 1.2 (L2 distance) may miss some documents
+4. **Session Storage**: Fixed 50-session cap per user
+5. **Message History**: Only latest 20 messages stored (older ones discarded)
+6. **No Batch Operations**: Each upload/analysis is single-file only
 
 ## Configuration
 
