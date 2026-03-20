@@ -1244,6 +1244,27 @@
     .char-counter.limit {
       color: var(--danger);
     }
+
+    /* ===================== PRACTO BOOKING BUTTON ===================== */
+    .practo-btn-wrap { margin-top: 12px; }
+    .practo-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 16px;
+      background: rgba(0,138,255,0.10);
+      border: 1px solid rgba(0,138,255,0.35);
+      border-radius: 10px; color: #3b9eff;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px; font-weight: 700;
+      text-decoration: none; cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .practo-btn:hover {
+      background: rgba(0,138,255,0.18);
+      box-shadow: 0 0 16px rgba(0,138,255,0.2);
+      transform: translateY(-1px);
+    }
+    .practo-specialty { font-size: 10px; color: var(--text3); margin-top: 4px; margin-left: 2px; }
+
   </style>
 </head>
 
@@ -1321,7 +1342,7 @@
 
       <div class="sb-footer">
         <div class="model-label">Active Model</div>
-        <div class="model-select" id="modelSelect">gemini-2.0-flash</div>
+        <select class="model-select" id="modelSelect"><option value="gemini-2.5-flash-lite" selected>gemini-2.5-flash-lite</option><option value="gemini-1.5-flash">gemini-1.5-flash</option><option value="gemini-2.0-flash">gemini-2.0-flash</option></select>
         <div class="user-row">
           <div class="user-avatar">👤</div>
           <div class="user-info">
@@ -1600,7 +1621,7 @@
           var res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, session_id: sessionId, token: userToken, model: 'gemini-2.0-flash' })
+            body: JSON.stringify({ message: text, session_id: sessionId, token: userToken, model: document.getElementById('modelSelect').value })
           });
           var data = await res.json();
           var el = document.getElementById(tid);
@@ -1609,6 +1630,7 @@
             sessionId = data.session_id;
             document.getElementById('topbarTitle').textContent = text.slice(0, 40) || 'New Chat';
             appendMsg('assistant', data.response, data.tools_used);
+            if (data.practo_url) { showPractoButton(data.practo_url); }
           } else {
             appendMsg('assistant', 'Error: ' + (data.detail || 'Something went wrong'), []);
           }
@@ -1825,7 +1847,7 @@
     }
 
     async function loadModels() {
-      updateModelBadge('gemini-2.0-flash');
+      updateModelBadge('gemini-2.5-flash-lite');
     }
 
     function updateModelBadge(model) {
@@ -1833,7 +1855,62 @@
       if (badge) badge.textContent = model.split('-').slice(0, 3).join('-');
     }
 
-    /* ===================== INIT ===================== */
+    /* ===================== PRACTO BOOKING ===================== */
+  var SPECIALTY_DISPLAY = {
+    'cardiologist':       'Cardiologist',
+    'neurologist':        'Neurologist',
+    'orthopedist':        'Orthopedic Specialist',
+    'general-physician':  'General Physician',
+    'psychiatrist':       'Psychiatrist',
+    'hematologist':       'Hematologist',
+    'gastroenterologist': 'Gastroenterologist',
+    'pulmonologist':      'Pulmonologist',
+    'urologist':          'Urologist',
+    'endocrinologist':    'Endocrinologist',
+    'dermatologist':      'Dermatologist',
+  };
+
+  function showPractoButton(practoUrl) {
+    if (!practoUrl) return;
+
+    // Extract slug from URL: practo.com/hyderabad/{slug}
+    var slug = 'general-physician';
+    var match = practoUrl.match(/practo\.com\/[^/]+\/([^/?]+)/);
+    if (match) slug = match[1];
+    var displayName = SPECIALTY_DISPLAY[slug] || slug.replace(/-/g, ' ')
+      .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+
+    var c = document.getElementById('messages');
+    var wrap = document.createElement('div');
+    wrap.className = 'msg assistant';
+
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar'; avatar.textContent = '🏥';
+
+    var bwrap = document.createElement('div');
+    bwrap.className = 'bubble-wrap';
+
+    var meta = document.createElement('div');
+    meta.className = 'bubble-meta'; meta.textContent = 'Medical Assistant';
+
+    var inner = document.createElement('div');
+    inner.className = 'practo-btn-wrap';
+    inner.innerHTML =
+      '<a class="practo-btn" href="' + practoUrl + '" target="_blank" rel="noopener noreferrer">' +
+        '🩺 Book a ' + displayName + ' in Hyderabad' +
+        '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
+      '</a>' +
+      '<div class="practo-specialty">Opens Practo · Hyderabad · ' + displayName + ' listings · Click Allow Location for nearest doctors</div>';
+
+    bwrap.appendChild(meta);
+    bwrap.appendChild(inner);
+    wrap.appendChild(avatar);
+    wrap.appendChild(bwrap);
+    c.appendChild(wrap);
+    scrollDown();
+  }
+
+  /* ===================== INIT ===================== */
     window.onload = function () {
       // Restore saved theme (default dark)
       var savedTheme = localStorage.getItem('theme') || 'dark';
