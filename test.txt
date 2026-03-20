@@ -1,3 +1,0 @@
-Python is a programming language.
-FastAPI is used for backend development.
-RAG means Retrieval Augmented Generation.
