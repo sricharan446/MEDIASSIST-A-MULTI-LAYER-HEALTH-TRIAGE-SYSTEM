@@ -1819,8 +1819,6 @@
             <input type="file" id="fileInput" style="display:none" onchange="onFileSelect(event)" />
             <button class="btn-icon" onclick="document.getElementById('fileInput').click()"
               title="Attach file">📎</button>
-            <button class="btn-icon" id="voiceBtn" onclick="toggleVoiceRecording()"
-              title="Record voice message">🎤</button>
             <button class="btn-send" id="sendBtn" onclick="sendMessage()">Send ↑</button>
           </div>
         </div>
@@ -2646,97 +2644,6 @@
       // Periodic health check
       setInterval(checkGemini, 30000);
     };
-
-    /* ===================== VOICE RECORDING ===================== */
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-
-    async function toggleVoiceRecording() {
-      const voiceBtn = document.getElementById('voiceBtn');
-      
-      if (!isRecording) {
-        // Start recording
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-          
-          mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
-          };
-          
-          mediaRecorder.onstop = async () => {
-            // Convert audio to base64
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            const reader = new FileReader();
-            
-            reader.onloadend = async () => {
-              const base64Audio = reader.result.split(',')[1]; // Remove data:audio/wav;base64, prefix
-              
-              // Send to backend
-              const langCode = localStorage.getItem('userLanguage') || 'en';
-              const tid = 'voice_' + Date.now();
-              appendTyping(tid);
-              
-              try {
-                const res = await fetch('/api/voice-input?token=' + userToken + '&language=' + langCode, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ audio_base64: base64Audio })
-                });
-                
-                const data = await res.json();
-                const el = document.getElementById(tid);
-                if (el) el.remove();
-                
-                if (res.ok && data.status === 'success') {
-                  const transcribedText = data.transcription.text;
-                  const confidence = (data.transcription.confidence * 100).toFixed(1);
-                  
-                  // Set the transcribed text in the input
-                  document.getElementById('msgInput').value = transcribedText;
-                  autoResize(document.getElementById('msgInput'));
-                  updateCharCount(document.getElementById('msgInput'));
-                  
-                  // Show notification
-                  appendMsg('assistant', `🎤 **Voice Transcription** (${confidence}% confidence)\\n\\n"${transcribedText}"\\n\\n(Click Send to process this message)`, ['Voice Input'], [
-                    { type: 'voice_input', label: 'Speech-to-Text' }
-                  ]);
-                } else {
-                  const errorMsg = data.message || 'Could not transcribe audio';
-                  appendMsg('assistant', '❌ Voice error: ' + errorMsg, []);
-                }
-              } catch (err) {
-                const el = document.getElementById(tid);
-                if (el) el.remove();
-                appendMsg('assistant', '❌ Voice service error. Please try again.', []);
-              }
-            };
-            
-            reader.readAsDataURL(audioBlob);
-          };
-          
-          mediaRecorder.start();
-          isRecording = true;
-          voiceBtn.style.background = 'rgba(255, 69, 96, 0.2)';
-          voiceBtn.style.color = '#ff4560';
-          voiceBtn.textContent = '⏹️';
-          
-        } catch (err) {
-          appendMsg('assistant', '❌ Microphone access denied. Please allow microphone permissions.', []);
-        }
-      } else {
-        // Stop recording
-        isRecording = false;
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        
-        voiceBtn.style.background = '';
-        voiceBtn.style.color = '';
-        voiceBtn.textContent = '🎤';
-      }
-    }
   </script>
 </body>
 

@@ -18,14 +18,6 @@ DEFAULT_PROFILE = {
     "email": None,
     "phone": None,
     "language": "en",
-    # User preferences
-    "notification_preferences": {
-        "email_enabled": True,
-        "sms_enabled": False,
-        "medication_reminders": True,
-        "follow_up_reminders": True,
-        "emergency_alerts": True,
-    },
 }
 
 ENUM_FIELDS = {

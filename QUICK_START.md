@@ -40,32 +40,7 @@ View dashboard:
 curl "http://localhost:8000/api/health-dashboard?token=YOUR_TOKEN"
 ```
 
-### 3. Manage Notifications
-
-Get notifications:
-```bash
-curl "http://localhost:8000/api/notifications?token=YOUR_TOKEN"
-```
-
-Update preferences:
-```bash
-curl -X POST "http://localhost:8000/api/notification-preferences?token=YOUR_TOKEN&email_enabled=true&sms_enabled=false"
-```
-
-### 4. Use Voice Input
-
-Convert audio to text:
-```bash
-curl -X POST "http://localhost:8000/api/voice-input" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "YOUR_TOKEN",
-    "audio_base64": "BASE64_ENCODED_AUDIO",
-    "language": "en"
-  }'
-```
-
-### 5. Request Expert Consultation
+### 3. Request Expert Consultation
 
 Get available experts:
 ```bash
@@ -84,7 +59,7 @@ curl -X POST "http://localhost:8000/api/request-consultation" \
   }'
 ```
 
-### 6. Multi-Language Support
+### 4. Multi-Language Support
 
 Get UI strings in Spanish:
 ```bash
@@ -98,7 +73,7 @@ Supported languages:
 - `de` - German
 - `hi` - Hindi
 
-### 7. Data Privacy
+### 5. Data Privacy
 
 Export your data (GDPR):
 ```bash
@@ -115,7 +90,7 @@ View audit log:
 curl "http://localhost:8000/api/audit-log?token=YOUR_TOKEN"
 ```
 
-### 8. Enhanced Profile
+### 6. Enhanced Profile
 
 Update profile with new fields:
 ```bash
@@ -179,25 +154,6 @@ curl -X POST "http://localhost:8000/api/update-profile-extended?token=YOUR_TOKEN
 }
 ```
 
-### Notifications
-```json
-{
-  "username": "john_doe",
-  "notifications": [
-    {
-      "id": "2026-03-20T10:30:00_john_doe",
-      "message": "Reminder: Take Amlodipine 5mg at 8 AM",
-      "type": "medication_reminder",
-      "priority": "high",
-      "channels": ["in-app"],
-      "timestamp": "2026-03-20T10:00:00",
-      "read": false
-    }
-  ],
-  "count": 1
-}
-```
-
 ### Experts
 ```json
 {
@@ -221,8 +177,6 @@ curl -X POST "http://localhost:8000/api/update-profile-extended?token=YOUR_TOKEN
 ✨ **What's New:**
 - 🔍 Drug interaction checker
 - 📊 Health analytics & trends
-- 🔔 Smart notification system
-- 🎤 Voice input/output support
 - 👨‍⚕️ Expert consultation booking
 - 🌍 Multi-language support
 - 🔐 Enhanced security & privacy
@@ -251,12 +205,6 @@ pip install cryptography
 curl -X GET "http://localhost:8000/api/health-dashboard?token=YOUR_TOKEN"
 ```
 
-### Issue: Voice input not working
-**Solution:** Ensure audio is properly base64 encoded
-
-### Issue: Notifications not sending
-**Solution:** Check notification preferences are enabled in profile
-
 ## Integration with Existing Features
 
 The new features integrate seamlessly with MediAssist's existing capabilities:
@@ -264,8 +212,6 @@ The new features integrate seamlessly with MediAssist's existing capabilities:
 - **Chat + Expert Consultation**: Expert can see your chat history
 - **Reports + Analytics**: Uploaded lab reports automatically populate metrics
 - **Medications + Drug Interactions**: Medication cards include interaction warnings
-- **Emergencies + Notifications**: Emergency alerts trigger high-priority notifications
-
 ## Environment Variables
 
 The following environment variables should be set in `.env`:
@@ -283,7 +229,6 @@ All data is stored locally in the `memory/` directory:
 - User profiles: `memory/{username}/profile.json`
 - Chat sessions: `memory/{username}/{session_id}.json`
 - Health analytics: `memory/{username}/analytics.json`
-- Notifications: `memory/notifications/{username}_notifications.json`
 - Consultations: `memory/consultations/{username}_consultations.json`
 - Audit logs: `memory/audit_logs/{username}_audit.json`
 
@@ -291,8 +236,6 @@ All data is stored locally in the `memory/` directory:
 
 1. **Test the API**: Run the Quick Start examples above
 2. **Update Frontend**: Integrate UI components for new features
-3. **Configure Notifications**: Set up real email/SMS providers
-4. **Set Up Voice**: Configure speech-to-text and text-to-speech services
-5. **Connect Experts**: Link real doctor scheduling platform
+3. **Connect Experts**: Link real doctor scheduling platform
 
 See [FEATURES.md](FEATURES.md) for detailed API documentation.

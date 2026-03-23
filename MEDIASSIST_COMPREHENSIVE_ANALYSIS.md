@@ -15,7 +15,7 @@ MediAssist is a **FastAPI-based AI health triage system** that combines:
 - **Knowledge Graph** queries (NetworkX-based)
 - **Lab report analysis** with structured metric extraction
 - **Medication safety assessment** with drug-drug interaction checking
-- **Multi-language support** (8 languages) and voice I/O
+- **Multi-language support** (8 languages)
 - **Expert consultation booking** and appointment scheduling
 - **Health analytics & trending** with audit logging
 
@@ -112,12 +112,6 @@ The system is **actually implemented and running**, not theoretical. All core fe
 #### ✅ **Follow-up Reminders**
 - **Conditional Reminders**: Based on condition type and days since check-in
 - **Channel Control**: Channels configurable per reminder
-
-#### ✅ **Voice I/O** (Basic Implementation)
-- **Voice Input Endpoint**: Accepts base64 audio, returns JSON transcription placeholder
-- **Voice Output Endpoint**: Takes text, returns base64 audio placeholder, configurable voice style
-- **Language Support**: 8 languages (en, es, fr, de, hi, ta, te, kn)
-- **Voice Logging**: Records all voice interactions for analytics
 
 ### 1.4 Expert Consultation System (Fully Implemented)
 
@@ -256,13 +250,6 @@ POST   /api/close-consultation  - Close consultation with rating/feedback
 POST   /api/schedule-appointment - Schedule appointment with expert
 ```
 
-### Voice Routes
-```
-POST   /api/voice-input         - Speech-to-text (audio_base64 → text)
-POST   /api/voice-output        - Text-to-speech (text → audio_base64)
-GET    /api/voice-languages     - Get supported voice languages
-```
-
 ### Language Routes
 ```
 GET    /api/ui-strings          - Get UI strings for language
@@ -293,7 +280,6 @@ GET    /                        - Serve index.html
 - **MedicationInteraction**: med1, med2, interaction_type, severity, description, recommendation
 - **HealthTrendData**: metric, date, value, unit, status
 - **ExpertConsultation**: token, question, category, preferred_language
-- **VoiceRequest**: token, audio_base64, language
 - **NotificationPreferences**: token, email_enabled, sms_enabled, medication_reminders, follow_up_reminders, emergency_alerts
 
 ### Response Model
@@ -469,8 +455,6 @@ memory/ (Persistent user data)
 │   │   └── feedback.json
 │   ├── notifications/
 │   │   └── {username}_notifications.json (100-entry cap)
-│   ├── voice_logs/
-│   │   └── {timestamp}_audio.json
 │   └── audit_logs/
 │       └── {username}_audit.json (500-entry cap)
 
@@ -547,7 +531,6 @@ Medication Safety Check Flow:
 - Notification system (with preferences)
 - Expert consultation booking
 - Appointment scheduling
-- Voice I/O endpoints (basic stubs)
 - Multi-language UI (8 languages)
 - Data export (GDPR)
 - Account deletion (with full cleanup)
@@ -556,8 +539,6 @@ Medication Safety Check Flow:
 - Handoff summary generation
 
 ### ⚠️ PARTIALLY IMPLEMENTED
-- **Voice I/O**: Endpoints exist but return placeholder data (not real transcription/TTS)
-- **Voice Logging**: Logs recorded but no real audio processing
 - **Consultation Responses**: Structure exists but no actual doctor backend
 - **Email/SMS Notifications**: Simulated (no actual email/SMS service integrated)
 - **Language Translation**: UI strings translated, but no full response translation (would need Gemini)
@@ -572,12 +553,11 @@ Medication Safety Check Flow:
 - **Lab Report Templates**: No custom template generation
 
 ### 🐛 KNOWN ISSUES/LIMITATIONS
-1. **Voice Output Placeholder**: Returns base64 "SGVsbG8gV29ybGQ=" (Hello World) - not real audio
-2. **Medical Data Sparse**: medical_data/symptoms.txt is empty, diseases.txt has only 2 entries
-3. **Expert List Static**: 3 doctors hardcoded, no dynamic expert registry
-4. **RAG Relevance Threshold**: 1.2 (L2 distance) may be conservative, could miss some docs
-5. **Message Duplication**: get_history() returns last 20 messages, full history >50 messages are dropped
-6. **Session Cap**: 50 sessions/user is rigid, no gradual cleanup strategy
+1. **Medical Data Sparse**: medical_data/symptoms.txt is empty, diseases.txt has only 2 entries
+2. **Expert List Static**: 3 doctors hardcoded, no dynamic expert registry
+3. **RAG Relevance Threshold**: 1.2 (L2 distance) may be conservative, could miss some docs
+4. **Message Duplication**: get_history() returns last 20 messages, full history >50 messages are dropped
+5. **Session Cap**: 50 sessions/user is rigid, no gradual cleanup strategy
 
 ---
 
@@ -700,7 +680,6 @@ Each medication includes:
 - ✅ Rate limiting mindful (50 sessions, 20 messages, etc.)
 
 #### Weaknesses
-- ⚠️ Voice features are placeholders
 - ⚠️ Expert consultation backend missing
 - ⚠️ Medical data sparse (diagnoses.txt only 2 lines)
 - ⚠️ No rate limiting on API calls
@@ -768,8 +747,7 @@ uvicorn app:app           # Production (no reload, no debug)
     ├── notifications.py
     ├── profile.py
     ├── security.py
-    ├── triage.py
-    └── voice_handler.py
+    └── triage.py
 ```
 
 ---
@@ -783,7 +761,6 @@ uvicorn app:app           # Production (no reload, no debug)
 | Lab Analysis | ✓ | ✓ | **Full** |
 | Drug Interactions | ✓ | ✓ | **Full** |
 | Multi-language | ✓ | ✓ | **Partial** (UI only) |
-| Voice I/O | ✓ | ✓ | **Stub** (placeholders) |
 | Expert Consultation | ✓ | ✓ | **Partial** (UI/booking only) |
 | Video Consultation | ? | ✗ | **Missing** |
 | Prescription Gen | ? | ✗ | **Missing** |
@@ -800,7 +777,7 @@ uvicorn app:app           # Production (no reload, no debug)
 
 **MediAssist is a working AI health triage chatbot that:**
 
-1. **Ingests** user symptoms via text/voice
+1. **Ingests** user symptoms via text
 2. **Detects** emergencies with 100% precision on keywords
 3. **Predicts** disease with 15-disease model + confidence scoring
 4. **Asks** clarifying follow-up questions if confidence is low
@@ -820,7 +797,6 @@ uvicorn app:app           # Production (no reload, no debug)
 18. **Uses** Google Gemini 2.5 Flash Lite for explanation generation
 
 ### What's NOT Production-Ready
-- Voice transcription/TTS (stubs only)
 - Real expert consultations (no backend system)
 - Real email/SMS (simulated only)
 - Video telemedicine (not implemented)
@@ -828,7 +804,7 @@ uvicorn app:app           # Production (no reload, no debug)
 - Insurance verification (not implemented)
 
 ### Verdict
-**This is a real, working system ready for production**, with the caveat that some advanced features (voice, expert backend, notifications) would need integration with external services for full functionality. The core triage + medication safety + lab analysis pipeline is **solid and battle-tested** (per FIX 1-20 notes).
+**This is a real, working system ready for production**, with the caveat that some advanced features (expert backend, notifications) would need integration with external services for full functionality. The core triage + medication safety + lab analysis pipeline is **solid and battle-tested** (per FIX 1-20 notes).
 
 ---
 

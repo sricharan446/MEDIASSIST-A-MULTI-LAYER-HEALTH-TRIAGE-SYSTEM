@@ -81,16 +81,3 @@ class ExpertConsultation(BaseModel):
     preferred_language: Optional[str] = "en"
 
 
-class VoiceRequest(BaseModel):
-    token: str
-    audio_base64: str
-    language: Optional[str] = "en"
-
-
-class NotificationPreferences(BaseModel):
-    token: str
-    email_enabled: bool = True
-    sms_enabled: bool = False
-    medication_reminders: bool = True
-    follow_up_reminders: bool = True
-    emergency_alerts: bool = True

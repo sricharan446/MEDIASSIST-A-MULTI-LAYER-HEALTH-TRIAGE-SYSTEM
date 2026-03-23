@@ -62,7 +62,7 @@ from google.genai import types
 from knowledge_graph.graph import query_graph
 from lab_services import analyze_lab_values, compare_lab_records, extract_lab_metrics, summarize_metric_snapshot
 from med_safety import assess_medication_safety, build_safety_summary, check_drug_interactions
-from models import ChatRequest, ChatResponse, LoginRequest, ProfileRequest, SignupRequest, VoiceRequest, ExpertConsultation
+from models import ChatRequest, ChatResponse, LoginRequest, ProfileRequest, SignupRequest, ExpertConsultation
 from rag.rag_engine import search_rag, add_document_to_rag
 from services.profile import normalize_profile, profile_from_login
 from services.triage import (
@@ -73,9 +73,7 @@ from services.triage import (
     needs_more_followup,
 )
 from services.analytics import add_health_metric, get_health_trends, get_dashboard_summary, generate_health_report
-from services.notifications import notification_manager
 from services.security import security_manager
-from services.voice_handler import voice_handler
 from services.expert_consultation import expert_manager
 from services.language import language_manager
 
@@ -498,14 +496,41 @@ EMERGENCY_SPECIALTY: dict = {
     "heart attack":         "cardiologist",
     "no pulse":             "cardiologist",
     "stroke":               "neurologist",
+    "brain bleed":          "neurologist",
+    "brain bleeding":       "neurologist",
+    "bleeding in brain":    "neurologist",
+    "brain hemorrhage":     "neurologist",
+    "brain haemorrhage":    "neurologist",
+    "intracranial bleed":   "neurologist",
+    "intracranial hemorrhage": "neurologist",
+    "intracranial haemorrhage": "neurologist",
+    "intracerebral hemorrhage": "neurologist",
+    "intracerebral haemorrhage": "neurologist",
+    "subarachnoid hemorrhage": "neurologist",
+    "subarachnoid haemorrhage": "neurologist",
+    "hemorrhagic stroke":   "neurologist",
+    "haemorrhagic stroke":  "neurologist",
     "severe headache":      "neurologist",
+    "worst headache":       "neurologist",
+    "worst headache of my life": "neurologist",
     "paralysis":            "neurologist",
     "unable to move":       "neurologist",
+    "slurred speech":       "neurologist",
+    "face drooping":        "neurologist",
+    "one sided weakness":   "neurologist",
     "seizure":              "neurologist",
     "breathing difficulty": "pulmonologist",
+    "difficulty breathing": "pulmonologist",
     "shortness of breath":  "pulmonologist",
+    "short breath":         "pulmonologist",
+    "breathless":           "pulmonologist",
+    "gasping":              "pulmonologist",
+    "struggling to breathe": "pulmonologist",
+    "not able to breathe":  "pulmonologist",
+    "unable to breathe":    "pulmonologist",
     "can't breathe":        "pulmonologist",
     "cannot breathe":       "pulmonologist",
+    "blue lips":            "pulmonologist",
     "unconscious":          "general-physician",
     "collapsed":            "general-physician",
     "fainting":             "general-physician",
@@ -539,6 +564,118 @@ def build_practo_url(specialty_slug: str, city: str = "") -> str:
     """Build a Google Maps doctor search URL without hard-coding a city."""
     specialty_query = urllib.parse.quote_plus(f"{specialty_slug.replace('-', ' ')} near me")
     return f"https://www.google.com/maps/search/{specialty_query}"
+
+
+SPECIALTY_KEYWORDS: Dict[str, str] = {
+    "diabetes": "endocrinologist",
+    "hba1c": "endocrinologist",
+    "glucose": "endocrinologist",
+    "thyroid": "endocrinologist",
+    "tsh": "endocrinologist",
+    "hypertension": "cardiologist",
+    "blood pressure": "cardiologist",
+    "bp": "cardiologist",
+    "cholesterol": "cardiologist",
+    "heart": "cardiologist",
+    "chest pain": "cardiologist",
+    "migraine": "neurologist",
+    "headache": "neurologist",
+    "dizziness": "neurologist",
+    "seizure": "neurologist",
+    "anxiety": "psychiatrist",
+    "palpitations": "psychiatrist",
+    "anemia": "hematologist",
+    "anaemia": "hematologist",
+    "hemoglobin": "hematologist",
+    "haemoglobin": "hematologist",
+    "asthma": "pulmonologist",
+    "wheezing": "pulmonologist",
+    "shortness of breath": "pulmonologist",
+    "breathing": "pulmonologist",
+    "gastroenteritis": "gastroenterologist",
+    "stomach pain": "gastroenterologist",
+    "vomiting": "gastroenterologist",
+    "diarrhea": "gastroenterologist",
+    "diarrhoea": "gastroenterologist",
+    "urinary tract infection": "urologist",
+    "uti": "urologist",
+    "burning urination": "urologist",
+    "frequent urination": "urologist",
+    "kidney": "urologist",
+    "urine": "urologist",
+    "skin": "dermatologist",
+    "rash": "dermatologist",
+    "itching": "dermatologist",
+    "eczema": "dermatologist",
+    "psoriasis": "dermatologist",
+    "acne": "dermatologist",
+    "muscle strain": "orthopedist",
+    "joint pain": "orthopedist",
+    "leg pain": "orthopedist",
+    "back pain": "orthopedist",
+}
+
+
+def infer_specialty_slug(message: str, prediction_list: Optional[List[tuple]] = None) -> str:
+    """Pick the most relevant specialist based on predicted disease or explicit medical terms."""
+    for disease, _confidence in prediction_list or []:
+        slug = DISEASE_SPECIALTY.get(str(disease).lower().strip())
+        if slug:
+            return slug
+
+    text = (message or "").lower()
+    for keyword, slug in SPECIALTY_KEYWORDS.items():
+        if keyword in text:
+            return slug
+
+    return "general-physician"
+
+
+REPORT_TRIGGER_PHRASES = [
+    "my report",
+    "this report",
+    "the report",
+    "lab report",
+    "blood report",
+    "scan report",
+    "test report",
+    "uploaded report",
+    "uploaded file",
+    "my file",
+    "my lab",
+    "my blood test",
+    "my test result",
+    "my results",
+    "report findings",
+    "lab findings",
+    "explain my report",
+    "explain my lab",
+    "explain these results",
+    "summarize my report",
+    "summarise my report",
+    "compare with previous report",
+    "compare with my previous report",
+    "compare my reports",
+    "previous report",
+]
+
+
+def should_use_uploaded_report(message: str, has_report: bool) -> bool:
+    """Only route to report analysis when the user explicitly refers to an uploaded report/results."""
+    if not has_report:
+        return False
+
+    text = (message or "").lower().strip()
+    if not text:
+        return False
+
+    if any(phrase in text for phrase in REPORT_TRIGGER_PHRASES):
+        return True
+
+    # Catch common direct questions with "report/results/file" phrasing.
+    question_starts = ("what does", "explain", "summarize", "summarise", "compare", "tell me about")
+    report_nouns = ("report", "results", "result", "file", "lab", "blood test", "scan", "document")
+    return text.startswith(question_starts) and any(noun in text for noun in report_nouns)
 
 # ── Gemini call with retry ────────────────────────────────────────────────────
 async def gemini_generate(model: str, contents: str, temperature: float = 0.7,
@@ -651,15 +788,21 @@ def check_emergency(user_text: str) -> bool:
     if not user_text:
         return False
     emergency_keywords = [
-        # Original 11
-        "chest pain", "breathing difficulty", "shortness of breath",
-        "unconscious", "stroke", "heart attack",
-        "severe headache", "blood vomiting", "seizure",
-        "can't breathe", "cannot breathe", "no pulse",
-        # New additions (FIX 15)
-        "paralysis", "unable to move", "fainting", "collapsed",
-        "suicidal", "overdose", "poisoning",
-        "anaphylaxis", "allergic reaction", "severe bleeding", "choking",
+        *EMERGENCY_SPECIALTY.keys(),
+        # Additional clinical red flags that should still trigger emergency routing
+        "respiratory distress",
+        "stopped breathing",
+        "not breathing",
+        "can barely breathe",
+        "barely breathing",
+        "sudden weakness on one side",
+        "weakness on one side",
+        "sudden confusion",
+        "loss of consciousness",
+        "vomiting blood",
+        "coughing blood",
+        "head injury with bleeding",
+        "severe head injury",
     ]
     text_lower = user_text.lower()
     return any(kw in text_lower for kw in emergency_keywords)
@@ -857,10 +1000,30 @@ class MemoryManager:
             for m in msgs
         ]
 
-    def get_message_context(self, username: str, sid: str) -> List[dict]:
+    def get_message_context(self, username: str, sid: str, exclude_tools: Optional[List[str]] = None) -> List[dict]:
+        session = self.get_session(username, sid)
+        if not session:
+            return []
+
+        messages = session.get("messages", [])[-20:]
+        exclude_set = {tool.lower() for tool in (exclude_tools or [])}
+        excluded_indexes = set()
+
+        if exclude_set:
+            for index, message in enumerate(messages):
+                tools_used = {
+                    str(tool).lower()
+                    for tool in (message.get("meta") or {}).get("tools_used", [])
+                }
+                if tools_used & exclude_set:
+                    excluded_indexes.add(index)
+                    if index > 0 and messages[index - 1].get("role") == "user":
+                        excluded_indexes.add(index - 1)
+
         return [
             {"role": item["role"], "content": item["content"]}
-            for item in self.get_history(username, sid)
+            for index, item in enumerate(messages)
+            if index not in excluded_indexes
         ]
 
     def list_sessions(self, username: str) -> List[dict]:
@@ -1300,7 +1463,7 @@ async def chat(req: ChatRequest):
     active_model = req.model if req.model else MODEL_NAME
 
     sid = req.session_id or memory.create_session(username)
-    history = memory.get_message_context(username, sid) or []
+    history = memory.get_message_context(username, sid, exclude_tools=["Uploaded Report"]) or []
     if not history:
         memory.set_session_name(username, sid, req.message)
 
@@ -1366,7 +1529,7 @@ async def chat(req: ChatRequest):
                 sources=sources,
             )
         req.message = combine_messages_for_assessment(updated_state, req.message)
-        history = memory.get_message_context(username, sid) or []
+        history = memory.get_message_context(username, sid, exclude_tools=["Uploaded Report"]) or []
         memory.set_diagnostic_state(username, sid, None)
 
     profile = normalize_profile(memory.load_profile(username))
@@ -1374,11 +1537,8 @@ async def chat(req: ChatRequest):
     gender = profile.get("gender", "unknown")
     known_conditions = profile.get("known_conditions", [])
 
-    report_keywords = ["report", "result", "findings", "uploaded", "my file", "summarise",
-                       "summarize", "lab", "test", "scan", "document", "analysis", "blood test",
-                       "what does", "explain my", "tell me about my", "trend", "compare", "previous"]
     user_report = USER_REPORTS.get(username) or memory.load_report(username)
-    if user_report and any(kw in req.message.lower() for kw in report_keywords):
+    if should_use_uploaded_report(req.message, bool(user_report)):
         lab_history = memory.load_lab_history(username)
         latest_record = lab_history[-1] if lab_history else None
         previous_record = lab_history[-2] if len(lab_history) > 1 else None
@@ -1390,6 +1550,9 @@ async def chat(req: ChatRequest):
             trend_lines = compare_lab_records(latest_record.get("metrics", []), previous_record.get("metrics", []))
             if trend_lines:
                 trend_context = "\n".join(trend_lines)
+        report_specialty = infer_specialty_slug(
+            f"{req.message}\n{user_report.get('text', '')}\n{metrics_context}\n{trend_context}"
+        )
         prompt = (
             f"You are a medical AI assistant. The user has uploaded a medical report.\n\n"
             f"Uploaded Report ({user_report['filename']}):\n{user_report['text']}\n\n"
@@ -1415,7 +1578,7 @@ async def chat(req: ChatRequest):
                            {"tools_used": result["tools_used"], "sources": sources})
         return ChatResponse(response=result["response"], session_id=sid,
                             tools_used=result["tools_used"],
-                            practo_url=build_practo_url("general-physician"),
+                            practo_url=build_practo_url(report_specialty),
                             timestamp=datetime.now().isoformat(),
                             sources=sources)
 
@@ -1626,7 +1789,7 @@ Respond EXACTLY in this format:
                                {"tools_used": result["tools_used"], "sources": sources})
             return ChatResponse(response=result["response"], session_id=sid,
                                 tools_used=result["tools_used"],
-                                practo_url=build_practo_url("general-physician"),
+                                practo_url=build_practo_url(infer_specialty_slug(req.message, prediction_list)),
                                 timestamp=datetime.now().isoformat(),
                                 sources=sources)
 
@@ -1672,7 +1835,7 @@ Respond EXACTLY in this format:
         response=result["response"],
         session_id=sid,
         tools_used=result.get("tools_used", []),
-        practo_url=build_practo_url("general-physician"),
+        practo_url=build_practo_url(infer_specialty_slug(req.message, prediction_list)),
         timestamp=datetime.now().isoformat(),
         sources=sources
     )
@@ -1982,105 +2145,6 @@ async def get_health_report_endpoint(token: str = Query(...)):
     }
 
 
-# ────────────────────── NOTIFICATIONS ─────────────────────────────────────────
-@app.get("/api/notifications")
-async def get_notifications(token: str = Query(...), unread_only: bool = Query(False)):
-    """Get notifications for the user"""
-    username = await get_current_user(token)
-    
-    notifications = notification_manager.get_user_notifications(username, unread_only)
-    return {
-        "username": username,
-        "notifications": notifications,
-        "count": len(notifications),
-    }
-
-
-@app.post("/api/mark-notification-read")
-async def mark_notification_read(token: str = Query(...), notification_id: str = Query(...)):
-    """Mark a notification as read"""
-    username = await get_current_user(token)
-    
-    success = notification_manager.mark_notification_as_read(username, notification_id)
-    
-    return {
-        "status": "success" if success else "failed",
-        "notification_id": notification_id,
-    }
-
-
-@app.post("/api/notification-preferences")
-async def update_notification_preferences(token: str = Query(...), 
-                                         email_enabled: bool = Query(True),
-                                         sms_enabled: bool = Query(False),
-                                         medication_reminders: bool = Query(True),
-                                         follow_up_reminders: bool = Query(True)):
-    """Update notification preferences for the user"""
-    username = await get_current_user(token)
-    
-    # Load and update profile
-    profile_file = Path("memory") / username / "profile.json"
-    profile = {}
-    if profile_file.exists():
-        with open(profile_file, "r") as f:
-            profile = json.load(f)
-    
-    profile["notification_preferences"] = {
-        "email_enabled": email_enabled,
-        "sms_enabled": sms_enabled,
-        "medication_reminders": medication_reminders,
-        "follow_up_reminders": follow_up_reminders,
-    }
-    
-    profile_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(profile_file, "w") as f:
-        json.dump(profile, f, indent=2)
-    
-    security_manager.log_audit_event(username, "UPDATE_NOTIFICATION_PREFERENCES", "preferences")
-    
-    return {
-        "status": "success",
-        "preferences": profile["notification_preferences"],
-    }
-
-
-# ────────────────────── VOICE INPUT/OUTPUT ───────────────────────────────────
-@app.post("/api/voice-input")
-async def process_voice_input(req: VoiceRequest):
-    """Convert voice input (audio) to text"""
-    username = await get_current_user(req.token)
-    
-    result = await voice_handler.process_voice_input(req.audio_base64, req.language or "en")
-    
-    if result["status"] == "success":
-        security_manager.log_audit_event(username, "VOICE_INPUT", "audio_transcription")
-    
-    return result
-
-
-@app.post("/api/voice-output")
-async def generate_voice_output(token: str = Query(...), text: str = Query(...), 
-                               language: str = Query("en"), voice_style: str = Query("neutral")):
-    """Convert text response to voice output (TTS)"""
-    username = await get_current_user(token)
-    
-    result = await voice_handler.generate_voice_output(text, language, voice_style)
-    
-    if result["status"] == "success":
-        security_manager.log_audit_event(username, "VOICE_OUTPUT", "text_to_speech")
-    
-    return result
-
-
-@app.get("/api/voice-languages")
-async def get_voice_languages():
-    """Get list of supported voice languages"""
-    return {
-        "languages": voice_handler.get_supported_languages(),
-        "voice_styles": voice_handler.get_voice_styles(),
-    }
-
-
 # ────────────────────── EXPERT CONSULTATION ───────────────────────────────────
 @app.get("/api/experts")
 async def get_available_experts(token: str = Query(...), category: str = Query("all")):
@@ -2109,15 +2173,7 @@ async def request_consultation(req: ExpertConsultation):
         req.category,
         req.preferred_language or "en"
     )
-    
-    # Send notification
-    notification_manager.send_notification(
-        username,
-        f"Your consultation request has been received. Estimated response time: 15-30 minutes",
-        notification_type="consultation",
-        channels=["in-app"]
-    )
-    
+
     security_manager.log_audit_event(username, "REQUEST_CONSULTATION", "consultation", details={"category": req.category})
     
     return {
@@ -2163,16 +2219,7 @@ async def schedule_appointment(token: str = Query(...), expert_id: str = Query(.
     username = await get_current_user(token)
     
     appointment = expert_manager.schedule_appointment(username, expert_id, date, time, reason)
-    
-    # Send notification
-    notification_manager.send_notification(
-        username,
-        f"Appointment scheduled for {date} at {time}. Meeting link: {appointment['meeting_link']}",
-        notification_type="appointment",
-        priority="high",
-        channels=["in-app", "email"]
-    )
-    
+
     security_manager.log_audit_event(username, "SCHEDULE_APPOINTMENT", "appointment", details={"date": date, "time": time})
     
     return {

@@ -32,20 +32,9 @@ pypdf
 # ── Security & Encryption ──────────────────────────────────
 cryptography
 
-# ── Voice Processing ──────────────────────────────────────
-SpeechRecognition
-pydub                                   # Audio format handling
-gtts                                    # Google Translate TTS (free, no API key)
-
 # ── Image & UI ────────────────────────────────────────────
 Pillow                                  # Image handling
 
 # ── Optional OCR (requires Tesseract system install) ──────
 # pytesseract                           # For image text extraction
 #                                       # First install: https://github.com/UB-Mannheim/tesseract/wiki
-
-# For advanced Google Cloud Speech-to-Text (optional):
-# google-cloud-speech
-#
-# For audio processing:
-# librosa

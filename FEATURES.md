@@ -90,124 +90,7 @@ Query Parameters:
 Response: Text-based comprehensive health report
 ```
 
-## 3. Notification System
-
-**Location:** `/api/notifications`, `/api/mark-notification-read`, `/api/notification-preferences`
-
-**Features:**
-- Email and SMS notifications
-- Medication reminders
-- Follow-up reminders
-- Emergency alerts
-- In-app notifications
-- Notification preferences management
-
-**API Endpoints:**
-
-### Get Notifications
-```
-GET /api/notifications
-Query Parameters:
-  - token: User authentication token
-  - unread_only: bool - Only unread notifications (default: false)
-```
-
-### Mark Notification as Read
-```
-POST /api/mark-notification-read
-Query Parameters:
-  - token: User authentication token
-  - notification_id: str - ID of notification to mark as read
-```
-
-### Update Notification Preferences
-```
-POST /api/notification-preferences
-Query Parameters:
-  - token: User authentication token
-  - email_enabled: bool
-  - sms_enabled: bool
-  - medication_reminders: bool
-  - follow_up_reminders: bool
-```
-
-## 4. Voice Input & Output
-
-**Location:** `/api/voice-input`, `/api/voice-output`, `/api/voice-languages`
-
-**Features:**
-- Speech-to-text for voice queries
-- Text-to-speech for responses
-- Support for multiple languages
-- Different voice styles (neutral, friendly, professional, calm, energetic)
-
-**API Endpoints:**
-
-### Process Voice Input
-```
-POST /api/voice-input
-Body:
-{
-  "token": "...",
-  "audio_base64": "...",  // Base64 encoded audio
-  "language": "en|es|fr|de|hi"
-}
-
-Response:
-{
-  "status": "success|error",
-  "transcription": {
-    "text": "...",
-    "confidence": 0.95,
-    "language": "en",
-    "duration_seconds": 5.2
-  }
-}
-```
-
-### Generate Voice Output
-```
-POST /api/voice-output
-Query Parameters:
-  - token: User authentication token
-  - text: str - Text to convert to speech
-  - language: str - Language (default: "en")
-  - voice_style: str - Voice style (default: "neutral")
-
-Response:
-{
-  "status": "success|error",
-  "audio": {
-    "audio_base64": "...",
-    "language": "en",
-    "voice_style": "neutral",
-    "duration_seconds": 2.5
-  }
-}
-```
-
-### Get Voice Languages
-```
-GET /api/voice-languages
-
-Response:
-{
-  "languages": {
-    "en": "English",
-    "es": "Spanish",
-    "fr": "French",
-    "de": "German",
-    "hi": "Hindi"
-  },
-  "voice_styles": {
-    "neutral": "Professional and neutral tone",
-    "friendly": "Warm and friendly tone",
-    ...
-  }
-}
-```
-
-## 5. Expert Consultation & Doctor Chat
+## 3. Expert Consultation & Doctor Chat
 
 **Location:** `/api/experts`, `/api/request-consultation`, `/api/my-consultations`, `/api/close-consultation`, `/api/schedule-appointment`
 
@@ -318,7 +201,7 @@ Response:
 }
 ```
 
-## 6. Multi-Language Support
+## 4. Multi-Language Support
 
 **Location:** `/api/ui-strings`, `/api/supported-languages`
 
@@ -362,7 +245,7 @@ Response:
 }
 ```
 
-## 7. Data Privacy & Security
+## 5. Data Privacy & Security
 
 **Location:** `/api/export-data`, `/api/delete-account`, `/api/audit-log`
 
@@ -391,7 +274,6 @@ Response:
     "profile": {...},
     "sessions": [...],
     "analytics": {...},
-    "notifications": [...],
     "audit_log": [...]
   }
 }
@@ -431,7 +313,7 @@ Response:
 }
 ```
 
-## 8. Enhanced User Profile
+## 6. Enhanced User Profile
 
 **Location:** `/api/update-profile-extended`
 
@@ -443,7 +325,6 @@ Response:
 - `email`: User email address
 - `phone`: User phone number
 - `language`: Preferred language
-- `notification_preferences`: Notification configuration
 
 **API Endpoint:**
 
@@ -467,8 +348,7 @@ Response:
     "emergency_contact": "...",
     "email": "...",
     "phone": "...",
-    "language": "en",
-    "notification_preferences": {...}
+    "language": "en"
   }
 }
 ```
@@ -494,8 +374,6 @@ Response:
 - Right to data export
 - Right to be forgotten (account deletion)
 - Data processing transparency
-- Consent management for notifications
-
 ## Storage Structure
 
 ```
@@ -504,9 +382,6 @@ memory/
     profile.json              # User profile
     analytics.json            # Health metrics and trends
     {session_id}.json         # Chat sessions
-  notifications/
-    {username}_notifications.json    # User notifications
-    emergency_alerts.json            # Emergency log
   audit_logs/
     {username}_audit.json     # User audit log
     emergency_alerts.json     # System emergency alerts
@@ -515,8 +390,6 @@ memory/
     {username}_consultations.json    # Consultations
     appointments.json         # Appointments
     experts.json              # Expert directory
-  voice_logs/
-    {username}_voice_log.json # Voice interactions
 ```
 
 ## Integration with Existing Features
@@ -525,9 +398,6 @@ All new features integrate seamlessly with existing MediAssist features:
 - Medication cards in responses include drug interaction warnings
 - Health metrics are tracked from lab uploads and chat inputs
 - Expert consultations can include chat history
-- Notifications are sent for emergency alerts and follow-ups
-- Voice input/output works with all existing chat features
-
 ## Development Notes
 
 - All service modules use JSON file storage for persistence
@@ -539,8 +409,6 @@ All new features integrate seamlessly with existing MediAssist features:
 
 ## Future Enhancements
 
-- Integration with real email/SMS providers (SendGrid, Twilio)
-- Advanced speech recognition (Google Cloud Speech-to-Text)
 - Appointment confirmations via calendar integration
 - Wearable device integration for real-time health data
 - Machine learning for personalized recommendations

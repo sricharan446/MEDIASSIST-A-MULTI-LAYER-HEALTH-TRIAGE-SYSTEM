@@ -24,10 +24,7 @@ User Message → Emergency Check → Symptom Predictor → Followup Triage
 - ✅ Health analytics with metric tracking & trends
 - ✅ Drug interaction checking (40+ documented interactions)
 - ✅ Expert consultation booking & appointment scheduling
-- ✅ Notification system (in-app + simulated email/SMS)
-- ✅ Multi-language support (8 languages UI + 10+ voice languages)
-- ✅ **Real speech-to-text** (Google Speech Recognition API)
-- ✅ **Real text-to-speech** (Google Translate TTS via gTTS)
+- ✅ Multi-language support (8 languages)
 - ✅ GDPR compliance (data export, account deletion)
 - ✅ Audit logging (500 entries/user)
 
@@ -41,29 +38,7 @@ User Message → Emergency Check → Symptom Predictor → Followup Triage
 - **Reports**: Generate personalized health summaries
 - **History**: Last 100 metrics stored per user
 
-### 🎤 Voice Input (Speech-to-Text) ✨
-- **Real Speech Recognition**: Google's free Speech Recognition API
-- **Browser Microphone Integration**: Click 🎤 button and speak
-- **10+ Languages**: English, Spanish, French, German, Hindi, Tamil, Telugu, Kannada, Marathi, Gujarati
-- **Confidence Scoring**: Know how accurate the transcription is
-- **Mobile Friendly**: Works on phones and tablets
-- **Secure**: Token-authenticated, audit logged
-
-### 🔊 Voice Output (Text-to-Speech) ✨
-- **Real Text-to-Speech**: Google Translate TTS (gTTS) - Free, no API key required
-- **Audio Playback**: Listen to responses directly in chat
-- **10+ Languages**: Supports all 10+ languages for both input and output
-- **MP3 Generation**: High-quality audio synthesis
-- **Browser Compatible**: Works on all modern browsers
-- **Duration Estimation**: Automatic duration calculation for UX
-
-### 🔔 Notification System
-- **Types**: Medication reminders, follow-up reminders, emergency alerts, appointment notifications
-- **Channels**: In-app (working), Email (simulated), SMS (simulated)
-- **Preferences**: Configurable per notification type
-- **History**: Last 100 notifications per user
-
-## API Endpoints (27 Total)
+## API Endpoints (24 Total)
 
 ### Authentication
 ```
@@ -104,13 +79,6 @@ POST   /api/check-drug-interactions - Check medication interactions
 GET    /api/pharmacy-links      - Get pharmacy order links for medicines
 ```
 
-### Notifications
-```
-GET    /api/notifications       - Get user notifications
-POST   /api/mark-notification-read - Mark as read
-POST   /api/notification-preferences - Update preferences
-```
-
 ### Expert Consultation
 ```
 GET    /api/experts             - List available experts (3 doctors + 1 nutritionist)
@@ -118,13 +86,6 @@ POST   /api/request-consultation - Request expert help
 GET    /api/my-consultations    - Get consultation history
 POST   /api/close-consultation  - Close with rating/feedback
 POST   /api/schedule-appointment - Book appointment with meeting link
-```
-
-### Voice (Real Speech-to-Text & Text-to-Speech ✨)
-```
-POST   /api/voice-input         - Speech-to-text (Google Speech Recognition API ✨)
-POST   /api/voice-output        - Text-to-speech (Google Translate TTS via gTTS ✨)
-GET    /api/voice-languages     - List 10+ supported languages
 ```
 
 ### Language & Localization
@@ -203,16 +164,12 @@ memory/                         (Persistent user data)
 │   ├── analytics.json          (health metrics, 100-entry cap)
 │   ├── lab_history.json        (lab records, 30-entry cap)
 │   └── last_report.json        (latest lab snapshot)
-├── notifications/
-│   └── {username}_notifications.json (100-entry cap)
 ├── consultations/
 │   ├── {username}_consultations.json
 │   ├── {username}_appointments.json
 │   └── feedback.json
 ├── audit_logs/
 │   └── {username}_audit.json   (500-entry cap)
-└── voice_logs/
-    └── {username}_voice_log.json
 
 uploads/                        (Temporary lab reports)
 ├── {filename}_{timestamp}
@@ -249,8 +206,7 @@ users.json                      (Auth store - credentials)
   "emergency_contact": "1234567890",
   "email": "user@example.com",
   "phone": null,
-  "language": "en",
-  "notification_preferences": {}
+  "language": "en"
 }
 ```
 
@@ -269,7 +225,6 @@ users.json                      (Auth store - credentials)
 - User authentication (token-based, SHA256 hashing)
 - Audit logging (500 entries/user)
 - Health metrics tracking (100 entries/user)
-- Notification system with preferences
 - Expert consultation booking (3 doctors + 1 nutritionist)
 - Appointment scheduling with mock meeting links
 - Data export (GDPR)
@@ -278,8 +233,6 @@ users.json                      (Auth store - credentials)
 - Pharmacy links (1mg)
 - Handoff summary generation
 - Multi-language UI (8 languages)
-- **Real speech-to-text** (Google Speech Recognition API, 10+ languages, browser microphone integration)
-- **Real text-to-speech** (Google Translate TTS via gTTS, 10+ languages, MP3 generation)
 
 ### ⚠️ Partially Implemented
   
@@ -288,11 +241,6 @@ users.json                      (Auth store - credentials)
   - Expert directory static (3 hardcoded doctors + 1 nutritionist)
   - No actual backend for responses
   
-- **Email/SMS Notifications**:
-  - Preferences saved
-  - Logic implemented
-  - No real email/SMS service integration (simulated)
-
 - **Language Translation**:
   - UI strings translated for 8 languages
   - Full response translation not implemented
@@ -324,11 +272,6 @@ users.json                      (Auth store - credentials)
 - **pdfplumber** (PDF analysis)
 - **BeautifulSoup4** (HTML scraping)
 - **Pillow** (image handling)
-
-### Voice & Audio
-- **SpeechRecognition** (Google Speech Recognition API - STT)
-- **gTTS** (Google Translate TTS - Text-to-Speech, free, no API key)
-- **pydub** (audio format conversion & handling)
 
 ### Security
 - **cryptography** (Fernet AES-128 encryption)
@@ -408,8 +351,6 @@ python app.py
 - Messages: 20 per session
 - Health metrics: 100 per user
 - Audit logs: 500 per user
-- Notifications: 100 per user
-
 ## Known Limitations
 
 1. **Medical Data Sparse**: symptom_disease_map is minimal (good for demo, needs expansion)
@@ -479,7 +420,6 @@ See FEATURES.md and QUICK_START.md for detailed examples.
 |-------|----------|
 | GEMINI_API_KEY not set | Create .env file with valid key from [aistudio.google.com](https://aistudio.google.com) |
 | Port 8000 in use | Change PORT in .env or run `netstat -ano \| findstr :8000` to find process |
-| Voice endpoints return placeholder | Expected behavior - no real audio service integrated |
 | Expert consultations empty | 3 doctors are hardcoded as demo data |
 | Slow symptom prediction | Normal on first run - knowledge graph loads, RAG indexes data |
 | Character encoding issues | Ensure UTF-8 in .env and terminal |
@@ -533,9 +473,7 @@ MediAssist/
 │   ├── profile.py
 │   ├── triage.py
 │   ├── analytics.py
-│   ├── notifications.py
 │   ├── security.py
-│   ├── voice_handler.py
 │   ├── expert_consultation.py
 │   └── language.py
 │
@@ -568,9 +506,6 @@ MediAssist/
 
 - **[FEATURES.md](FEATURES.md)** - Complete API reference with examples
 - **[QUICK_START.md](QUICK_START.md)** - Getting started guide
-- **[VOICE_FEATURE.md](VOICE_FEATURE.md)** - Complete voice input (STT) guide with troubleshooting
-- **[VOICE_QUICK_REFERENCE.md](VOICE_QUICK_REFERENCE.md)** - Quick voice I/O reference
-- **[SPEECH_TO_TEXT_IMPLEMENTATION.md](SPEECH_TO_TEXT_IMPLEMENTATION.md)** - Technical implementation details
 - **[MEDIASSIST_COMPREHENSIVE_ANALYSIS.md](MEDIASSIST_COMPREHENSIVE_ANALYSIS.md)** - Technical deep dive
 - **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Architecture & design
 
@@ -593,7 +528,7 @@ For issues or questions:
 
 ---
 
-**Version:** 4.1 (Speech-to-Text Update)  
-**Last Updated:** March 20, 2026  
-**Status:** Production-Ready ✅  
+**Version:** 4.2
+**Last Updated:** March 23, 2026
+**Status:** Production-Ready ✅
 **Maintenance Mode:** Active

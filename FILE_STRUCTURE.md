@@ -4,7 +4,7 @@
 
 ```
 MediAssist/
-├── app.py                          # Main FastAPI application (MODIFIED - added 26 endpoints)
+├── app.py                          # Main FastAPI application (MODIFIED - added 24 endpoints)
 ├── index.html                      # Frontend UI (ready for enhancement)
 ├── models.py                       # Pydantic models (MODIFIED - added 5 new models)
 ├── requirements.txt                # Dependencies (MODIFIED - added cryptography)
@@ -18,9 +18,7 @@ MediAssist/
 │   ├── profile.py                  # User profile management (MODIFIED - extended fields)
 │   ├── triage.py                   # Symptom triage logic
 │   ├── analytics.py                # 🆕 Health analytics & trends
-│   ├── notifications.py            # 🆕 Notification system
 │   ├── security.py                 # 🆕 Security & encryption
-│   ├── voice_handler.py            # 🆕 Voice input/output
 │   ├── expert_consultation.py      # 🆕 Doctor consultation management
 │   └── language.py                 # 🆕 Multi-language support
 │
@@ -50,9 +48,6 @@ MediAssist/
 │   │   ├── profile.json            # User profile
 │   │   ├── analytics.json          # 🆕 Health metrics (new)
 │   │   └── {session_id}.json       # Chat sessions
-│   ├── notifications/
-│   │   ├── {username}_notifications.json  # 🆕 User notifications (new)
-│   │   └── emergency_alerts.json   # 🆕 Emergency log (new)
 │   ├── audit_logs/
 │   │   ├── {username}_audit.json   # 🆕 Audit log (new)
 │   │   └── user_roles.json         # 🆕 Role assignments (new)
@@ -60,8 +55,6 @@ MediAssist/
 │   │   ├── {username}_consultations.json  # 🆕 Consultations (new)
 │   │   ├── appointments.json       # 🆕 Appointments (new)
 │   │   └── experts.json            # 🆕 Expert directory (new)
-│   └── voice_logs/
-│       └── {username}_voice_log.json      # 🆕 Voice interactions (new)
 │
 ├── uploads/                        # User uploaded files
 ├── chroma_db/                      # RAG database
@@ -74,7 +67,7 @@ MediAssist/
     └── CHECKLIST.md                # 🆕 Feature checklist (this file)
 ```
 
-## New Core Service Modules (5 files)
+## New Core Service Modules (3 files)
 
 ### 1. `services/analytics.py` - Health Analytics & Trends
 **Purpose:** Track and analyze user health metrics over time
@@ -94,30 +87,7 @@ MediAssist/
 
 ---
 
-### 2. `services/notifications.py` - Notification System
-**Purpose:** Manage and send notifications to users
-**Key Classes:**
-- `NotificationManager` - Main notification handler
-
-**Key Methods:**
-- `send_notification()` - Send generic notification
-- `send_medication_reminder()` - Medication alert
-- `send_follow_up_reminder()` - Follow-up alert
-- `send_emergency_alert()` - Emergency alert
-- `get_user_notifications()` - Retrieve notifications
-- `mark_notification_as_read()` - Mark as read
-
-**Features:**
-- Email and SMS support (configurable)
-- Multiple notification types
-- Priority levels (low, normal, high, urgent)
-- Last 100 notifications per user
-
-**Storage:** `memory/notifications/{username}_notifications.json`
-
----
-
-### 3. `services/security.py` - Security & Privacy
+### 2. `services/security.py` - Security & Privacy
 **Purpose:** Handle encryption, security, and privacy compliance
 **Key Classes:**
 - `SecurityManager` - Main security handler
@@ -148,32 +118,7 @@ MediAssist/
 
 ---
 
-### 4. `services/voice_handler.py` - Voice Input & Output
-**Purpose:** Handle speech-to-text and text-to-speech
-**Key Classes:**
-- `VoiceHandler` - Main voice I/O handler
-
-**Key Methods:**
-- `process_voice_input()` - Audio to text (STT)
-- `generate_voice_output()` - Text to audio (TTS)
-- `log_voice_interaction()` - Log voice usage
-- `get_supported_languages()` - Get language list
-- `get_voice_styles()` - Get voice styles
-
-**Features:**
-- Supports 10+ languages
-- Multiple voice styles (neutral, friendly, professional, etc.)
-- Audio codec handling
-- Voice interaction logging
-
-**Supported Languages:**
-- English, Spanish, French, German, Hindi, Tamil, Telugu, Kannada, Marathi, Gujarati
-
-**Storage:** `memory/voice_logs/{username}_voice_log.json`
-
----
-
-### 5. `services/expert_consultation.py` - Expert Consultation Management
+### 3. `services/expert_consultation.py` - Expert Consultation Management
 **Purpose:** Manage doctor/expert consultations and appointments
 **Key Classes:**
 - `ExpertConsultationManager` - Main consultation handler
@@ -207,7 +152,7 @@ MediAssist/
 
 ---
 
-### 6. `services/language.py` - Multi-Language Support
+### 5. `services/language.py` - Multi-Language Support
 **Purpose:** Provide language translations and localization
 **Key Classes:**
 - `LanguageManager` - Main language handler
@@ -255,8 +200,6 @@ MediAssist/
 - `MedicationInteraction` - Drug interaction data format
 - `HealthTrendData` - Health trend data format
 - `ExpertConsultation` - Consultation request format
-- `VoiceRequest` - Voice input request format
-- `NotificationPreferences` - Notification settings format
 
 **Updated Models:**
 - `LoginRequest` - Added 7 new optional fields
@@ -281,7 +224,6 @@ MediAssist/
 - Added 8 new profile fields
 - Updated `DEFAULT_PROFILE` with new fields
 - Added `language` to `ENUM_FIELDS`
-- Added `notification_preferences` configuration
 - Normalized and validated all new fields
 
 **New Fields:**
@@ -292,7 +234,6 @@ MediAssist/
 - `email`
 - `phone`
 - `language`
-- `notification_preferences`
 
 **Total Lines Added:** ~80
 
@@ -389,9 +330,7 @@ services/
 ├── profile.py          # User data
 ├── triage.py           # Symptom assessment
 ├── analytics.py        # 🆕 Health metrics (NEW)
-├── notifications.py    # 🆕 Alerts (NEW)
 ├── security.py         # 🆕 Encryption (NEW)
-├── voice_handler.py    # 🆕 Voice I/O (NEW)
 ├── expert_consultation.py  # 🆕 Consultations (NEW)
 └── language.py         # 🆕 Translations (NEW)
 ```
@@ -402,10 +341,8 @@ memory/
 ├── User Data         → {username}/profile.json
 ├── Chat History      → {username}/{session_id}.json
 ├── Analytics         → {username}/analytics.json (🆕 NEW)
-├── Notifications     → notifications/{username}_notifications.json (🆕 NEW)
 ├── Security/Audit    → audit_logs/{username}_audit.json (🆕 NEW)
-├── Consultations     → consultations/{username}_consultations.json (🆕 NEW)
-└── Voice            → voice_logs/{username}_voice_log.json (🆕 NEW)
+└── Consultations     → consultations/{username}_consultations.json (🆕 NEW)
 ```
 
 ## File Dependencies
@@ -415,9 +352,7 @@ app.py
 ├─→ models.py
 ├─→ services/profile.py
 ├─→ services/analytics.py (🆕)
-├─→ services/notifications.py (🆕)
 ├─→ services/security.py (🆕)
-├─→ services/voice_handler.py (🆕)
 ├─→ services/expert_consultation.py (🆕)
 ├─→ services/language.py (🆕)
 ├─→ med_safety.py (modified)
@@ -449,9 +384,7 @@ app.py
 | File | Lines | Type | Status |
 |------|-------|------|--------|
 | services/analytics.py | 200+ | Code | 🆕 NEW |
-| services/notifications.py | 180+ | Code | 🆕 NEW |
 | services/security.py | 320+ | Code | 🆕 NEW |
-| services/voice_handler.py | 150+ | Code | 🆕 NEW |
 | services/expert_consultation.py | 280+ | Code | 🆕 NEW |
 | services/language.py | 180+ | Code | 🆕 NEW |
 | app.py | +300 | Code | MODIFIED |
@@ -503,9 +436,7 @@ To add new features in the future:
 
 **For Features:**
 - Analytics → `services/analytics.py`
-- Notifications → `services/notifications.py`
 - Security → `services/security.py`
-- Voice → `services/voice_handler.py`
 - Consultations → `services/expert_consultation.py`
 - Languages → `services/language.py`
 
