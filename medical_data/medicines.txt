@@ -1,0 +1,104 @@
+Medicine: Paracetamol (Acetaminophen)
+Class: Analgesic, Antipyretic
+Uses: Fever, mild to moderate pain, headache
+Common brands: Tylenol, Calpol, Dolo 650
+Typical dosage: 500-1000mg every 4-6 hours, max 4g/day
+Precautions: Avoid in liver disease, do not exceed recommended dose
+
+Medicine: Ibuprofen
+Class: NSAID (Non-Steroidal Anti-Inflammatory Drug)
+Uses: Pain, fever, inflammation, arthritis
+Common brands: Advil, Brufen, Nurofen
+Typical dosage: 200-400mg every 4-6 hours
+Precautions: Avoid in kidney disease, stomach ulcers, pregnancy
+
+Medicine: Cetirizine
+Class: Antihistamine
+Uses: Allergies, hay fever, hives, itching
+Common brands: Zyrtec, Alerid
+Typical dosage: 10mg once daily
+Precautions: May cause drowsiness, avoid alcohol
+
+Medicine: Omeprazole
+Class: Proton Pump Inhibitor (PPI)
+Uses: Acid reflux, GERD, stomach ulcers
+Common brands: Prilosec, Omez
+Typical dosage: 20-40mg once daily before meals
+Precautions: Long-term use may affect calcium absorption
+
+Medicine: Metformin
+Class: Antidiabetic (Biguanide)
+Uses: Type 2 diabetes
+Common brands: Glucophage, Glycomet
+Typical dosage: 500-2000mg daily in divided doses
+Precautions: Take with food, avoid in kidney disease
+
+Medicine: Amlodipine
+Class: Calcium Channel Blocker
+Uses: High blood pressure, angina
+Common brands: Norvasc, Amlod
+Typical dosage: 5-10mg once daily
+Precautions: May cause ankle swelling, avoid grapefruit
+
+Medicine: Atorvastatin
+Class: Statin (HMG-CoA reductase inhibitor)
+Uses: High cholesterol, cardiovascular disease prevention
+Common brands: Lipitor, Atorva
+Typical dosage: 10-80mg once daily
+Precautions: Take at night, monitor liver function
+
+Medicine: Losartan
+Class: ARB (Angiotensin Receptor Blocker)
+Uses: High blood pressure, diabetic kidney disease
+Common brands: Cozaar, Losartan
+Typical dosage: 50-100mg once daily
+Precautions: Avoid in pregnancy, monitor potassium levels
+
+Medicine: Salbutamol (Albuterol)
+Class: Bronchodilator (Beta-2 Agonist)
+Uses: Asthma, COPD, bronchospasm
+Common brands: Ventolin, Asthalin
+Typical dosage: 2 puffs as needed, up to 4 times daily
+Precautions: May cause tremor, palpitations
+
+Medicine: Amoxicillin
+Class: Antibiotic (Penicillin)
+Uses: Bacterial infections (respiratory, ear, skin, urinary)
+Common brands: Amoxil, Mox
+Typical dosage: 250-500mg three times daily
+Precautions: Penicillin allergy, complete full course
+
+Medicine: Azithromycin
+Class: Antibiotic (Macrolide)
+Uses: Bacterial infections, respiratory, skin, STIs
+Common brands: Zithromax, Azee
+Typical dosage: 500mg day 1, then 250mg days 2-5
+Precautions: May prolong QT interval
+
+Medicine: Pantoprazole
+Class: Proton Pump Inhibitor (PPI)
+Uses: GERD, peptic ulcer, H. pylori treatment
+Common brands: Protonix, Pan
+Typical dosage: 20-40mg once daily
+Precautions: Take before meals, avoid long-term high doses
+
+Medicine: Diclofenac
+Class: NSAID
+Uses: Pain, inflammation, arthritis, muscle pain
+Common brands: Voltaren, Voveran
+Typical dosage: 50mg 2-3 times daily
+Precautions: Avoid in heart disease, kidney disease
+
+Medicine: Levocetirizine
+Class: Antihistamine
+Uses: Allergies, chronic urticaria
+Common brands: Xyzal, Levosiz
+Typical dosage: 5mg once daily
+Precautions: Less drowsy than older antihistamines
+
+Medicine: Montelukast
+Class: Leukotriene Receptor Antagonist
+Uses: Asthma, allergic rhinitis
+Common brands: Singulair, Montair
+Typical dosage: 10mg once daily at bedtime
+Precautions: May cause mood changes, not for acute attacks

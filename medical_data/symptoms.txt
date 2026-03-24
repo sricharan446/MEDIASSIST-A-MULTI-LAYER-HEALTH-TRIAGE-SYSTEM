@@ -1,0 +1,74 @@
+Symptom: Fever
+Description: Elevated body temperature above 37.5C (99.5F)
+Causes: Infection, inflammation, heat exhaustion, medication reaction
+When to see doctor: Temperature above 39.4C (103F), persists more than 3 days, or with severe symptoms
+
+Symptom: Headache
+Description: Pain in the head or face, can be throbbing, constant, sharp, or dull
+Causes: Tension, migraine, dehydration, sinus infection, high blood pressure
+When to see doctor: Sudden severe headache, with fever/stiff neck, after head injury, with vision changes
+
+Symptom: Cough
+Description: Reflex action to clear the throat and airways
+Causes: Cold, flu, allergies, asthma, GERD, infection
+When to see doctor: Persists more than 3 weeks, produces blood, with shortness of breath
+
+Symptom: Fatigue
+Description: Extreme tiredness that does not improve with rest
+Causes: Lack of sleep, anemia, diabetes, thyroid disorders, depression
+When to see doctor: Persists more than 2 weeks, with unexplained weight loss, or with other symptoms
+
+Symptom: Chest Pain
+Description: Discomfort in the chest area ranging from dull ache to sharp stabbing
+Causes: Heart problems, lung conditions, digestive issues, muscle strain
+When to see doctor: EMERGENCY - if sudden, severe, with shortness of breath, or radiates to arm/jaw
+
+Symptom: Shortness of Breath
+Description: Difficulty breathing or feeling of not getting enough air
+Causes: Asthma, COPD, heart conditions, anxiety, anemia
+When to see doctor: EMERGENCY - if sudden onset, severe, or with chest pain
+
+Symptom: Dizziness
+Description: Feeling lightheaded, unsteady, or sensation of spinning
+Causes: Inner ear problems, low blood pressure, dehydration, anemia, medication
+When to see doctor: Recurrent episodes, with chest pain, or if causing falls
+
+Symptom: Nausea
+Description: Sensation of unease in the stomach with urge to vomit
+Causes: Food poisoning, viral infection, pregnancy, medication, motion sickness
+When to see doctor: Persists more than 2 days, with severe abdominal pain, or signs of dehydration
+
+Symptom: Abdominal Pain
+Description: Pain anywhere between the chest and groin
+Causes: Indigestion, gastritis, appendicitis, gallstones, kidney stones
+When to see doctor: Severe pain, with fever, bloody stool, or inability to eat
+
+Symptom: Joint Pain
+Description: Discomfort, aching, or soreness in joints
+Causes: Arthritis, injury, infection, autoimmune conditions, gout
+When to see doctor: Severe swelling, redness, warmth, or inability to use joint
+
+Symptom: Back Pain
+Description: Pain in the upper, middle, or lower back
+Causes: Muscle strain, poor posture, herniated disc, kidney problems
+When to see doctor: With leg weakness, bladder issues, or after injury
+
+Symptom: Skin Rash
+Description: Change in skin color or texture, may include bumps, itching, or scaling
+Causes: Allergies, infections, eczema, psoriasis, medication reaction
+When to see doctor: Spreads rapidly, with fever, or covers large body area
+
+Symptom: Sore Throat
+Description: Pain, scratchiness, or irritation in the throat
+Causes: Viral infection, bacterial infection (strep), allergies, dry air
+When to see doctor: Severe pain, difficulty swallowing, or with high fever
+
+Symptom: Runny Nose
+Description: Excess drainage from the nose, clear or colored
+Causes: Cold, allergies, sinus infection, flu
+When to see doctor: Persists more than 10 days, or with facial pain
+
+Symptom: Loss of Smell/Taste
+Description: Reduced or absent ability to smell or taste
+Causes: COVID-19, nasal polyps, sinus infection, head injury
+When to see doctor: Sudden onset, or persists more than 2 weeks

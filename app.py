@@ -927,7 +927,7 @@ class MemoryManager:
 
     def _user_path(self, username: str) -> Path:
         p = self.base_path / username
-        p.mkdir(exist_ok=True)
+        p.mkdir(parents=True, exist_ok=True)
         return p
 
     def _session_file(self, username: str, sid: str) -> Path:
@@ -1048,13 +1048,21 @@ class MemoryManager:
         return sorted(sessions, key=lambda x: x.get("last_activity", ""), reverse=True)
 
     def save_profile(self, username: str, profile_data: dict):
-        fpath = self._user_path(username) / "profile.json"
-        self._write_json(fpath, profile_data)
+        try:
+            fpath = self._user_path(username) / "profile.json"
+            self._write_json(fpath, profile_data)
+        except OSError:
+            logger.warning("Skipping profile save for %s; memory store unavailable", username)
 
     def load_profile(self, username: str) -> Optional[dict]:
-        fpath = self._user_path(username) / "profile.json"
-        if not fpath.exists(): return None
-        return self._read_json(fpath)
+        try:
+            fpath = self.base_path / username / "profile.json"
+            if not fpath.exists():
+                return None
+            return self._read_json(fpath)
+        except OSError:
+            logger.warning("Skipping profile load for %s; memory store unavailable", username)
+            return None
 
     def delete_session(self, username: str, sid: str) -> bool:
         fpath = self._session_file(username, sid)

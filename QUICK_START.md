@@ -1,241 +1,145 @@
-# MediAssist v4 - Quick Start Guide
+# Quick Start
 
-## Installation
+## 1. Create and use the local virtual environment
 
-1. **Install new dependencies:**
-```bash
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-The following packages were added for new features:
-- `cryptography` - For data encryption and security
+If `python` points to the Microsoft Store shim on Windows, use an installed interpreter directly to create the environment, then use `.venv\Scripts\python.exe` for project commands.
 
-## Running the Application
+## 2. Configure `.env`
 
-```bash
-python app.py
-# or
-uvicorn app:app --reload
+Minimum configuration:
+
+```env
+GEMINI_API_KEY=your_api_key_here
+MODEL_NAME=gemini-2.5-flash-lite
+PORT=8000
+CHROMA_DB_PATH=./chroma_db
 ```
 
-Visit: `http://localhost:8000`
+Optional:
 
-## Feature Quick Start
-
-### 1. Check Medication Interactions
-
-```bash
-curl -X POST "http://localhost:8000/api/check-drug-interactions?token=YOUR_TOKEN&medications=Cetirizine&medications=Paracetamol"
+```env
+ENCRYPTION_KEY=your_secret_key
 ```
 
-### 2. Track Health Metrics
+## 3. Run the application
 
-Add a metric:
+```powershell
+.\.venv\Scripts\python.exe app.py
+```
+
+Open:
+
+- `http://localhost:8000`
+- `http://localhost:8000/docs`
+
+## 4. Basic API flow
+
+### Sign up
+
+```bash
+curl -X POST "http://localhost:8000/api/signup" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "password": "Pass@1234"}'
+```
+
+### Log in
+
+```bash
+curl -X POST "http://localhost:8000/api/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "password": "Pass@1234"}'
+```
+
+### Send a chat request
+
+```bash
+curl -X POST "http://localhost:8000/api/chat?token=YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "I have fever and cough", "session_id": "demo-session"}'
+```
+
+### Upload a lab file
+
+```bash
+curl -X POST "http://localhost:8000/api/upload?token=YOUR_TOKEN" \
+  -F "file=@report.txt"
+```
+
+## 5. Feature-specific examples
+
+### Check drug interactions
+
+```bash
+curl -X POST "http://localhost:8000/api/check-drug-interactions?token=YOUR_TOKEN&medications=Warfarin&medications=Aspirin"
+```
+
+### Add and view health metrics
+
 ```bash
 curl -X POST "http://localhost:8000/api/health-metric?token=YOUR_TOKEN&metric=blood_pressure&value=120&unit=mmHg&status=normal"
 ```
 
-View dashboard:
 ```bash
 curl "http://localhost:8000/api/health-dashboard?token=YOUR_TOKEN"
 ```
 
-### 3. Request Expert Consultation
+### View supported languages
 
-Get available experts:
 ```bash
-curl "http://localhost:8000/api/experts?token=YOUR_TOKEN"
+curl "http://localhost:8000/api/supported-languages"
 ```
 
-Request consultation:
+Current UI languages in code:
+
+- `en`
+- `es`
+- `fr`
+- `de`
+- `hi`
+
+### Request a consultation
+
 ```bash
-curl -X POST "http://localhost:8000/api/request-consultation" \
+curl -X POST "http://localhost:8000/api/request-consultation?token=YOUR_TOKEN&expert_id=dr_001" \
   -H "Content-Type: application/json" \
   -d '{
-    "token": "YOUR_TOKEN",
     "question": "I have persistent headaches for 3 days",
     "category": "symptoms",
     "preferred_language": "en"
   }'
 ```
 
-### 4. Multi-Language Support
+## 6. Operational notes
 
-Get UI strings in Spanish:
-```bash
-curl "http://localhost:8000/api/ui-strings?language=es"
+- ChromaDB-backed RAG is optional at runtime; the app now degrades safely if the vector store cannot initialize
+- User state is stored in local JSON files under `memory/`
+- Uploaded files are stored under `uploads/`
+- The current auth routes use `SHA-256` hashing in `app.py`; stronger PBKDF2 helpers exist in `services/security.py` but are not wired into login yet
+
+## 7. Troubleshooting
+
+### `GEMINI_API_KEY is not set`
+
+Add the key to `.env` and restart the app.
+
+### Windows `python.exe` cannot run
+
+Use the project interpreter directly:
+
+```powershell
+.\.venv\Scripts\python.exe app.py
 ```
 
-Supported languages:
-- `en` - English
-- `es` - Spanish
-- `fr` - French
-- `de` - German
-- `hi` - Hindi
+### ChromaDB fails with read-only database
 
-### 5. Data Privacy
+The app should still start, but RAG search will return empty results until `chroma_db/` is writable.
 
-Export your data (GDPR):
-```bash
-curl "http://localhost:8000/api/export-data?token=YOUR_TOKEN" > user_data_export.json
-```
+### Permission errors under `memory/`
 
-Delete your account:
-```bash
-curl -X POST "http://localhost:8000/api/delete-account?token=YOUR_TOKEN"
-```
-
-View audit log:
-```bash
-curl "http://localhost:8000/api/audit-log?token=YOUR_TOKEN"
-```
-
-### 6. Enhanced Profile
-
-Update profile with new fields:
-```bash
-curl -X POST "http://localhost:8000/api/update-profile-extended?token=YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "family_history": ["Diabetes", "Heart disease"],
-    "lifestyle_activities": ["Running", "Yoga"],
-    "dietary_preferences": ["Vegetarian"],
-    "emergency_contact": "9876543210",
-    "email": "user@example.com",
-    "phone": "9876543210",
-    "language": "en"
-  }'
-```
-
-## API Response Examples
-
-### Medication Interaction Check
-```json
-{
-  "medications": ["Warfarin", "Aspirin"],
-  "interactions": [
-    {
-      "medication1": "Warfarin",
-      "medication2": "Aspirin",
-      "severity": "severe",
-      "type": "caution",
-      "description": "Significantly increased bleeding risk",
-      "recommendation": "Discuss with your doctor about using both medications together"
-    }
-  ],
-  "risk_level": "severe",
-  "total_interactions": 1
-}
-```
-
-### Health Dashboard
-```json
-{
-  "username": "john_doe",
-  "dashboard": {
-    "last_updated": "2026-03-20T10:30:00",
-    "health_metrics": {
-      "blood_pressure": [
-        {
-          "metric": "blood_pressure",
-          "value": 120,
-          "unit": "mmHg",
-          "status": "normal",
-          "timestamp": "2026-03-20T10:00:00"
-        }
-      ]
-    },
-    "profile": {
-      "age": 35,
-      "conditions": ["Hypertension"],
-      "medications": ["Amlodipine 5mg"]
-    }
-  }
-}
-```
-
-### Experts
-```json
-{
-  "username": "john_doe",
-  "experts": [
-    {
-      "id": "dr_001",
-      "name": "Dr. Rajesh Kumar",
-      "specialization": "General Medicine",
-      "available": true,
-      "response_time": "15-30 minutes",
-      "rating": 4.8
-    }
-  ],
-  "count": 1
-}
-```
-
-## Feature Highlights
-
-✨ **What's New:**
-- 🔍 Drug interaction checker
-- 📊 Health analytics & trends
-- 👨‍⚕️ Expert consultation booking
-- 🌍 Multi-language support
-- 🔐 Enhanced security & privacy
-- 👤 Extended user profiles
-
-## Security Features
-
-- ✅ End-to-end encryption
-- ✅ GDPR compliance (data export & deletion)
-- ✅ Audit logging
-- ✅ Role-based access control
-- ✅ Secure password hashing
-- ✅ Session token management
-
-## Troubleshooting
-
-### Issue: "Import 'cryptography' could not be resolved"
-**Solution:** Install chromatography:
-```bash
-pip install cryptography
-```
-
-### Issue: "Token missing" in requests
-**Solution:** Include your authentication token:
-```bash
-curl -X GET "http://localhost:8000/api/health-dashboard?token=YOUR_TOKEN"
-```
-
-## Integration with Existing Features
-
-The new features integrate seamlessly with MediAssist's existing capabilities:
-- **Chat + Health Metrics**: Add metrics while chatting about symptoms
-- **Chat + Expert Consultation**: Expert can see your chat history
-- **Reports + Analytics**: Uploaded lab reports automatically populate metrics
-- **Medications + Drug Interactions**: Medication cards include interaction warnings
-## Environment Variables
-
-The following environment variables should be set in `.env`:
-
-```
-GEMINI_API_KEY=your_api_key_here
-MODEL_NAME=gemini-2.5-flash-lite
-PORT=8000
-ENCRYPTION_KEY=your_encryption_key_here (optional)
-```
-
-## Data Storage
-
-All data is stored locally in the `memory/` directory:
-- User profiles: `memory/{username}/profile.json`
-- Chat sessions: `memory/{username}/{session_id}.json`
-- Health analytics: `memory/{username}/analytics.json`
-- Consultations: `memory/consultations/{username}_consultations.json`
-- Audit logs: `memory/audit_logs/{username}_audit.json`
-
-## Next Steps
-
-1. **Test the API**: Run the Quick Start examples above
-2. **Update Frontend**: Integrate UI components for new features
-3. **Connect Experts**: Link real doctor scheduling platform
-
-See [FEATURES.md](FEATURES.md) for detailed API documentation.
+Make sure the workspace is writable. Profile and RAG initialization now fail closed more safely, but persistent features still need write access for full functionality.

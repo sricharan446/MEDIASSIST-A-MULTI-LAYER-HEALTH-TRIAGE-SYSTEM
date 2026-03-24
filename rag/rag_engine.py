@@ -1,19 +1,33 @@
 import os
+from typing import Optional
+
 import chromadb
 from sentence_transformers import SentenceTransformer
+
 from rag.document_loader import load_text_from_file
 
 # Embedding model
-_model = SentenceTransformer('all-MiniLM-L6-v2')
+_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # ── FIX: Persistent ChromaDB — survives server restarts ───────────────────────
 DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
-_client = chromadb.PersistentClient(path=DB_PATH)
-_collection = _client.get_or_create_collection(name="medical_docs")
+_client = None
+_collection: Optional[object] = None
+
+try:
+    _client = chromadb.PersistentClient(path=DB_PATH)
+    _collection = _client.get_or_create_collection(name="medical_docs")
+except Exception as e:
+    # Keep app importable even when the local vector store is unavailable
+    # (for example, read-only filesystem during tests).
+    print(f"RAG init disabled: {e}")
 
 
 def add_document_to_rag(file_path: str) -> str:
     """Load, chunk, embed and store a file. Skips if already indexed."""
+    if _collection is None:
+        return "RAG unavailable"
+
     # FIX: Deduplication guard — avoid duplicate-ID crash
     sentinel_id = f"{file_path}::chunk_0"
     existing = _collection.get(ids=[sentinel_id])
@@ -38,6 +52,9 @@ def add_document_to_rag(file_path: str) -> str:
 
 def search_rag(query: str, n_results: int = 2) -> list:
     """Search ChromaDB for most relevant chunks. Returns [] if nothing useful found."""
+    if _collection is None:
+        return []
+
     try:
         # FIX: Guard against empty collection crash
         count = _collection.count()

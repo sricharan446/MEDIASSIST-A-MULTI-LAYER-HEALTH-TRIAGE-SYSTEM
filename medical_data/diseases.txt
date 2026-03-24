@@ -1,2 +1,122 @@
-Diabetes: high blood sugar disease.
-BP: high blood pressure condition.
+Disease: Diabetes Mellitus
+Description: Chronic metabolic disorder characterized by high blood sugar levels
+Types: Type 1 (autoimmune), Type 2 (insulin resistance), Gestational
+Key symptoms: Frequent urination, excessive thirst, fatigue, blurred vision, slow healing wounds
+Risk factors: Obesity, family history, sedentary lifestyle, age over 45
+Complications: Heart disease, kidney damage, nerve damage, vision problems
+Management: Diet control, exercise, medication, regular blood sugar monitoring
+
+Disease: Hypertension (High Blood Pressure)
+Description: Persistently elevated blood pressure above 130/80 mmHg
+Types: Primary (essential), Secondary (caused by other conditions)
+Key symptoms: Often silent; headaches, dizziness, chest pain in severe cases
+Risk factors: Age, family history, obesity, high salt diet, stress, smoking
+Complications: Heart attack, stroke, kidney disease, vision loss
+Management: Lifestyle changes, medication, regular BP monitoring
+
+Disease: Common Cold
+Description: Viral upper respiratory infection affecting nose and throat
+Causes: Rhinovirus (most common), coronavirus, RSV
+Key symptoms: Runny nose, sneezing, sore throat, mild cough, mild fever
+Duration: Usually 7-10 days, self-limiting
+Treatment: Rest, fluids, symptom relief (no antibiotics needed)
+Prevention: Hand hygiene, avoid close contact with sick individuals
+
+Disease: Influenza (Flu)
+Description: Contagious respiratory illness caused by influenza viruses
+Types: Influenza A, B, C (A and B cause seasonal epidemics)
+Key symptoms: High fever, body aches, fatigue, headache, cough, sore throat
+Duration: 1-2 weeks, can be severe in high-risk groups
+Treatment: Rest, fluids, antivirals (if started within 48 hours)
+Prevention: Annual flu vaccination, hand hygiene
+
+Disease: COVID-19
+Description: Respiratory illness caused by SARS-CoV-2 coronavirus
+Key symptoms: Fever, dry cough, fatigue, loss of smell/taste, shortness of breath
+Severity: Ranges from mild to severe/critical
+Complications: Pneumonia, ARDS, multi-organ failure
+Treatment: Supportive care, antivirals, oxygen therapy for severe cases
+Prevention: Vaccination, masking, social distancing, hand hygiene
+
+Disease: Migraine
+Description: Neurological condition characterized by intense, recurring headaches
+Types: With aura, without aura, chronic migraine
+Key symptoms: Throbbing headache (usually one-sided), nausea, light/sound sensitivity
+Triggers: Stress, hormones, certain foods, lack of sleep, weather changes
+Duration: 4-72 hours
+Treatment: Pain relievers, triptans, preventive medications
+
+Disease: Asthma
+Description: Chronic inflammatory disease of the airways
+Key symptoms: Wheezing, shortness of breath, chest tightness, cough
+Triggers: Allergens, exercise, cold air, smoke, respiratory infections
+Classification: Intermittent, mild persistent, moderate persistent, severe persistent
+Treatment: Rescue inhalers (bronchodilators), controller medications (steroids)
+Management: Avoid triggers, use action plan, regular follow-up
+
+Disease: Gastroenteritis
+Description: Inflammation of the stomach and intestines, usually due to infection
+Causes: Viral (norovirus, rotavirus), bacterial (Salmonella, E. coli), parasitic
+Key symptoms: Diarrhea, vomiting, nausea, abdominal cramps, fever
+Duration: 1-3 days (viral), longer for bacterial
+Treatment: Oral rehydration, rest, avoid dairy, antiemetics if needed
+When to seek help: Severe dehydration, bloody stool, high fever
+
+Disease: Urinary Tract Infection (UTI)
+Description: Infection in any part of the urinary system (bladder, urethra, kidneys)
+Common in: Women more than men
+Key symptoms: Burning urination, frequent urination, urgency, cloudy/bloody urine
+Causes: Bacteria (usually E. coli) entering the urinary tract
+Treatment: Antibiotics, increased fluid intake
+Prevention: Good hygiene, adequate hydration, urinate after intercourse
+
+Disease: Anemia
+Description: Condition where blood lacks adequate healthy red blood cells
+Types: Iron deficiency, vitamin B12 deficiency, chronic disease, hemolytic
+Key symptoms: Fatigue, weakness, pale skin, dizziness, shortness of breath
+Causes: Blood loss, poor diet, absorption problems, chronic diseases
+Diagnosis: Blood tests (hemoglobin, hematocrit, iron studies)
+Treatment: Depends on type - iron supplements, B12 injections, treat underlying cause
+
+Disease: Dengue Fever
+Description: Mosquito-borne viral infection common in tropical regions
+Transmission: Aedes mosquito bites
+Key symptoms: High fever, severe headache, eye pain, joint/muscle pain, rash
+Warning signs: Abdominal pain, persistent vomiting, bleeding, lethargy
+Duration: 2-7 days, recovery 1-2 weeks
+Treatment: Supportive care, fluids, avoid NSAIDs (use paracetamol)
+Prevention: Mosquito control, protective clothing, repellents
+
+Disease: Malaria
+Description: Parasitic disease transmitted through mosquito bites
+Causes: Plasmodium parasites (P. falciparum most dangerous)
+Key symptoms: Cyclic fever, chills, sweating, headache, body aches
+Complications: Cerebral malaria, severe anemia, organ failure
+Diagnosis: Blood smear, rapid diagnostic test
+Treatment: Antimalarial drugs (artemisinin combinations)
+Prevention: Mosquito nets, repellents, prophylactic medication in endemic areas
+
+Disease: Anxiety Disorder
+Description: Mental health condition characterized by excessive worry and fear
+Types: Generalized anxiety, panic disorder, social anxiety, phobias
+Key symptoms: Restlessness, rapid heartbeat, sweating, trembling, difficulty concentrating
+Physical symptoms: Headaches, muscle tension, sleep problems, fatigue
+Treatment: Therapy (CBT), medication (SSRIs, anxiolytics), lifestyle changes
+Management: Stress management, exercise, adequate sleep, avoid caffeine/alcohol
+
+Disease: Muscle Strain
+Description: Overstretching or tearing of muscle fibers
+Causes: Overuse, sudden movements, poor flexibility, fatigue
+Grades: Grade 1 (mild), Grade 2 (moderate), Grade 3 (severe/complete tear)
+Key symptoms: Pain, swelling, limited movement, muscle weakness
+Treatment: RICE (Rest, Ice, Compression, Elevation), pain relievers
+Recovery: Few days to several weeks depending on severity
+Prevention: Warm-up, stretching, proper technique, adequate rest
+
+Disease: Viral Infection (General)
+Description: Illness caused by viruses affecting various body systems
+Common types: Respiratory, gastrointestinal, skin infections
+Key symptoms: Fever, fatigue, body aches, varies by virus type
+Treatment: Usually supportive (rest, fluids); antivirals for specific viruses
+Duration: Most resolve in 1-2 weeks
+Prevention: Vaccination where available, good hygiene, avoid sick contacts
