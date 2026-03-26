@@ -64,8 +64,23 @@ MediAssist/
 
 ### Authentication
 - `POST /api/signup` - Register new user
-- `POST /api/login` - Login and get token
+- `POST /api/login` - Login and get token (optionally with health profile data)
 - `POST /api/logout` - Invalidate token
+
+#### Authentication Flow (UI)
+
+The frontend implements a multi-step authentication flow:
+
+1. **Welcome Screen** - Landing page with "Login" and "Sign Up" buttons
+2. **Sign Up Screen** - New user registration with:
+   - Username
+   - Password
+   - Confirm Password
+3. **Health Profile Setup** (Optional) - After registration, users can:
+   - Add health details (age, gender, conditions, allergies, medications, etc.)
+   - Click "Save & Continue" to save profile and enter the app
+   - Click "Skip for now" to skip and enter the app directly
+4. **Login Screen** - Existing user login with username and password
 
 ### Chat & Triage
 - `POST /api/chat` - Main chat endpoint with multi-stage routing

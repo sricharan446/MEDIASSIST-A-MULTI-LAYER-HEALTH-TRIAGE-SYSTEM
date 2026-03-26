@@ -38,7 +38,39 @@ Open:
 - `http://localhost:8000`
 - `http://localhost:8000/docs`
 
-## 4. Basic API flow
+## 4. Using the Web Interface
+
+### Authentication Flow
+
+1. **Welcome Screen** - When you first visit `http://localhost:8000`, you'll see:
+   - "Login" button for existing users
+   - "Sign Up (New User)" button for new users
+
+2. **Creating an Account**:
+   - Click "Sign Up (New User)"
+   - Enter username, password, and confirm password
+   - Click "Create Account"
+   - You'll be taken to the optional Health Profile setup
+
+3. **Health Profile Setup** (Optional):
+   - Fill in your health details (age, gender, conditions, allergies, etc.)
+   - Click "Save & Continue" to save and enter the app
+   - Or click "Skip for now" to enter without adding profile data
+
+4. **Logging In**:
+   - Click "Login" from the welcome screen
+   - Enter your username and password
+   - Click "Sign In"
+
+### After Login
+
+Once authenticated, you can:
+- Start a new chat with the AI assistant
+- Upload lab reports for analysis
+- View and manage your health profile in the sidebar
+- Access chat history and previous sessions
+
+## 5. Basic API flow
 
 ### Sign up
 
@@ -71,7 +103,7 @@ curl -X POST "http://localhost:8000/api/upload?token=YOUR_TOKEN" \
   -F "file=@report.txt"
 ```
 
-## 5. Feature-specific examples
+## 6. Feature-specific examples
 
 ### Check drug interactions
 
@@ -115,14 +147,14 @@ curl -X POST "http://localhost:8000/api/request-consultation?token=YOUR_TOKEN&ex
   }'
 ```
 
-## 6. Operational notes
+## 7. Operational notes
 
 - ChromaDB-backed RAG is optional at runtime; the app now degrades safely if the vector store cannot initialize
 - User state is stored in local JSON files under `memory/`
 - Uploaded files are stored under `uploads/`
 - The current auth routes use `SHA-256` hashing in `app.py`; stronger PBKDF2 helpers exist in `services/security.py` but are not wired into login yet
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 ### `GEMINI_API_KEY is not set`
 
