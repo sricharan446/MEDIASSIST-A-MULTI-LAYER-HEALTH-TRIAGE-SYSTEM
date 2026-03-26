@@ -96,7 +96,7 @@
     .sess-item,
     .sb-footer,
     .sb-logo,
-    #loginScreen {
+    .auth-screen {
       transition: background-color 0.3s ease, border-color 0.3s ease,
         color 0.2s ease, box-shadow 0.3s ease;
     }
@@ -928,8 +928,8 @@
       color: var(--danger);
     }
 
-    /* ===================== LOGIN ===================== */
-    #loginScreen {
+    /* ===================== AUTH SCREENS ===================== */
+    .auth-screen {
       position: fixed;
       inset: 0;
       background: var(--login-bg);
@@ -1081,6 +1081,10 @@
       min-height: 16px;
     }
 
+    .login-msg.error {
+      color: var(--danger);
+    }
+
     .login-section-note {
       font-size: 11px;
       color: var(--text2);
@@ -1088,41 +1092,80 @@
       line-height: 1.5;
     }
 
-    .login-profile-panel {
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
+    /* Welcome screen specific */
+    .welcome-subtitle {
+      font-size: 14px;
+      color: var(--text2);
+      margin-top: 8px;
+      line-height: 1.6;
     }
 
-    .login-profile-summary {
+    .welcome-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn-welcome {
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
-      list-style: none;
-      font-size: 11px;
+      transition: all 0.2s;
+    }
+
+    .btn-welcome.primary {
+      background: var(--accent);
+      color: #020a06;
+      border: none;
+    }
+
+    .btn-welcome.primary:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+
+    .btn-welcome.secondary {
+      background: none;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-welcome.secondary:hover {
+      border-color: var(--accent);
       color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-      user-select: none;
     }
 
-    .login-profile-summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .login-profile-summary::before {
-      content: '+ ';
-      color: var(--accent);
-    }
-
-    .login-profile-panel[open] .login-profile-summary::before {
-      content: '- ';
-    }
-
-    .login-profile-help {
-      font-size: 10px;
+    .btn-skip {
+      background: none;
+      border: none;
       color: var(--text3);
-      margin-bottom: 12px;
-      line-height: 1.5;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 16px;
+      text-decoration: underline;
+    }
+
+    .btn-skip:hover {
+      color: var(--text2);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text3);
+      font-size: 12px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
     }
 
     /* ===================== SCROLLBAR ===================== */
@@ -1563,112 +1606,180 @@
 
 <body>
 
-  <!-- LOGIN -->
-  <div id="loginScreen">
+  <!-- WELCOME SCREEN -->
+  <div id="welcomeScreen" class="auth-screen">
     <div class="login-wrap">
       <div class="login-logo">
         <span class="login-icon">🏥</span>
-        <h1>Medical Assistant</h1>
-        <p>AI-powered health guidance · Powered by Gemini</p>
+        <h1>MediAssist</h1>
+        <p class="welcome-subtitle">Your AI Health Assistant<br>Get personalized health guidance powered by Gemini</p>
       </div>
 
-      <!-- Theme toggle on login -->
       <div class="login-theme-row">
-        <span class="theme-icon" id="loginThemeIcon">☀️</span>
+        <span class="theme-icon" id="welcomeThemeIcon">☀️</span>
         <button class="theme-toggle" onclick="toggleTheme()" title="Switch theme"></button>
-        <span style="font-size:10px; color:var(--text3)" id="loginThemeLabel">Light mode</span>
+        <span style="font-size:10px; color:var(--text3)" id="welcomeThemeLabel">Light mode</span>
       </div>
 
       <div class="login-card">
+        <div class="welcome-btns">
+          <button class="btn-welcome primary" onclick="showScreen('login')">Login</button>
+          <button class="btn-welcome secondary" onclick="showScreen('signup')">Sign Up (New User)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNUP SCREEN -->
+  <div id="signupScreen" class="auth-screen" style="display:none">
+    <div class="login-wrap">
+      <div class="login-logo">
+        <span class="login-icon">🏥</span>
+        <h1>Create Account</h1>
+        <p>Join MediAssist today</p>
+      </div>
+
+      <div class="login-card">
+        <a class="back-link" onclick="showScreen('welcome')">← Back to Welcome</a>
+
         <div class="login-field">
           <label>Username</label>
-          <input type="text" id="username" placeholder="your_name" autocomplete="off" />
+          <input type="text" id="signupUsername" placeholder="Choose a username" autocomplete="off" />
         </div>
 
         <div class="login-field">
           <label>Password</label>
-          <input type="password" id="password" placeholder="••••••••" />
+          <input type="password" id="signupPassword" placeholder="Create a password" />
         </div>
+
+        <div class="login-field">
+          <label>Confirm Password</label>
+          <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" />
+        </div>
+
+        <div class="login-btns">
+          <button class="btn-login" onclick="signup()">Create Account</button>
+        </div>
+
+        <div class="login-msg" id="signupMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE SETUP SCREEN -->
+  <div id="profileSetupScreen" class="auth-screen" style="display:none">
+    <div class="login-wrap">
+      <div class="login-logo">
+        <span class="login-icon">📋</span>
+        <h1>Health Profile</h1>
+        <p>Optional: Help us personalize your experience</p>
+      </div>
+
+      <div class="login-card">
         <div class="login-section-note">
-          Register creates your account with username and password only. Add the optional health profile below if you want sign-in context for triage.
+          This information helps provide more accurate health guidance. You can skip this and add details later.
         </div>
 
-        <details class="login-profile-panel">
-          <summary class="login-profile-summary">Optional Health Profile</summary>
-          <div class="login-profile-help">
-            These details are used during sign in and later assessments. Registration does not save them until you sign in.
-          </div>
+        <div class="login-field">
+          <label>Age</label>
+          <input type="number" id="setupAgeInput" placeholder="Enter your age" />
+        </div>
 
-          <div class="login-field">
-            <label>Age</label>
-            <input type="number" id="ageInput" placeholder="Enter your age" />
-          </div>
+        <div class="login-field">
+          <label>Gender</label>
+          <select id="setupGenderInput" onchange="syncPregnancyOptions('setup', this.value)">
+            <option value="unknown">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
 
-          <div class="login-field">
-            <label>Gender</label>
-            <select id="genderInput" onchange="syncPregnancyOptions('', this.value)">
-              <option value="unknown">Unknown</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
-          </div>
+        <div class="login-field">
+          <label>Known Conditions</label>
+          <input type="text" id="setupConditionsInput" placeholder="e.g. diabetes, hypertension" />
+        </div>
 
-          <div class="login-field">
-            <label>Known Conditions</label>
-            <input type="text" id="conditionsInput" placeholder="e.g. diabetes, hypertension" />
-          </div>
+        <div class="login-field">
+          <label>Allergies</label>
+          <input type="text" id="setupAllergiesInput" placeholder="e.g. penicillin, peanuts" />
+        </div>
 
-          <div class="login-field">
-            <label>Allergies</label>
-            <input type="text" id="allergiesInput" placeholder="e.g. penicillin, peanuts" />
-          </div>
+        <div class="login-field">
+          <label>Current Medications</label>
+          <input type="text" id="setupMedicationsInput" placeholder="e.g. metformin, amlodipine" />
+        </div>
 
-          <div class="login-field">
-            <label>Current Medications</label>
-            <input type="text" id="medicationsInput" placeholder="e.g. metformin, amlodipine" />
-          </div>
+        <div class="login-field">
+          <label>Pregnancy Status</label>
+          <select id="setupPregnancyInput">
+            <option value="unknown">Unknown</option>
+            <option value="not_applicable">Not applicable</option>
+            <option value="not_pregnant">Not pregnant</option>
+            <option value="pregnant">Pregnant</option>
+          </select>
+        </div>
 
-          <div class="login-field">
-            <label>Pregnancy Status</label>
-            <select id="pregnancyInput">
-              <option value="unknown">Unknown</option>
-              <option value="not_applicable">Not applicable</option>
-              <option value="not_pregnant">Not pregnant</option>
-              <option value="pregnant">Pregnant</option>
-            </select>
-          </div>
+        <div class="login-field">
+          <label>Smoking Status</label>
+          <select id="setupSmokingInput">
+            <option value="unknown">Unknown</option>
+            <option value="never">Never</option>
+            <option value="former">Former</option>
+            <option value="current">Current</option>
+          </select>
+        </div>
 
-          <div class="login-field">
-            <label>Smoking Status</label>
-            <select id="smokingInput">
-              <option value="unknown">Unknown</option>
-              <option value="never">Never</option>
-              <option value="former">Former</option>
-              <option value="current">Current</option>
-            </select>
-          </div>
+        <div class="login-field">
+          <label>Alcohol Use</label>
+          <select id="setupAlcoholInput">
+            <option value="unknown">Unknown</option>
+            <option value="never">Never</option>
+            <option value="occasional">Occasional</option>
+            <option value="regular">Regular</option>
+          </select>
+        </div>
 
-          <div class="login-field">
-            <label>Alcohol Use</label>
-            <select id="alcoholInput">
-              <option value="unknown">Unknown</option>
-              <option value="never">Never</option>
-              <option value="occasional">Occasional</option>
-              <option value="regular">Regular</option>
-            </select>
-          </div>
+        <div class="login-field">
+          <label>Past Medical History</label>
+          <input type="text" id="setupHistoryInput" placeholder="e.g. asthma, surgery" />
+        </div>
 
-          <div class="login-field">
-            <label>Past History</label>
-            <input type="text" id="historyInput" placeholder="e.g. asthma, surgery, thyroid issues" />
-          </div>
-        </details>
+        <div class="login-btns">
+          <button class="btn-login" onclick="saveProfileAndLogin()">Save & Continue</button>
+        </div>
+
+        <button class="btn-skip" onclick="skipProfileAndLogin()">Skip for now →</button>
+
+        <div class="login-msg" id="profileSetupMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="auth-screen" style="display:none">
+    <div class="login-wrap">
+      <div class="login-logo">
+        <span class="login-icon">🏥</span>
+        <h1>Welcome Back</h1>
+        <p>Sign in to MediAssist</p>
+      </div>
+
+      <div class="login-card">
+        <a class="back-link" onclick="showScreen('welcome')">← Back to Welcome</a>
+
+        <div class="login-field">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="Enter your username" autocomplete="off" />
+        </div>
+
+        <div class="login-field">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Enter your password" />
+        </div>
 
         <div class="login-btns">
           <button class="btn-login" onclick="login()">Sign In</button>
-          <button class="btn-signup" onclick="signup()">Register</button>
         </div>
 
         <div class="login-msg" id="loginMsg"></div>
@@ -1841,8 +1952,8 @@
       var icon = isDark ? '☀️' : '🌙';
       var label = isDark ? 'Light mode' : 'Dark mode';
       document.querySelectorAll('.theme-icon').forEach(function (el) { el.textContent = icon; });
-      var ll = document.getElementById('loginThemeLabel');
-      if (ll) ll.textContent = label;
+      var wl = document.getElementById('welcomeThemeLabel');
+      if (wl) wl.textContent = label;
     }
 
     function toggleTheme() {
@@ -2450,10 +2561,37 @@
     }
 
     /* ===================== AUTH ===================== */
+    // Store new user credentials temporarily for profile setup flow
+    var pendingSignupUsername = null;
+    var pendingSignupPassword = null;
+
+    function showScreen(screenName) {
+      // Hide all auth screens
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('signupScreen').style.display = 'none';
+      document.getElementById('profileSetupScreen').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'none';
+
+      // Show the requested screen
+      var screen = document.getElementById(screenName + 'Screen');
+      if (screen) screen.style.display = 'flex';
+    }
+
+    function hideAllAuthScreens() {
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('signupScreen').style.display = 'none';
+      document.getElementById('profileSetupScreen').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'none';
+    }
+
     async function login() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const profile = collectProfilePayload('');
+
+      if (!username || !password) {
+        document.getElementById("loginMsg").innerText = "Please enter username and password";
+        return;
+      }
 
       try {
         const response = await fetch("/api/login", {
@@ -2461,7 +2599,113 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: username,
-            password: password,
+            password: password
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("username", username);
+          location.reload();
+        } else {
+          document.getElementById("loginMsg").innerText =
+            data.detail || "Login failed";
+        }
+
+      } catch (error) {
+        document.getElementById("loginMsg").innerText =
+          "Server not reachable";
+      }
+    }
+
+
+    async function signup() {
+      var username = document.getElementById('signupUsername').value;
+      var password = document.getElementById('signupPassword').value;
+      var confirmPassword = document.getElementById('signupConfirmPassword').value;
+      var msgEl = document.getElementById('signupMsg');
+
+      if (!username || !password) {
+        msgEl.textContent = 'Please enter username and password';
+        msgEl.className = 'login-msg error';
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        msgEl.textContent = 'Passwords do not match';
+        msgEl.className = 'login-msg error';
+        return;
+      }
+
+      if (password.length < 4) {
+        msgEl.textContent = 'Password must be at least 4 characters';
+        msgEl.className = 'login-msg error';
+        return;
+      }
+
+      try {
+        var res = await fetch('/api/signup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username, password: password })
+        });
+        var data = await res.json();
+
+        if (res.ok) {
+          msgEl.textContent = '✓ Account created!';
+          msgEl.className = 'login-msg';
+          // Store credentials for profile setup
+          pendingSignupUsername = username;
+          pendingSignupPassword = password;
+          // Go to profile setup screen
+          setTimeout(function() {
+            showScreen('profileSetup');
+          }, 500);
+        } else {
+          msgEl.textContent = data.detail || 'Registration failed';
+          msgEl.className = 'login-msg error';
+        }
+      } catch (e) {
+        msgEl.textContent = 'Server unreachable';
+        msgEl.className = 'login-msg error';
+      }
+    }
+
+    function collectSetupProfile() {
+      return {
+        age: parseInt(document.getElementById('setupAgeInput').value, 10) || 30,
+        gender: document.getElementById('setupGenderInput').value,
+        known_conditions: splitCsv(document.getElementById('setupConditionsInput').value),
+        allergies: splitCsv(document.getElementById('setupAllergiesInput').value),
+        current_medications: splitCsv(document.getElementById('setupMedicationsInput').value),
+        pregnancy_status: document.getElementById('setupPregnancyInput').value,
+        smoking_status: document.getElementById('setupSmokingInput').value,
+        alcohol_use: document.getElementById('setupAlcoholInput').value,
+        past_history: splitCsv(document.getElementById('setupHistoryInput').value)
+      };
+    }
+
+    async function saveProfileAndLogin() {
+      var msgEl = document.getElementById('profileSetupMsg');
+
+      if (!pendingSignupUsername || !pendingSignupPassword) {
+        msgEl.textContent = 'Session expired. Please sign up again.';
+        msgEl.className = 'login-msg error';
+        setTimeout(function() { showScreen('signup'); }, 1000);
+        return;
+      }
+
+      var profile = collectSetupProfile();
+
+      try {
+        // Login with profile data
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: pendingSignupUsername,
+            password: pendingSignupPassword,
             age: profile.age,
             gender: profile.gender,
             known_conditions: profile.known_conditions,
@@ -2478,34 +2722,49 @@
 
         if (response.ok) {
           localStorage.setItem("token", data.token);
-          localStorage.setItem("username", username);  // ✅ IMPORTANT
+          localStorage.setItem("username", pendingSignupUsername);
+          pendingSignupUsername = null;
+          pendingSignupPassword = null;
           location.reload();
         } else {
-          document.getElementById("loginMsg").innerText =
-            data.detail || "Login failed";
+          msgEl.textContent = data.detail || "Login failed";
+          msgEl.className = 'login-msg error';
         }
-
       } catch (error) {
-        document.getElementById("loginMsg").innerText =
-          "Server not reachable";
+        msgEl.textContent = "Server not reachable";
+        msgEl.className = 'login-msg error';
       }
     }
 
+    async function skipProfileAndLogin() {
+      if (!pendingSignupUsername || !pendingSignupPassword) {
+        showScreen('login');
+        return;
+      }
 
-    async function signup() {
-      var u = document.getElementById('username').value;
-      var p = document.getElementById('password').value;
       try {
-        var res = await fetch('/api/signup', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: pendingSignupUsername,
+            password: pendingSignupPassword
+          })
         });
-        var data = await res.json();
-        document.getElementById('loginMsg').textContent = res.ok
-          ? '✓ Account created. Sign in now.'
-          : (data.detail || 'Error');
-      } catch (e) {
-        document.getElementById('loginMsg').textContent = 'Server unreachable';
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("username", pendingSignupUsername);
+          pendingSignupUsername = null;
+          pendingSignupPassword = null;
+          location.reload();
+        } else {
+          showScreen('login');
+        }
+      } catch (error) {
+        showScreen('login');
       }
     }
 
@@ -2617,21 +2876,22 @@
       // Restore saved theme (default dark)
       var savedTheme = localStorage.getItem('theme') || 'dark';
       applyTheme(savedTheme);
-      syncPregnancyOptions('', document.getElementById('genderInput') ? document.getElementById('genderInput').value : 'unknown');
+      syncPregnancyOptions('setup', document.getElementById('setupGenderInput') ? document.getElementById('setupGenderInput').value : 'unknown');
 
       // Auto-login if token exists
       var token = localStorage.getItem('token');
       var username = localStorage.getItem('username');
       if (token) {
         userToken = token;
-        document.getElementById('loginScreen').style.display = 'none';
+        hideAllAuthScreens();
         if (username) document.getElementById('userDisplay').textContent = username;
         loadSessions();
         loadProfile();
         checkGemini();
         loadModels();
       } else {
-        document.getElementById('loginScreen').style.display = 'flex';
+        // Show welcome screen for new visitors
+        showScreen('welcome');
       }
 
       // Keyboard shortcut: Ctrl/Cmd+K = new chat
