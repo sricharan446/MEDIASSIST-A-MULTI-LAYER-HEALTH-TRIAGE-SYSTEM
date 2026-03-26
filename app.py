@@ -77,6 +77,20 @@ from services.security import security_manager
 from services.expert_consultation import expert_manager
 from services.language import language_manager
 
+# ── Advanced Prompts and Response Validation ──────────────────────────────────
+from prompts.medical_prompts import (
+    MEDICAL_REASONING_SYSTEM_PROMPT,
+    SYMPTOM_ANALYSIS_PROMPT,
+    PatientContext,
+    build_symptom_analysis_prompt,
+)
+from services.response_validator import (
+    ResponseValidator,
+    process_validated_response,
+    create_validator,
+)
+
+
 # ── Config ────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 MODEL_NAME     = os.getenv("MODEL_NAME", "gemini-2.5-flash-lite")   # FIX 19
@@ -401,6 +415,234 @@ DISEASE_MEDICATIONS: Dict[str, Dict] = {
                 "buy_url": "https://www.1mg.com/search/all?name=phenazopyridine"
             }
         ]
+    },
+
+    # ── Cardiovascular ──
+    "coronary artery disease": {
+        "medicines": [
+            {"name": "Aspirin 75mg", "type": "Antiplatelet", "composition": "Aspirin 75mg", "dosage": "1 tablet once daily", "duration": "Long-term — as prescribed", "purpose": "Prevents blood clots and reduces heart attack risk", "buy_url": "https://www.1mg.com/search/all?name=aspirin+75mg"},
+            {"name": "Atorvastatin 20mg", "type": "Statin (cholesterol-lowering)", "composition": "Atorvastatin Calcium 20mg", "dosage": "1 tablet once daily at night", "duration": "Long-term — as prescribed", "purpose": "Lowers cholesterol to reduce plaque buildup", "buy_url": "https://www.1mg.com/search/all?name=atorvastatin+20mg"}
+        ]
+    },
+    "heart failure": {
+        "medicines": [
+            {"name": "Furosemide 40mg", "type": "Loop diuretic", "composition": "Furosemide 40mg", "dosage": "1 tablet once or twice daily", "duration": "As directed by cardiologist", "purpose": "Removes excess fluid to reduce swelling and breathlessness", "buy_url": "https://www.1mg.com/search/all?name=furosemide+40mg"},
+            {"name": "Ramipril 5mg", "type": "ACE Inhibitor", "composition": "Ramipril 5mg", "dosage": "1 tablet once daily", "duration": "Long-term — do not stop without doctor advice", "purpose": "Protects heart and improves heart function", "buy_url": "https://www.1mg.com/search/all?name=ramipril+5mg"}
+        ]
+    },
+    "arrhythmia": {
+        "medicines": [
+            {"name": "Metoprolol 50mg", "type": "Beta-blocker", "composition": "Metoprolol Succinate 50mg", "dosage": "1 tablet once daily", "duration": "Long-term — as prescribed", "purpose": "Controls heart rate and rhythm", "buy_url": "https://www.1mg.com/search/all?name=metoprolol+50mg"}
+        ]
+    },
+    "deep vein thrombosis": {
+        "medicines": [
+            {"name": "Rivaroxaban 15mg", "type": "Anticoagulant (blood thinner)", "composition": "Rivaroxaban 15mg", "dosage": "1 tablet twice daily with food for 21 days, then 20mg once daily", "duration": "At least 3 months — as directed", "purpose": "Prevents clot growth and new clot formation — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=rivaroxaban+15mg"}
+        ]
+    },
+
+    # ── Respiratory ──
+    "pneumonia": {
+        "medicines": [
+            {"name": "Amoxicillin 500mg", "type": "Antibiotic", "composition": "Amoxicillin Trihydrate 500mg", "dosage": "1 capsule three times daily", "duration": "7–10 days — complete full course", "purpose": "Treats bacterial pneumonia", "buy_url": "https://www.1mg.com/search/all?name=amoxicillin+500mg"},
+            {"name": "Azithromycin 500mg", "type": "Macrolide antibiotic", "composition": "Azithromycin 500mg", "dosage": "1 tablet once daily", "duration": "3–5 days", "purpose": "Treats atypical pneumonia — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=azithromycin+500mg"}
+        ]
+    },
+    "copd": {
+        "medicines": [
+            {"name": "Tiotropium 18mcg Inhaler", "type": "Long-acting anticholinergic bronchodilator", "composition": "Tiotropium Bromide 18mcg", "dosage": "1 inhalation once daily", "duration": "Long-term maintenance", "purpose": "Opens airways long-term to improve breathing", "buy_url": "https://www.1mg.com/search/all?name=tiotropium+inhaler"},
+            {"name": "Salbutamol Inhaler 100mcg", "type": "Short-acting bronchodilator", "composition": "Salbutamol Sulfate 100mcg per actuation", "dosage": "1–2 puffs as needed for breathlessness", "duration": "As needed rescue use", "purpose": "Quick relief of acute breathlessness", "buy_url": "https://www.1mg.com/search/all?name=salbutamol+inhaler"}
+        ]
+    },
+    "bronchitis": {
+        "medicines": [
+            {"name": "Ambroxol 30mg", "type": "Mucolytic", "composition": "Ambroxol Hydrochloride 30mg", "dosage": "1 tablet three times daily", "duration": "5–7 days", "purpose": "Thins mucus to make coughing easier", "buy_url": "https://www.1mg.com/search/all?name=ambroxol+30mg"},
+            {"name": "Dextromethorphan + Guaifenesin Syrup", "type": "Cough suppressant + Expectorant", "composition": "Dextromethorphan + Guaifenesin", "dosage": "10ml every 6–8 hours", "duration": "5–7 days", "purpose": "Suppresses cough and loosens mucus", "buy_url": "https://www.1mg.com/search/all?name=dextromethorphan+guaifenesin"}
+        ]
+    },
+
+    # ── Gastrointestinal ──
+    "gerd": {
+        "medicines": [
+            {"name": "Pantoprazole 40mg", "type": "Proton Pump Inhibitor", "composition": "Pantoprazole Sodium 40mg", "dosage": "1 tablet once daily before breakfast", "duration": "4–8 weeks, may extend if needed", "purpose": "Reduces stomach acid to heal esophagus", "buy_url": "https://www.1mg.com/search/all?name=pantoprazole+40mg"},
+            {"name": "Domperidone 10mg", "type": "Prokinetic", "composition": "Domperidone 10mg", "dosage": "1 tablet three times daily before meals", "duration": "2–4 weeks", "purpose": "Improves stomach emptying, reduces regurgitation", "buy_url": "https://www.1mg.com/search/all?name=domperidone+10mg"}
+        ]
+    },
+    "peptic ulcer": {
+        "medicines": [
+            {"name": "Omeprazole 20mg", "type": "Proton Pump Inhibitor", "composition": "Omeprazole 20mg", "dosage": "1 capsule once daily before breakfast", "duration": "4–8 weeks", "purpose": "Heals ulcer by reducing stomach acid", "buy_url": "https://www.1mg.com/search/all?name=omeprazole+20mg"},
+            {"name": "Sucralfate 1g", "type": "Mucosal protectant", "composition": "Sucralfate 1g", "dosage": "1 tablet four times daily on empty stomach", "duration": "4–8 weeks", "purpose": "Coats and protects ulcer from acid", "buy_url": "https://www.1mg.com/search/all?name=sucralfate+1g"}
+        ]
+    },
+    "irritable bowel syndrome": {
+        "medicines": [
+            {"name": "Mebeverine 135mg", "type": "Antispasmodic", "composition": "Mebeverine Hydrochloride 135mg", "dosage": "1 tablet three times daily before meals", "duration": "As needed for symptoms", "purpose": "Relieves abdominal cramps and spasms", "buy_url": "https://www.1mg.com/search/all?name=mebeverine+135mg"},
+            {"name": "Psyllium Husk (Isabgol)", "type": "Fiber supplement", "composition": "Psyllium husk fiber", "dosage": "1–2 teaspoons in water daily", "duration": "Long-term as needed", "purpose": "Regulates bowel movements", "buy_url": "https://www.1mg.com/search/all?name=isabgol"}
+        ]
+    },
+
+    # ── Endocrine ──
+    "hypothyroidism": {
+        "medicines": [
+            {"name": "Levothyroxine 50mcg", "type": "Thyroid hormone replacement", "composition": "Levothyroxine Sodium 50mcg", "dosage": "1 tablet once daily on empty stomach (30 min before food)", "duration": "Lifelong — do not stop without doctor advice", "purpose": "Replaces deficient thyroid hormone", "buy_url": "https://www.1mg.com/search/all?name=levothyroxine+50mcg"}
+        ]
+    },
+    "hyperthyroidism": {
+        "medicines": [
+            {"name": "Methimazole 10mg", "type": "Antithyroid", "composition": "Methimazole 10mg", "dosage": "1 tablet once or twice daily as directed", "duration": "1–2 years typically — doctor monitored", "purpose": "Reduces thyroid hormone production", "buy_url": "https://www.1mg.com/search/all?name=methimazole+10mg"},
+            {"name": "Propranolol 40mg", "type": "Beta-blocker", "composition": "Propranolol Hydrochloride 40mg", "dosage": "1 tablet two to three times daily", "duration": "Until thyroid controlled", "purpose": "Controls rapid heartbeat and tremors", "buy_url": "https://www.1mg.com/search/all?name=propranolol+40mg"}
+        ]
+    },
+
+    # ── Musculoskeletal ──
+    "rheumatoid arthritis": {
+        "medicines": [
+            {"name": "Methotrexate 7.5mg", "type": "DMARD", "composition": "Methotrexate 7.5mg", "dosage": "Once weekly (same day each week)", "duration": "Long-term — requires monitoring", "purpose": "Slows disease progression — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=methotrexate+7.5mg"},
+            {"name": "Folic Acid 5mg", "type": "Vitamin supplement", "composition": "Folic Acid 5mg", "dosage": "1 tablet daily (not on methotrexate day)", "duration": "As long as on methotrexate", "purpose": "Reduces methotrexate side effects", "buy_url": "https://www.1mg.com/search/all?name=folic+acid+5mg"}
+        ]
+    },
+    "osteoarthritis": {
+        "medicines": [
+            {"name": "Paracetamol 650mg", "type": "Analgesic", "composition": "Paracetamol 650mg", "dosage": "1 tablet every 6–8 hours as needed", "duration": "As needed for pain", "purpose": "First-line pain relief for osteoarthritis", "buy_url": "https://www.1mg.com/search/all?name=paracetamol+650mg"},
+            {"name": "Glucosamine + Chondroitin", "type": "Joint health supplement", "composition": "Glucosamine Sulfate 500mg + Chondroitin Sulfate 400mg", "dosage": "1 tablet twice daily", "duration": "Long-term — may take weeks to show benefit", "purpose": "Supports joint cartilage health", "buy_url": "https://www.1mg.com/search/all?name=glucosamine+chondroitin"}
+        ]
+    },
+    "gout": {
+        "medicines": [
+            {"name": "Colchicine 0.5mg", "type": "Anti-gout", "composition": "Colchicine 0.5mg", "dosage": "1 tablet 2–3 times daily during acute attack", "duration": "Until attack resolves (3–5 days)", "purpose": "Reduces inflammation in acute gout attack", "buy_url": "https://www.1mg.com/search/all?name=colchicine+0.5mg"},
+            {"name": "Allopurinol 100mg", "type": "Urate-lowering therapy", "composition": "Allopurinol 100mg", "dosage": "1 tablet once daily (start low, increase gradually)", "duration": "Long-term to prevent attacks", "purpose": "Lowers uric acid levels — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=allopurinol+100mg"}
+        ]
+    },
+    "sciatica": {
+        "medicines": [
+            {"name": "Pregabalin 75mg", "type": "Neuropathic pain medication", "composition": "Pregabalin 75mg", "dosage": "1 capsule twice daily", "duration": "As directed — may be long-term", "purpose": "Relieves nerve pain — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=pregabalin+75mg"},
+            {"name": "Diclofenac 50mg", "type": "NSAID", "composition": "Diclofenac Sodium 50mg", "dosage": "1 tablet twice daily after food", "duration": "5–7 days", "purpose": "Reduces inflammation and pain", "buy_url": "https://www.1mg.com/search/all?name=diclofenac+50mg"}
+        ]
+    },
+    "fibromyalgia": {
+        "medicines": [
+            {"name": "Pregabalin 75mg", "type": "Anticonvulsant/Pain medication", "composition": "Pregabalin 75mg", "dosage": "1 capsule twice daily", "duration": "Long-term as directed", "purpose": "Reduces pain and improves sleep — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=pregabalin+75mg"},
+            {"name": "Duloxetine 30mg", "type": "SNRI Antidepressant", "composition": "Duloxetine 30mg", "dosage": "1 capsule once daily", "duration": "Long-term as directed", "purpose": "Treats pain and depression in fibromyalgia — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=duloxetine+30mg"}
+        ]
+    },
+
+    # ── Neurological ──
+    "epilepsy": {
+        "medicines": [
+            {"name": "Levetiracetam 500mg", "type": "Antiepileptic", "composition": "Levetiracetam 500mg", "dosage": "1 tablet twice daily", "duration": "Long-term — do not stop abruptly", "purpose": "Prevents seizures — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=levetiracetam+500mg"}
+        ]
+    },
+    "vertigo": {
+        "medicines": [
+            {"name": "Betahistine 16mg", "type": "Antivertigo", "composition": "Betahistine Dihydrochloride 16mg", "dosage": "1 tablet three times daily", "duration": "As prescribed — may be long-term", "purpose": "Improves inner ear blood flow, reduces vertigo", "buy_url": "https://www.1mg.com/search/all?name=betahistine+16mg"},
+            {"name": "Meclizine 25mg", "type": "Antihistamine / Antiemetic", "composition": "Meclizine Hydrochloride 25mg", "dosage": "1 tablet once or twice daily", "duration": "As needed for acute episodes", "purpose": "Relieves dizziness and nausea", "buy_url": "https://www.1mg.com/search/all?name=meclizine+25mg"}
+        ]
+    },
+
+    # ── Mental Health ──
+    "depression": {
+        "medicines": [
+            {"name": "Sertraline 50mg", "type": "SSRI Antidepressant", "composition": "Sertraline Hydrochloride 50mg", "dosage": "1 tablet once daily (morning or night)", "duration": "Long-term — minimum 6-12 months", "purpose": "Treats depression by increasing serotonin — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=sertraline+50mg"}
+        ]
+    },
+    "panic disorder": {
+        "medicines": [
+            {"name": "Paroxetine 20mg", "type": "SSRI Antidepressant", "composition": "Paroxetine Hydrochloride 20mg", "dosage": "1 tablet once daily", "duration": "Long-term as directed", "purpose": "Prevents panic attacks — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=paroxetine+20mg"}
+        ]
+    },
+    "ptsd": {
+        "medicines": [
+            {"name": "Sertraline 50mg", "type": "SSRI Antidepressant", "composition": "Sertraline Hydrochloride 50mg", "dosage": "1 tablet once daily", "duration": "Long-term as directed", "purpose": "First-line treatment for PTSD — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=sertraline+50mg"}
+        ]
+    },
+    "bipolar disorder": {
+        "medicines": [
+            {"name": "Lithium 300mg", "type": "Mood stabilizer", "composition": "Lithium Carbonate 300mg", "dosage": "As directed — requires blood level monitoring", "duration": "Long-term", "purpose": "Stabilizes mood in bipolar disorder — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=lithium+300mg"}
+        ]
+    },
+    "ocd": {
+        "medicines": [
+            {"name": "Fluoxetine 20mg", "type": "SSRI Antidepressant", "composition": "Fluoxetine Hydrochloride 20mg", "dosage": "1 capsule once daily (may increase to 60-80mg)", "duration": "Long-term as directed", "purpose": "Treats OCD symptoms — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=fluoxetine+20mg"}
+        ]
+    },
+
+    # ── Dermatological ──
+    "eczema": {
+        "medicines": [
+            {"name": "Hydrocortisone 1% Cream", "type": "Topical corticosteroid", "composition": "Hydrocortisone 1%", "dosage": "Apply thin layer to affected areas twice daily", "duration": "7–14 days (avoid prolonged use)", "purpose": "Reduces inflammation and itching", "buy_url": "https://www.1mg.com/search/all?name=hydrocortisone+cream"},
+            {"name": "Cetirizine 10mg", "type": "Antihistamine", "composition": "Cetirizine Hydrochloride 10mg", "dosage": "1 tablet at night", "duration": "As needed for itching", "purpose": "Reduces itching", "buy_url": "https://www.1mg.com/search/all?name=cetirizine+10mg"}
+        ]
+    },
+    "psoriasis": {
+        "medicines": [
+            {"name": "Clobetasol 0.05% Cream", "type": "High-potency topical corticosteroid", "composition": "Clobetasol Propionate 0.05%", "dosage": "Apply thin layer twice daily", "duration": "2 weeks max — not for face/groin", "purpose": "Reduces inflammation and scaling", "buy_url": "https://www.1mg.com/search/all?name=clobetasol+cream"},
+            {"name": "Coal Tar Shampoo/Ointment", "type": "Keratolytic", "composition": "Coal tar solution", "dosage": "Apply to affected areas daily", "duration": "As needed", "purpose": "Slows skin cell growth, reduces scaling", "buy_url": "https://www.1mg.com/search/all?name=coal+tar"}
+        ]
+    },
+    "shingles": {
+        "medicines": [
+            {"name": "Acyclovir 800mg", "type": "Antiviral", "composition": "Acyclovir 800mg", "dosage": "1 tablet five times daily (every 4 hours while awake)", "duration": "7 days — start within 72 hours of rash", "purpose": "Reduces severity and duration of shingles", "buy_url": "https://www.1mg.com/search/all?name=acyclovir+800mg"},
+            {"name": "Gabapentin 300mg", "type": "Neuropathic pain medication", "composition": "Gabapentin 300mg", "dosage": "1 capsule three times daily (increase gradually)", "duration": "As needed for postherpetic neuralgia", "purpose": "Relieves nerve pain after shingles — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=gabapentin+300mg"}
+        ]
+    },
+    "cellulitis": {
+        "medicines": [
+            {"name": "Cephalexin 500mg", "type": "Antibiotic", "composition": "Cephalexin 500mg", "dosage": "1 capsule four times daily", "duration": "7–14 days — complete full course", "purpose": "Treats bacterial skin infection", "buy_url": "https://www.1mg.com/search/all?name=cephalexin+500mg"}
+        ]
+    },
+
+    # ── Urological ──
+    "kidney stones": {
+        "medicines": [
+            {"name": "Tamsulosin 0.4mg", "type": "Alpha-blocker", "composition": "Tamsulosin Hydrochloride 0.4mg", "dosage": "1 capsule once daily", "duration": "Until stone passes (2–4 weeks)", "purpose": "Relaxes ureter to help stone pass — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=tamsulosin+0.4mg"},
+            {"name": "Diclofenac 50mg", "type": "NSAID", "composition": "Diclofenac Sodium 50mg", "dosage": "1 tablet twice daily after food", "duration": "As needed for pain", "purpose": "Relieves kidney stone pain", "buy_url": "https://www.1mg.com/search/all?name=diclofenac+50mg"}
+        ]
+    },
+    "bph": {
+        "medicines": [
+            {"name": "Tamsulosin 0.4mg", "type": "Alpha-blocker", "composition": "Tamsulosin Hydrochloride 0.4mg", "dosage": "1 capsule once daily after a meal", "duration": "Long-term", "purpose": "Relaxes prostate and bladder neck muscles — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=tamsulosin+0.4mg"},
+            {"name": "Finasteride 5mg", "type": "5-alpha reductase inhibitor", "composition": "Finasteride 5mg", "dosage": "1 tablet once daily", "duration": "Long-term — may take 6 months for full effect", "purpose": "Shrinks enlarged prostate — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=finasteride+5mg"}
+        ]
+    },
+    "interstitial cystitis": {
+        "medicines": [
+            {"name": "Pentosan Polysulfate 100mg", "type": "Bladder protectant", "composition": "Pentosan Polysulfate Sodium 100mg", "dosage": "1 capsule three times daily", "duration": "Long-term — may take 3-6 months for effect", "purpose": "Coats and protects bladder lining — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=pentosan+polysulfate"}
+        ]
+    },
+
+    # ── Infectious ──
+    "tuberculosis": {
+        "medicines": [
+            {"name": "Isoniazid 300mg", "type": "Antitubercular", "composition": "Isoniazid 300mg", "dosage": "1 tablet once daily", "duration": "6-9 months as part of combination therapy", "purpose": "Kills TB bacteria — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=isoniazid+300mg"},
+            {"name": "Rifampicin 450mg", "type": "Antitubercular", "composition": "Rifampicin 450mg", "dosage": "1 capsule once daily on empty stomach", "duration": "6-9 months as part of combination therapy", "purpose": "Kills TB bacteria — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=rifampicin+450mg"}
+        ]
+    },
+    "typhoid fever": {
+        "medicines": [
+            {"name": "Azithromycin 500mg", "type": "Macrolide antibiotic", "composition": "Azithromycin 500mg", "dosage": "1 tablet once daily", "duration": "7 days", "purpose": "Treats typhoid fever — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=azithromycin+500mg"},
+            {"name": "Ciprofloxacin 500mg", "type": "Fluoroquinolone antibiotic", "composition": "Ciprofloxacin 500mg", "dosage": "1 tablet twice daily", "duration": "7-14 days", "purpose": "Alternative treatment for typhoid — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=ciprofloxacin+500mg"}
+        ]
+    },
+    "chickenpox": {
+        "medicines": [
+            {"name": "Acyclovir 400mg", "type": "Antiviral", "composition": "Acyclovir 400mg", "dosage": "1 tablet five times daily", "duration": "5-7 days", "purpose": "Reduces severity in high-risk patients", "buy_url": "https://www.1mg.com/search/all?name=acyclovir+400mg"},
+            {"name": "Calamine Lotion", "type": "Topical antipruritic", "composition": "Calamine, Zinc Oxide", "dosage": "Apply to itchy areas as needed", "duration": "Until rash resolves", "purpose": "Relieves itching from chickenpox rash", "buy_url": "https://www.1mg.com/search/all?name=calamine+lotion"}
+        ]
+    },
+    "hepatitis b": {
+        "medicines": [
+            {"name": "Tenofovir 300mg", "type": "Antiviral", "composition": "Tenofovir Disoproxil Fumarate 300mg", "dosage": "1 tablet once daily", "duration": "Long-term — as directed by hepatologist", "purpose": "Suppresses hepatitis B virus — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=tenofovir+300mg"}
+        ]
+    },
+    "hepatitis c": {
+        "medicines": [
+            {"name": "Sofosbuvir 400mg + Velpatasvir 100mg", "type": "Direct-acting antiviral", "composition": "Sofosbuvir 400mg + Velpatasvir 100mg", "dosage": "1 tablet once daily", "duration": "12 weeks", "purpose": "Cures hepatitis C with >95% success rate — PRESCRIPTION ONLY", "buy_url": "https://www.1mg.com/search/all?name=sofosbuvir+velpatasvir"}
+        ]
+    },
+    "hepatitis a": {
+        "medicines": [
+            {"name": "ORS (Oral Rehydration Salts)", "type": "Supportive care", "composition": "WHO formula ORS", "dosage": "As needed to maintain hydration", "duration": "Throughout illness", "purpose": "Prevents dehydration — no specific antiviral for Hep A", "buy_url": "https://www.1mg.com/search/all?name=ors+sachets"}
+        ]
     }
 }
 
@@ -447,27 +689,58 @@ def format_medication_card(disease: str, quantity: int = 1, safety_report: dict 
     return "\n".join(lines)
 
 
-GEMINI_MEDICAL_SYSTEM_PROMPT = """You are MediAssist, an intelligent AI health triage assistant.
+GEMINI_MEDICAL_SYSTEM_PROMPT = MEDICAL_REASONING_SYSTEM_PROMPT
 
-When answering about any disease, condition, or health query, you MUST always end your
-response with a medication section in EXACTLY this Markdown format:
 
----
-## 💊 Suggested Medications
-> ⚠️ *General reference only. Always consult a doctor before taking any medication.*
+# ── Response Validator Initialization ─────────────────────────────────────────
+# Extract known diseases and medications for validation
+_KNOWN_DISEASES = list(DISEASE_MEDICATIONS.keys())
+_KNOWN_MEDICATIONS = []
+for _disease_info in DISEASE_MEDICATIONS.values():
+    if "medicines" in _disease_info:
+        for _med in _disease_info["medicines"]:
+            if "name" in _med:
+                _KNOWN_MEDICATIONS.append(_med["name"].split()[0])  # First word (drug name)
+                _KNOWN_MEDICATIONS.append(_med["name"])              # Full name
 
-### 🔹 [Medicine Name and Strength]
-- **Type:** [tablet / capsule / syrup / inhaler / gel / etc.]
-- **Composition:** [active ingredient(s) and strength]
-- **Dosage:** [how much and how often]
-- **Duration:** [how long to take it]
-- **Purpose:** [what it treats in this context]
-- [Click to order](https://www.1mg.com/search/all?name=medicine+name+url+encoded)
+# Simple symptom map for validator (extracted from expanded map)
+_VALIDATOR_SYMPTOM_MAP = {
+    "diabetes": {"urination": 3, "thirst": 3, "fatigue": 2},
+    "hypertension": {"chest pain": 3, "dizziness": 2, "headache": 2},
+    "migraine": {"headache": 3, "nausea": 2, "light sensitivity": 3},
+    "asthma": {"wheezing": 4, "shortness of breath": 3, "cough": 2},
+    "pneumonia": {"fever": 3, "cough": 3, "chest pain": 3},
+    "gerd": {"heartburn": 4, "regurgitation": 3},
+    "anxiety": {"palpitations": 3, "restlessness": 2},
+    "depression": {"persistent sadness": 4, "loss of interest": 4},
+}
 
-Repeat the block above for each relevant medicine (maximum 3 medicines).
-If the condition requires prescription-only medicines, clearly state that a prescription is needed.
-"""
+# Initialize the response validator
+response_validator = ResponseValidator(
+    known_diseases=_KNOWN_DISEASES,
+    known_medications=list(set(_KNOWN_MEDICATIONS)),
+    symptom_map=_VALIDATOR_SYMPTOM_MAP,
+    medication_db=DISEASE_MEDICATIONS
+)
 
+
+def validate_and_process_response(response: str, context: dict = None) -> str:
+    """
+    Validate AI response for hallucinations and add appropriate warnings.
+    Returns processed response with validation warnings if needed.
+    """
+    try:
+        validation = response_validator.validate_response(response, context or {})
+        return process_validated_response(response, validation)
+    except Exception as e:
+        # If validation fails, return original response with generic disclaimer
+        logger.error(f"Response validation error: {e}")
+        if "consult" not in response.lower() and "disclaimer" not in response.lower():
+            response += (
+                "\n\n---\n⚠️ **Disclaimer:** This is AI-generated health information. "
+                "Always consult a qualified healthcare professional."
+            )
+        return response
 
 
 # ── Practo Specialist Mapping ─────────────────────────────────────────────
@@ -616,6 +889,38 @@ SPECIALTY_KEYWORDS: Dict[str, str] = {
 }
 
 
+NEGATION_TERMS = (
+    "no ",
+    "not ",
+    "without ",
+    "don't have ",
+    "do not have ",
+    "doesn't have ",
+    "does not have ",
+    "dont have ",
+)
+
+
+def keyword_is_present(text: str, keyword: str) -> bool:
+    start = 0
+    while True:
+        idx = text.find(keyword, start)
+        if idx == -1:
+            return False
+
+        context = text[max(0, idx - 40):idx]
+        for conj in (" but ", ", but ", " and ", ", and ", " however ", ", however "):
+            parts = context.rsplit(conj, 1)
+            if len(parts) > 1:
+                context = parts[-1]
+                break
+
+        if not any(neg in context for neg in NEGATION_TERMS):
+            return True
+
+        start = idx + len(keyword)
+
+
 def infer_specialty_slug(message: str, prediction_list: Optional[List[tuple]] = None) -> str:
     """Pick the most relevant specialist based on predicted disease or explicit medical terms."""
     for disease, _confidence in prediction_list or []:
@@ -625,7 +930,7 @@ def infer_specialty_slug(message: str, prediction_list: Optional[List[tuple]] = 
 
     text = (message or "").lower()
     for keyword, slug in SPECIALTY_KEYWORDS.items():
-        if keyword in text:
+        if keyword_is_present(text, keyword):
             return slug
 
     return "general-physician"
@@ -694,6 +999,8 @@ async def gemini_generate(model: str, contents: str, temperature: float = 0.7,
                     )
                 )
             response = await asyncio.to_thread(_sync_call)
+            if not response or not hasattr(response, 'text') or response.text is None:
+                raise RuntimeError("Gemini returned no text in generate_content")
             return response.text
         except Exception as e:
             last_err = e
@@ -725,21 +1032,91 @@ def predict_disease_from_symptoms(user_text: str) -> List[tuple]:
     if not user_text:
         return []
     symptom_map = {
-        "diabetes":                {"urination": 3, "thirst": 3, "fatigue": 2, "blurred vision": 2},
-        "hypertension":            {"chest pain": 3, "dizziness": 2, "headache": 1},
-        "migraine":                {"light sensitivity": 3, "nausea": 2, "headache": 1},
-        "muscle strain":           {"leg pain": 3, "muscle pain": 2},
-        "viral infection":         {"fever": 3, "fatigue": 2, "body pain": 2},
-        "common cold":             {"fever": 2, "cough": 2, "runny nose": 2},
-        "flu":                     {"fever": 3, "body pain": 3, "fatigue": 2},
-        "covid":                   {"fever": 2, "dry cough": 2, "loss of smell": 4},
-        "malaria":                 {"fever": 3, "chills": 3, "sweating": 2},
-        "anxiety":                 {"palpitations": 3, "sweating": 2, "shortness of breath": 2, "dizziness": 1},
-        "anemia":                  {"fatigue": 3, "dizziness": 2, "pale skin": 3, "weakness": 2},
-        "gastroenteritis":         {"nausea": 3, "vomiting": 3, "diarrhea": 3, "stomach pain": 2},
-        "asthma":                  {"wheezing": 4, "shortness of breath": 3, "cough": 2},
-        "urinary tract infection": {"burning urination": 4, "frequent urination": 3, "lower back pain": 2},
-        "dengue fever":            {"fever": 3, "rash": 3, "joint pain": 3, "headache": 2},
+        # ── Existing Conditions ──
+        "diabetes":                {"urination": 3, "thirst": 3, "fatigue": 2, "blurred vision": 2, "weight loss": 2, "hunger": 2},
+        "hypertension":            {"chest pain": 3, "dizziness": 2, "headache": 2, "shortness of breath": 2, "nosebleed": 1},
+        "migraine":                {"light sensitivity": 3, "nausea": 2, "headache": 3, "throbbing": 2, "vomiting": 1},
+        "muscle strain":           {"leg pain": 3, "muscle pain": 3, "swelling": 2, "stiffness": 2, "limited range": 1},
+        "viral infection":         {"fever": 3, "fatigue": 2, "body pain": 2, "sore throat": 1, "headache": 1},
+        "common cold":             {"fever": 2, "cough": 2, "runny nose": 3, "sneezing": 2, "sore throat": 2},
+        "flu":                     {"fever": 3, "body pain": 3, "fatigue": 2, "chills": 2, "sore throat": 1},
+        "covid":                   {"fever": 2, "dry cough": 3, "loss of smell": 4, "loss of taste": 4, "fatigue": 2},
+        "malaria":                 {"fever": 3, "chills": 3, "sweating": 2, "headache": 2, "nausea": 1},
+        "anxiety":                 {"palpitations": 3, "sweating": 2, "shortness of breath": 2, "dizziness": 2, "restlessness": 2},
+        "anemia":                  {"fatigue": 3, "dizziness": 2, "pale skin": 3, "weakness": 2, "cold hands": 1},
+        "gastroenteritis":         {"nausea": 3, "vomiting": 3, "diarrhea": 3, "stomach pain": 2, "fever": 1},
+        "asthma":                  {"wheezing": 4, "shortness of breath": 3, "cough": 2, "chest tightness": 2},
+        "urinary tract infection": {"burning urination": 4, "frequent urination": 3, "lower back pain": 2, "cloudy urine": 2},
+        "dengue fever":            {"fever": 3, "rash": 3, "joint pain": 3, "headache": 2, "eye pain": 2},
+
+        # ── Cardiovascular ──
+        "coronary artery disease": {"chest pain": 4, "shortness of breath": 3, "fatigue": 2, "arm pain": 3, "jaw pain": 2, "sweating": 2},
+        "heart failure":           {"shortness of breath": 4, "swelling": 3, "fatigue": 3, "rapid heartbeat": 2, "cough": 1, "weight gain": 2},
+        "arrhythmia":              {"palpitations": 4, "fluttering": 3, "racing heart": 3, "slow heartbeat": 2, "dizziness": 2, "fainting": 2},
+        "deep vein thrombosis":    {"leg swelling": 4, "leg pain": 3, "warmth": 2, "redness": 2, "visible veins": 1},
+        "stroke":                  {"numbness": 4, "weakness": 4, "confusion": 3, "speech difficulty": 4, "vision problems": 3, "severe headache": 3},
+
+        # ── Respiratory ──
+        "pneumonia":               {"fever": 3, "cough": 3, "phlegm": 3, "chest pain": 3, "shortness of breath": 3, "fatigue": 2},
+        "copd":                    {"chronic cough": 4, "mucus": 3, "shortness of breath": 4, "wheezing": 3, "chest tightness": 2},
+        "bronchitis":              {"cough": 4, "mucus": 3, "fatigue": 2, "shortness of breath": 2, "chest discomfort": 2},
+        "tuberculosis":            {"persistent cough": 4, "coughing blood": 4, "weight loss": 3, "night sweats": 3, "fever": 2},
+        "pulmonary embolism":      {"sudden shortness of breath": 4, "chest pain": 4, "cough": 2, "rapid heartbeat": 3, "dizziness": 2},
+
+        # ── Gastrointestinal ──
+        "gerd":                    {"heartburn": 4, "regurgitation": 3, "difficulty swallowing": 2, "chest pain": 2, "chronic cough": 1},
+        "peptic ulcer":            {"burning stomach pain": 4, "bloating": 2, "heartburn": 2, "nausea": 2, "fullness": 2},
+        "irritable bowel syndrome":{"abdominal cramping": 4, "bloating": 3, "gas": 2, "diarrhea": 3, "constipation": 3},
+        "appendicitis":            {"lower right abdominal pain": 4, "nausea": 3, "vomiting": 2, "loss of appetite": 2, "fever": 2},
+        "gallstones":              {"upper right abdominal pain": 4, "back pain": 2, "shoulder pain": 2, "nausea": 2, "vomiting": 1},
+        "hepatitis b":             {"fatigue": 3, "jaundice": 4, "abdominal pain": 2, "nausea": 2, "dark urine": 3},
+        "hepatitis c":             {"fatigue": 3, "jaundice": 4, "abdominal pain": 2, "joint pain": 2, "dark urine": 3},
+        "hepatitis a":             {"fatigue": 3, "jaundice": 4, "nausea": 2, "loss of appetite": 2, "fever": 2},
+
+        # ── Endocrine ──
+        "hypothyroidism":          {"fatigue": 4, "weight gain": 3, "cold intolerance": 3, "constipation": 2, "dry skin": 2, "depression": 2},
+        "hyperthyroidism":         {"weight loss": 3, "rapid heartbeat": 3, "anxiety": 3, "tremors": 3, "sweating": 2, "heat intolerance": 2},
+        "pcos":                    {"irregular periods": 4, "excess hair": 3, "acne": 2, "weight gain": 2, "hair thinning": 2},
+        "cushing syndrome":        {"weight gain": 3, "round face": 3, "stretch marks": 3, "thin skin": 2, "fatigue": 2, "high blood pressure": 2},
+
+        # ── Musculoskeletal ──
+        "rheumatoid arthritis":    {"joint pain": 4, "joint swelling": 4, "stiffness": 3, "fatigue": 2, "fever": 1},
+        "osteoarthritis":          {"joint pain": 4, "stiffness": 3, "tenderness": 2, "loss of flexibility": 2, "grating": 1},
+        "osteoporosis":            {"back pain": 3, "loss of height": 3, "stooped posture": 2, "fracture": 4},
+        "gout":                    {"intense joint pain": 4, "swelling": 3, "redness": 3, "warmth": 2, "limited motion": 2},
+        "fibromyalgia":            {"widespread pain": 4, "fatigue": 4, "cognitive difficulties": 3, "sleep problems": 3, "headaches": 2},
+        "sciatica":                {"lower back pain": 4, "leg pain": 4, "numbness": 3, "tingling": 3, "muscle weakness": 2},
+
+        # ── Neurological ──
+        "epilepsy":                {"seizures": 4, "convulsions": 4, "staring": 3, "confusion": 3, "loss of consciousness": 3},
+        "parkinson disease":       {"tremor": 4, "slowed movement": 4, "rigid muscles": 3, "balance problems": 3, "speech changes": 2},
+        "alzheimer disease":       {"memory loss": 4, "confusion": 4, "difficulty planning": 3, "language problems": 3, "mood changes": 2},
+        "bell palsy":              {"facial weakness": 4, "facial droop": 4, "drooling": 2, "eye dryness": 2, "headache": 1},
+        "vertigo":                 {"spinning": 4, "dizziness": 4, "loss of balance": 3, "nausea": 2, "vomiting": 2},
+
+        # ── Infectious ──
+        "typhoid fever":           {"sustained fever": 4, "headache": 3, "weakness": 3, "stomach pain": 2, "constipation": 2},
+        "chickenpox":              {"itchy rash": 4, "blisters": 4, "fever": 3, "fatigue": 2, "loss of appetite": 1},
+        "measles":                 {"high fever": 3, "cough": 2, "runny nose": 2, "red eyes": 3, "rash": 4},
+        "hiv aids":                {"weight loss": 3, "fever": 3, "night sweats": 3, "chronic diarrhea": 3, "swollen lymph nodes": 3},
+
+        # ── Mental Health ──
+        "depression":              {"persistent sadness": 4, "loss of interest": 4, "sleep changes": 3, "fatigue": 3, "worthlessness": 3},
+        "bipolar disorder":        {"elevated mood": 4, "decreased sleep": 3, "racing thoughts": 3, "depression": 3, "risky behavior": 2},
+        "ptsd":                    {"flashbacks": 4, "nightmares": 4, "avoidance": 3, "negative mood": 3, "hyperarousal": 3},
+        "ocd":                     {"intrusive thoughts": 4, "compulsive behaviors": 4, "repetitive": 3, "anxiety": 3, "need for order": 2},
+        "panic disorder":          {"panic attack": 4, "heart palpitations": 4, "sweating": 3, "trembling": 3, "fear of dying": 3},
+
+        # ── Dermatological ──
+        "eczema":                  {"dry skin": 4, "itching": 4, "red patches": 3, "raised bumps": 2, "cracked skin": 2},
+        "psoriasis":               {"red patches": 4, "silvery scales": 4, "dry skin": 3, "itching": 2, "thickened nails": 2},
+        "cellulitis":              {"spreading redness": 4, "swelling": 3, "tenderness": 3, "warmth": 2, "fever": 2},
+        "shingles":                {"painful rash": 4, "blisters": 4, "burning": 3, "tingling": 3, "fever": 2},
+
+        # ── Urological ──
+        "kidney stones":           {"severe side pain": 4, "back pain": 3, "pain in waves": 3, "painful urination": 3, "blood in urine": 3},
+        "bph":                     {"frequent urination": 4, "urgency": 3, "difficulty starting": 3, "weak stream": 3, "dribbling": 2},
+        "interstitial cystitis":   {"bladder pressure": 4, "pelvic pain": 4, "persistent urge": 3, "frequent urination": 3, "pain during intercourse": 2},
     }
 
     def symptom_present(text: str, symptom: str) -> bool:
@@ -805,7 +1182,7 @@ def check_emergency(user_text: str) -> bool:
         "severe head injury",
     ]
     text_lower = user_text.lower()
-    return any(kw in text_lower for kw in emergency_keywords)
+    return any(keyword_is_present(text_lower, kw) for kw in emergency_keywords)
 
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
@@ -1151,9 +1528,13 @@ class AIAgent:
                 config=types.GenerateContentConfig(temperature=0.7, max_output_tokens=2048)
             )
         response = await asyncio.to_thread(_sync_call)
+        if not response or not hasattr(response, 'text') or response.text is None:
+            raise RuntimeError("Gemini returned no text in conversation response")
         return response.text
 
     def _parse_tool(self, text: str) -> Optional[dict]:
+        if not text or not isinstance(text, str):
+            return None
         s = text.find("{")
         e = text.rfind("}") + 1
         if s == -1 or e == 0:
@@ -1477,7 +1858,7 @@ async def chat(req: ChatRequest):
 
     if check_emergency(req.message):
         emg_lower   = req.message.lower()
-        emg_slug    = next((slug for kw, slug in EMERGENCY_SPECIALTY.items() if kw in emg_lower), "general-physician")
+        emg_slug    = next((slug for kw, slug in EMERGENCY_SPECIALTY.items() if keyword_is_present(emg_lower, kw)), "general-physician")
         emg_display = SPECIALTY_DISPLAY.get(emg_slug, "General Physician")
         emg_practo_url = build_practo_url(emg_slug)
         emergency_response = (
@@ -1571,7 +1952,8 @@ async def chat(req: ChatRequest):
             "If the user asks about change over time, explicitly discuss the trend comparison."
         )
         try:
-            text   = await gemini_generate(active_model, prompt)
+            raw_text = await gemini_generate(active_model, prompt)
+            text = validate_and_process_response(raw_text, {"symptoms": req.message})
             result = {"response": text, "tools_used": ["Uploaded Report"]}
         except Exception as e:
             logger.error(f"Gemini report error: {e}")
@@ -1691,7 +2073,9 @@ Respond EXACTLY in this format:
 
 ⚠️ Disclaimer: This is AI-generated health guidance, not a medical diagnosis. Please consult a qualified healthcare professional."""
 
-        explanation     = await agent.process(explanation_prompt, history, model=active_model)
+        raw_explanation = await agent.process(explanation_prompt, history, model=active_model)
+        validated_text = validate_and_process_response(raw_explanation["response"], {"symptoms": req.message})
+        explanation = {"response": validated_text, "tools_used": raw_explanation.get("tools_used", [])}
         conditions_text = "\n".join(
             [f"{i+1}. {d.title()} ({c}%)" for i, (d, c) in enumerate(prediction_list)]
         )
@@ -1781,7 +2165,8 @@ Respond EXACTLY in this format:
             f"Then add the medication section as instructed above."
         )
         try:
-            kg_response = await gemini_generate(active_model, kg_prompt)
+            raw_kg_response = await gemini_generate(active_model, kg_prompt)
+            kg_response = validate_and_process_response(raw_kg_response, {"symptoms": req.message})
             result      = {"response": kg_response, "tools_used": ["Medical KG"]}
         except Exception as e:
             logger.error(f"Gemini KG error: {e}")
@@ -1820,14 +2205,17 @@ Respond EXACTLY in this format:
                 "If the context does not contain a relevant answer, answer from general knowledge. "
                 "Always end with the medication section as instructed above."
             )
-            text   = await gemini_generate(active_model, prompt)
+            raw_text = await gemini_generate(active_model, prompt)
+            text = validate_and_process_response(raw_text, {"symptoms": req.message})
             result = {"response": text, "tools_used": ["RAG"]}
             sources = build_sources(
                 {"type": "rag", "label": "Medical Knowledge Base"},
                 {"type": "profile", "label": "Structured Profile"},
             )
         else:
-            result = await agent.process(req.message, history, model=active_model)
+            agent_result = await agent.process(req.message, history, model=active_model)
+            validated_response = validate_and_process_response(agent_result["response"], {"symptoms": req.message})
+            result = {"response": validated_response, "tools_used": agent_result.get("tools_used", [])}
             sources = build_sources(
                 {"type": "gemini_fallback", "label": "Direct Gemini Reasoning"},
                 {"type": "profile", "label": "Structured Profile"},

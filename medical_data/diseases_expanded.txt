@@ -1,0 +1,751 @@
+# MediAssist Expanded Disease Database
+# 50+ diseases with ICD-10 codes, symptoms, risk factors, and treatment guidelines
+# Format: Structured entries for each disease
+
+================================================================================
+CARDIOVASCULAR DISEASES
+================================================================================
+
+Disease: Coronary Artery Disease
+ICD-10: I25.10
+Category: Cardiovascular
+Description: Narrowing or blockage of coronary arteries due to plaque buildup, reducing blood flow to the heart muscle.
+Key Symptoms: chest pain (angina), shortness of breath, fatigue, heart palpitations, dizziness, nausea, sweating
+Severity Indicators: chest pain at rest, pain radiating to arm/jaw, severe shortness of breath, syncope
+Risk Factors: high cholesterol, hypertension, diabetes, smoking, obesity, family history, sedentary lifestyle, age >45
+Complications: heart attack, heart failure, arrhythmias, sudden cardiac death
+Treatment: lifestyle changes, statins, aspirin, beta-blockers, ACE inhibitors, angioplasty, bypass surgery
+When to Seek Emergency: crushing chest pain, pain radiating to arm or jaw, difficulty breathing, loss of consciousness
+
+Disease: Heart Failure
+ICD-10: I50.9
+Category: Cardiovascular
+Description: Heart cannot pump blood efficiently to meet body's needs, causing fluid buildup and organ dysfunction.
+Key Symptoms: shortness of breath, fatigue, swelling in legs/ankles/feet, rapid heartbeat, persistent cough, weight gain, reduced exercise tolerance
+Severity Indicators: shortness of breath at rest, unable to lie flat, severe swelling, confusion, chest pain
+Risk Factors: coronary artery disease, hypertension, diabetes, obesity, valve disease, cardiomyopathy, previous heart attack
+Complications: kidney damage, liver damage, arrhythmias, pulmonary edema, sudden cardiac death
+Treatment: ACE inhibitors, beta-blockers, diuretics, aldosterone antagonists, lifestyle modifications, devices (pacemaker, ICD)
+When to Seek Emergency: sudden severe shortness of breath, chest pain, fainting, rapid or irregular heartbeat, coughing pink frothy mucus
+
+Disease: Arrhythmia
+ICD-10: I49.9
+Category: Cardiovascular
+Description: Abnormal heart rhythm - too fast (tachycardia), too slow (bradycardia), or irregular heartbeat.
+Key Symptoms: heart palpitations, fluttering in chest, racing heartbeat, slow heartbeat, chest discomfort, shortness of breath, dizziness, fainting
+Severity Indicators: prolonged palpitations, loss of consciousness, severe chest pain, extreme shortness of breath
+Risk Factors: heart disease, hypertension, diabetes, thyroid problems, excessive caffeine/alcohol, stress, sleep apnea
+Complications: stroke, heart failure, sudden cardiac arrest
+Treatment: antiarrhythmic medications, blood thinners, cardioversion, ablation, pacemaker, ICD
+When to Seek Emergency: fainting, severe chest pain, extreme shortness of breath, prolonged rapid heartbeat
+
+Disease: Deep Vein Thrombosis (DVT)
+ICD-10: I82.40
+Category: Cardiovascular
+Description: Blood clot forms in a deep vein, usually in the leg, which can break loose and travel to the lungs.
+Key Symptoms: leg swelling, leg pain, warmth in affected area, red or discolored skin, visible surface veins
+Severity Indicators: sudden severe leg swelling, chest pain, difficulty breathing (suggests pulmonary embolism)
+Risk Factors: prolonged immobility, surgery, cancer, pregnancy, birth control pills, smoking, obesity, family history
+Complications: pulmonary embolism, post-thrombotic syndrome, chronic venous insufficiency
+Treatment: anticoagulants (blood thinners), thrombolytics, compression stockings, IVC filter
+When to Seek Emergency: sudden chest pain, difficulty breathing, coughing blood, rapid heartbeat with leg swelling
+
+Disease: Stroke
+ICD-10: I63.9
+Category: Cardiovascular/Neurological
+Description: Brain damage from interrupted blood supply (ischemic) or bleeding in the brain (hemorrhagic).
+Key Symptoms: sudden numbness or weakness (face/arm/leg), confusion, trouble speaking, vision problems, severe headache, dizziness, loss of balance
+Severity Indicators: all stroke symptoms are emergencies - "FAST": Face drooping, Arm weakness, Speech difficulty, Time to call emergency
+Risk Factors: hypertension, diabetes, high cholesterol, heart disease, smoking, obesity, family history, prior stroke/TIA
+Complications: paralysis, speech problems, memory loss, emotional changes, pain, behavioral changes
+Treatment: emergency clot-busting drugs (tPA), mechanical thrombectomy, surgery, rehabilitation
+When to Seek Emergency: ANY stroke symptoms require immediate 911 call - time is critical for treatment
+
+================================================================================
+RESPIRATORY DISEASES
+================================================================================
+
+Disease: Pneumonia
+ICD-10: J18.9
+Category: Respiratory
+Description: Infection causing inflammation in lung air sacs, which may fill with fluid or pus.
+Key Symptoms: fever, cough with phlegm, chest pain when breathing, shortness of breath, fatigue, nausea, vomiting, confusion (in elderly)
+Severity Indicators: high fever >103°F, confusion, bluish lips/fingernails, rapid breathing, severe chest pain
+Risk Factors: age >65 or <2, chronic diseases, weakened immune system, smoking, hospitalization, recent respiratory infection
+Complications: bacteremia, sepsis, lung abscess, pleural effusion, respiratory failure
+Treatment: antibiotics (bacterial), antivirals (viral), rest, fluids, fever reducers, oxygen therapy if needed
+When to Seek Emergency: difficulty breathing, confusion, bluish skin, high fever unresponsive to treatment
+
+Disease: Chronic Obstructive Pulmonary Disease (COPD)
+ICD-10: J44.9
+Category: Respiratory
+Description: Progressive lung disease causing airflow obstruction, including emphysema and chronic bronchitis.
+Key Symptoms: chronic cough, mucus production, shortness of breath, wheezing, chest tightness, fatigue, frequent respiratory infections
+Severity Indicators: severe breathlessness at rest, bluish lips, confusion, rapid heartbeat
+Risk Factors: smoking, long-term exposure to pollutants, alpha-1 antitrypsin deficiency, asthma, age
+Complications: respiratory infections, heart problems, lung cancer, pulmonary hypertension, depression
+Treatment: bronchodilators, inhaled steroids, oxygen therapy, pulmonary rehabilitation, smoking cessation
+When to Seek Emergency: severe shortness of breath, bluish lips/fingernails, confusion, rapid heartbeat
+
+Disease: Bronchitis
+ICD-10: J40
+Category: Respiratory
+Description: Inflammation of bronchial tubes causing cough and mucus production; acute or chronic.
+Key Symptoms: cough, mucus production, fatigue, shortness of breath, chest discomfort, low-grade fever, body aches
+Severity Indicators: high fever, bloody mucus, severe shortness of breath, symptoms lasting >3 weeks
+Risk Factors: smoking, weakened immune system, GERD, exposure to irritants, repeated respiratory infections
+Complications: pneumonia, chronic bronchitis, COPD (with repeated episodes)
+Treatment: rest, fluids, cough suppressants, bronchodilators, antibiotics (if bacterial), steroids for inflammation
+When to Seek Emergency: difficulty breathing, high fever, bloody mucus, symptoms worsening after initial improvement
+
+Disease: Tuberculosis
+ICD-10: A15.9
+Category: Respiratory/Infectious
+Description: Bacterial infection primarily affecting lungs, highly contagious through airborne transmission.
+Key Symptoms: persistent cough (>3 weeks), coughing blood, chest pain, unintentional weight loss, fatigue, fever, night sweats, chills
+Severity Indicators: coughing blood, severe weight loss, high fever, difficulty breathing
+Risk Factors: weakened immune system (HIV), close contact with TB patients, living in endemic areas, malnutrition, healthcare work
+Complications: lung damage, spread to other organs (bones, brain, kidneys), drug-resistant TB
+Treatment: 6-9 months of multiple antibiotics (isoniazid, rifampin, ethambutol, pyrazinamide), directly observed therapy
+When to Seek Emergency: coughing up blood, severe difficulty breathing, high fever with known TB exposure
+
+Disease: Pulmonary Embolism
+ICD-10: I26.99
+Category: Respiratory/Cardiovascular
+Description: Blood clot blocking arteries in the lungs, usually originating from leg veins (DVT).
+Key Symptoms: sudden shortness of breath, chest pain (worse with breathing), cough (may be bloody), rapid heartbeat, dizziness, leg pain/swelling
+Severity Indicators: severe shortness of breath, fainting, cyanosis, massive chest pain
+Risk Factors: DVT, prolonged immobility, surgery, cancer, pregnancy, birth control, smoking, obesity
+Complications: pulmonary hypertension, right heart failure, death (if massive)
+Treatment: emergency anticoagulation, thrombolytics (severe cases), embolectomy, IVC filter
+When to Seek Emergency: sudden shortness of breath, chest pain, coughing blood, fainting - call 911 immediately
+
+================================================================================
+GASTROINTESTINAL DISEASES
+================================================================================
+
+Disease: Gastroesophageal Reflux Disease (GERD)
+ICD-10: K21.0
+Category: Gastrointestinal
+Description: Chronic acid reflux where stomach acid frequently flows back into esophagus, causing irritation.
+Key Symptoms: heartburn, regurgitation, difficulty swallowing, chest pain, chronic cough, hoarseness, feeling of lump in throat
+Severity Indicators: difficulty swallowing, unintentional weight loss, vomiting blood, black stools
+Risk Factors: obesity, hiatal hernia, pregnancy, smoking, certain foods, eating late at night, certain medications
+Complications: esophagitis, Barrett's esophagus, esophageal stricture, esophageal cancer
+Treatment: lifestyle modifications, antacids, H2 blockers, proton pump inhibitors, surgery (fundoplication)
+When to Seek Emergency: severe chest pain, difficulty swallowing, vomiting blood, black tarry stools
+
+Disease: Peptic Ulcer Disease
+ICD-10: K27.9
+Category: Gastrointestinal
+Description: Open sores in stomach lining (gastric ulcer) or upper small intestine (duodenal ulcer).
+Key Symptoms: burning stomach pain, feeling of fullness, bloating, heartburn, nausea, intolerance to fatty foods
+Severity Indicators: vomiting blood, black or bloody stools, sudden severe abdominal pain, unintended weight loss
+Risk Factors: H. pylori infection, regular NSAID use, smoking, alcohol, stress, spicy foods (can worsen)
+Complications: internal bleeding, perforation, gastric outlet obstruction, gastric cancer
+Treatment: antibiotics (if H. pylori), proton pump inhibitors, H2 blockers, antacids, stopping NSAIDs
+When to Seek Emergency: vomiting blood or coffee-ground material, black tarry stools, sudden severe abdominal pain
+
+Disease: Irritable Bowel Syndrome (IBS)
+ICD-10: K58.9
+Category: Gastrointestinal
+Description: Chronic functional disorder affecting large intestine, causing cramping, pain, and altered bowel habits.
+Key Symptoms: abdominal cramping, bloating, gas, diarrhea, constipation, mucus in stool, symptoms related to stress/food
+Severity Indicators: weight loss, rectal bleeding, severe pain, symptoms starting after age 50
+Risk Factors: age <50, female gender, family history, anxiety, depression, food sensitivities, history of abuse
+Complications: poor quality of life, mood disorders, hemorrhoids (from chronic diarrhea/constipation)
+Treatment: dietary changes (low FODMAP), fiber supplements, antispasmodics, antidepressants, probiotics, stress management
+When to Seek Emergency: rectal bleeding, severe abdominal pain, unexplained weight loss, persistent vomiting
+
+Disease: Appendicitis
+ICD-10: K35.80
+Category: Gastrointestinal
+Description: Inflammation of the appendix requiring urgent surgical removal to prevent rupture.
+Key Symptoms: pain starting near navel then moving to lower right abdomen, nausea, vomiting, loss of appetite, low-grade fever, abdominal swelling
+Severity Indicators: severe pain in lower right abdomen, high fever, abdominal rigidity, rebound tenderness
+Risk Factors: age 10-30 (most common), family history, being male
+Complications: ruptured appendix, peritonitis, abscess, sepsis
+Treatment: emergency appendectomy (surgical removal), antibiotics
+When to Seek Emergency: severe abdominal pain (especially lower right), high fever with abdominal pain, vomiting with severe pain
+
+Disease: Gallstones
+ICD-10: K80.20
+Category: Gastrointestinal
+Description: Hardened deposits in gallbladder that can block bile ducts, causing pain and complications.
+Key Symptoms: sudden intense pain in upper right abdomen, pain between shoulder blades, right shoulder pain, nausea, vomiting
+Severity Indicators: prolonged pain (>5 hours), fever, jaundice, clay-colored stools
+Risk Factors: female gender, age >40, obesity, rapid weight loss, pregnancy, high-fat diet, diabetes, family history
+Complications: cholecystitis, cholangitis, pancreatitis, gallbladder cancer
+Treatment: watchful waiting (asymptomatic), cholecystectomy, medications to dissolve stones (rarely used)
+When to Seek Emergency: severe abdominal pain lasting hours, fever with abdominal pain, jaundice
+
+Disease: Hepatitis B
+ICD-10: B16.9
+Category: Gastrointestinal/Infectious
+Description: Viral infection attacking the liver, can be acute or chronic, transmitted through blood/body fluids.
+Key Symptoms: fatigue, nausea, vomiting, abdominal pain, loss of appetite, fever, dark urine, joint pain, jaundice
+Severity Indicators: severe jaundice, confusion, abdominal swelling, easy bruising/bleeding
+Risk Factors: unprotected sex, sharing needles, healthcare exposure, born to infected mother, travel to endemic areas
+Complications: chronic hepatitis, cirrhosis, liver failure, liver cancer
+Treatment: acute (supportive care), chronic (antivirals like entecavir, tenofovir), liver transplant (severe cases)
+When to Seek Emergency: severe jaundice, confusion, abdominal swelling, vomiting blood
+
+Disease: Hepatitis C
+ICD-10: B17.10
+Category: Gastrointestinal/Infectious
+Description: Viral liver infection primarily spread through blood contact, often becomes chronic.
+Key Symptoms: fatigue, fever, nausea, loss of appetite, abdominal pain, dark urine, clay-colored stools, joint pain, jaundice
+Severity Indicators: severe jaundice, confusion, abdominal swelling, signs of cirrhosis
+Risk Factors: injection drug use, blood transfusion before 1992, healthcare exposure, born to infected mother, HIV infection
+Complications: chronic hepatitis, cirrhosis, liver cancer, liver failure
+Treatment: direct-acting antivirals (DAAs) - cure rates >95%, liver transplant for end-stage disease
+When to Seek Emergency: severe jaundice, confusion, vomiting blood, abdominal swelling
+
+================================================================================
+ENDOCRINE DISEASES
+================================================================================
+
+Disease: Hypothyroidism
+ICD-10: E03.9
+Category: Endocrine
+Description: Underactive thyroid gland doesn't produce enough thyroid hormone, slowing metabolism.
+Key Symptoms: fatigue, weight gain, cold intolerance, constipation, dry skin, hair loss, depression, muscle weakness, slow heart rate
+Severity Indicators: severe fatigue, confusion, very slow heart rate, hypothermia (myxedema coma - emergency)
+Risk Factors: female gender, age >60, family history, autoimmune disease, radiation treatment, thyroid surgery
+Complications: heart problems, mental health issues, myxedema coma, peripheral neuropathy, infertility
+Treatment: levothyroxine (thyroid hormone replacement), lifelong treatment with regular monitoring
+When to Seek Emergency: extreme fatigue with slow pulse, confusion, hypothermia, difficulty breathing
+
+Disease: Hyperthyroidism
+ICD-10: E05.90
+Category: Endocrine
+Description: Overactive thyroid produces excess thyroid hormone, accelerating metabolism.
+Key Symptoms: weight loss, rapid heartbeat, increased appetite, anxiety, tremors, sweating, heat intolerance, frequent bowel movements, menstrual changes
+Severity Indicators: very rapid heartbeat, fever, confusion, agitation (thyroid storm - emergency)
+Risk Factors: female gender, family history, Graves' disease, excessive iodine intake, thyroid nodules
+Complications: heart problems, brittle bones, thyroid storm, eye problems (Graves' ophthalmopathy)
+Treatment: antithyroid medications (methimazole, PTU), radioactive iodine, beta-blockers, surgery
+When to Seek Emergency: rapid heartbeat with fever and confusion, severe agitation, chest pain
+
+Disease: Polycystic Ovary Syndrome (PCOS)
+ICD-10: E28.2
+Category: Endocrine/Reproductive
+Description: Hormonal disorder causing enlarged ovaries with small cysts, affecting menstruation and fertility.
+Key Symptoms: irregular periods, heavy bleeding, excess hair growth, acne, weight gain, hair thinning, darkened skin, difficulty getting pregnant
+Severity Indicators: very heavy bleeding, severe pelvic pain, signs of diabetes
+Risk Factors: family history, obesity, insulin resistance, inflammation
+Complications: infertility, gestational diabetes, type 2 diabetes, metabolic syndrome, depression, sleep apnea, endometrial cancer
+Treatment: birth control pills, metformin, anti-androgens, fertility medications, lifestyle modifications
+When to Seek Emergency: very heavy bleeding, severe pelvic pain, signs of ectopic pregnancy if trying to conceive
+
+Disease: Cushing's Syndrome
+ICD-10: E24.9
+Category: Endocrine
+Description: Excess cortisol production causing distinctive physical changes and metabolic problems.
+Key Symptoms: weight gain (face, abdomen), round face, pink/purple stretch marks, thin skin, slow healing, fatigue, muscle weakness, high blood pressure
+Severity Indicators: severe hypertension, severe muscle weakness, bone fractures, psychosis
+Risk Factors: long-term corticosteroid use, pituitary tumors, adrenal tumors
+Complications: diabetes, bone loss, high blood pressure, infections, depression, muscle loss
+Treatment: reduce corticosteroid use (if medication-induced), surgery (tumors), radiation, medications
+When to Seek Emergency: severe high blood pressure, signs of infection, bone fractures, severe depression/psychosis
+
+================================================================================
+MUSCULOSKELETAL DISEASES
+================================================================================
+
+Disease: Rheumatoid Arthritis
+ICD-10: M06.9
+Category: Musculoskeletal/Autoimmune
+Description: Autoimmune disease causing chronic joint inflammation, potentially affecting other body systems.
+Key Symptoms: joint pain, joint swelling, joint stiffness (morning), fatigue, fever, loss of appetite, symmetric joint involvement
+Severity Indicators: severe joint deformity, difficulty with daily activities, systemic symptoms
+Risk Factors: female gender, family history, smoking, obesity, age 40-60
+Complications: osteoporosis, rheumatoid nodules, dry eyes/mouth, infections, heart problems, lung disease
+Treatment: DMARDs (methotrexate), biologics, NSAIDs, corticosteroids, physical therapy
+When to Seek Emergency: sudden severe joint swelling with fever (may indicate infection), chest pain, severe shortness of breath
+
+Disease: Osteoarthritis
+ICD-10: M19.90
+Category: Musculoskeletal
+Description: Degenerative joint disease where protective cartilage breaks down over time.
+Key Symptoms: joint pain, stiffness, tenderness, loss of flexibility, grating sensation, bone spurs, swelling
+Severity Indicators: severe pain limiting mobility, joint deformity, inability to perform daily activities
+Risk Factors: age, obesity, joint injuries, repetitive stress, genetics, bone deformities
+Complications: chronic pain, reduced mobility, sleep disturbances, depression
+Treatment: exercise, weight management, physical therapy, pain relievers, NSAIDs, corticosteroid injections, joint replacement
+When to Seek Emergency: sudden severe joint pain with swelling and warmth (may indicate infection or gout), inability to move joint
+
+Disease: Osteoporosis
+ICD-10: M81.0
+Category: Musculoskeletal
+Description: Bones become weak and brittle due to loss of tissue, increasing fracture risk.
+Key Symptoms: often asymptomatic until fracture, back pain (from fractured vertebra), loss of height, stooped posture, bone fractures from minor trauma
+Severity Indicators: spine or hip fractures, multiple fractures, severe back pain
+Risk Factors: female gender, age >50, menopause, low calcium intake, sedentary lifestyle, smoking, alcohol, certain medications
+Complications: bone fractures (especially hip, spine, wrist), chronic pain, disability, death (hip fractures in elderly)
+Treatment: bisphosphonates, denosumab, hormone therapy, calcium/vitamin D supplements, weight-bearing exercise
+When to Seek Emergency: hip or spine fracture, severe sudden back pain, fall with inability to move
+
+Disease: Gout
+ICD-10: M10.9
+Category: Musculoskeletal
+Description: Form of arthritis caused by uric acid crystal deposits in joints, causing intense pain.
+Key Symptoms: intense joint pain (often big toe), swelling, redness, warmth, limited range of motion, pain peaks within 4-12 hours
+Severity Indicators: fever with joint symptoms, multiple joint involvement, inability to bear weight
+Risk Factors: high-purine diet, alcohol, obesity, certain medications, kidney disease, genetics, male gender
+Complications: recurrent gout, advanced gout (tophi), kidney stones, kidney disease
+Treatment: NSAIDs, colchicine, corticosteroids, urate-lowering therapy (allopurinol, febuxostat), lifestyle changes
+When to Seek Emergency: fever with joint inflammation (may indicate infection), severe pain uncontrolled by medication
+
+Disease: Fibromyalgia
+ICD-10: M79.7
+Category: Musculoskeletal
+Description: Chronic condition causing widespread musculoskeletal pain with fatigue, sleep, and cognitive issues.
+Key Symptoms: widespread pain, fatigue, cognitive difficulties (fibro fog), sleep problems, headaches, depression, abdominal pain
+Severity Indicators: severe fatigue affecting daily function, severe depression, sleep completely disrupted
+Risk Factors: female gender, family history, osteoarthritis, rheumatoid arthritis, lupus, physical or emotional trauma
+Complications: reduced quality of life, depression, anxiety, sleep disorders, disability
+Treatment: pain relievers, antidepressants (duloxetine, milnacipran), anti-seizure drugs (pregabalin), exercise, cognitive behavioral therapy
+When to Seek Emergency: severe depression with suicidal thoughts, extreme fatigue with other concerning symptoms
+
+Disease: Sciatica
+ICD-10: M54.3
+Category: Musculoskeletal/Neurological
+Description: Pain radiating along sciatic nerve from lower back through hips and buttocks down each leg.
+Key Symptoms: lower back pain, pain radiating down leg, numbness or tingling, muscle weakness, pain worsened by sitting, sharp or burning pain
+Severity Indicators: progressive leg weakness, loss of bladder/bowel control, severe numbness
+Risk Factors: age, obesity, prolonged sitting, diabetes, occupation requiring heavy lifting or twisting
+Complications: chronic pain, permanent nerve damage, muscle weakness, loss of sensation
+Treatment: self-care (ice/heat), physical therapy, medications (NSAIDs, muscle relaxants, corticosteroids), epidural injections, surgery (severe cases)
+When to Seek Emergency: loss of bladder or bowel control, severe progressive weakness, sudden severe pain after injury
+
+================================================================================
+NEUROLOGICAL DISEASES
+================================================================================
+
+Disease: Epilepsy
+ICD-10: G40.909
+Category: Neurological
+Description: Brain disorder causing recurrent, unprovoked seizures due to abnormal electrical activity.
+Key Symptoms: seizures (convulsions, staring spells, confusion), temporary confusion, loss of consciousness, uncontrollable jerking, psychic symptoms
+Severity Indicators: prolonged seizure (>5 min), multiple seizures without recovery, injury during seizure
+Risk Factors: family history, head trauma, stroke, brain tumors, infections (meningitis), developmental disorders
+Complications: injuries from falls, drowning, accidents, status epilepticus, SUDEP (sudden unexpected death), cognitive issues
+Treatment: anti-seizure medications, surgery, vagus nerve stimulation, ketogenic diet, responsive neurostimulation
+When to Seek Emergency: seizure >5 minutes, no return to consciousness, second seizure immediately, injury during seizure, first-time seizure
+
+Disease: Parkinson's Disease
+ICD-10: G20
+Category: Neurological
+Description: Progressive nervous system disorder affecting movement, causing tremors and stiffness.
+Key Symptoms: tremor (usually starts in hand), slowed movement, rigid muscles, impaired posture/balance, loss of automatic movements, speech changes, writing changes
+Severity Indicators: severe difficulty walking, frequent falls, significant cognitive decline, severe swallowing problems
+Risk Factors: age >60, male gender, family history, toxin exposure (pesticides), head injuries
+Complications: cognitive problems, depression, sleep disorders, swallowing problems, bladder problems, constipation, falls
+Treatment: levodopa/carbidopa, dopamine agonists, MAO-B inhibitors, deep brain stimulation, physical therapy
+When to Seek Emergency: sudden worsening of symptoms, severe falls, difficulty breathing or swallowing, signs of medication toxicity
+
+Disease: Alzheimer's Disease
+ICD-10: G30.9
+Category: Neurological
+Description: Progressive brain disorder causing memory loss and cognitive decline, most common cause of dementia.
+Key Symptoms: memory loss (especially recent events), difficulty planning/problem-solving, trouble completing familiar tasks, confusion with time/place, language problems, poor judgment, mood changes
+Severity Indicators: complete dependence on others, inability to communicate, loss of physical functions
+Risk Factors: age >65, family history, Down syndrome, head injuries, cardiovascular disease, poor sleep
+Complications: falls, infections (pneumonia common cause of death), malnutrition, dehydration, wandering
+Treatment: cholinesterase inhibitors (donepezil, rivastigmine), memantine, supportive care, cognitive stimulation
+When to Seek Emergency: sudden confusion or behavior change (may indicate infection), falls, signs of aspiration pneumonia
+
+Disease: Bell's Palsy
+ICD-10: G51.0
+Category: Neurological
+Description: Sudden weakness in facial muscles, usually one side, due to facial nerve inflammation.
+Key Symptoms: sudden weakness on one side of face, facial droop, difficulty closing eye, drooling, decreased taste, eye dryness, headache, pain around jaw/ear
+Severity Indicators: complete paralysis, symptoms not improving after weeks, symptoms on both sides (rare, different cause)
+Risk Factors: viral infections (herpes), diabetes, pregnancy, upper respiratory infection, weakened immune system
+Complications: irreversible facial nerve damage, chronic taste abnormalities, eye damage from dryness, involuntary movements
+Treatment: corticosteroids, antiviral medications (if viral cause suspected), eye protection, physical therapy
+When to Seek Emergency: symptoms on both sides of face, weakness spreading to other body parts, severe headache with facial weakness
+
+Disease: Vertigo (Vestibular Disorders)
+ICD-10: R42
+Category: Neurological
+Description: Sensation of spinning or dizziness, often caused by inner ear problems or brain issues.
+Key Symptoms: sensation of spinning, dizziness, loss of balance, nausea, vomiting, nystagmus (abnormal eye movements), hearing loss, tinnitus
+Severity Indicators: severe vomiting, symptoms with headache/slurred speech/weakness, high fever
+Risk Factors: inner ear infections, head injury, Meniere's disease, vestibular neuritis, BPPV, migraines
+Complications: falls, injury, anxiety, depression, reduced quality of life
+Treatment: depends on cause - canalith repositioning (BPPV), vestibular rehabilitation, medications (meclizine, diazepam), treating underlying condition
+When to Seek Emergency: vertigo with severe headache, slurred speech, weakness, visual changes, high fever, recent head injury
+
+================================================================================
+INFECTIOUS DISEASES
+================================================================================
+
+Disease: Typhoid Fever
+ICD-10: A01.00
+Category: Infectious
+Description: Bacterial infection (Salmonella typhi) spread through contaminated food/water, causing high fever.
+Key Symptoms: sustained high fever, headache, weakness, stomach pain, constipation or diarrhea, rose-colored spots on chest, enlarged spleen
+Severity Indicators: very high fever, confusion, intestinal bleeding, perforation
+Risk Factors: travel to endemic areas, poor sanitation, consuming contaminated food/water
+Complications: intestinal hemorrhage, intestinal perforation, encephalitis, kidney failure, death if untreated
+Treatment: antibiotics (ciprofloxacin, azithromycin, ceftriaxone), fluids, hospitalization for severe cases
+When to Seek Emergency: high fever with confusion, severe abdominal pain, bloody stools, signs of dehydration
+
+Disease: Chickenpox (Varicella)
+ICD-10: B01.9
+Category: Infectious
+Description: Highly contagious viral infection causing itchy, blister-like rash throughout the body.
+Key Symptoms: itchy rash (progresses from red spots to blisters to scabs), fever, fatigue, loss of appetite, headache, malaise before rash
+Severity Indicators: rash involving eyes, high fever, confusion, difficulty breathing, severe skin infection
+Risk Factors: no previous infection or vaccination, weakened immune system, pregnancy, newborns
+Complications: bacterial skin infections, pneumonia, encephalitis, sepsis, Reye's syndrome (if aspirin given)
+Treatment: supportive care, calamine lotion, antihistamines, acyclovir (high-risk patients), avoid aspirin in children
+When to Seek Emergency: difficulty breathing, confusion, severe headache with stiff neck, rash spreading to eyes, signs of bacterial infection
+
+Disease: Measles
+ICD-10: B05.9
+Category: Infectious
+Description: Highly contagious viral disease causing distinctive rash and potentially serious complications.
+Key Symptoms: high fever, cough, runny nose, red/watery eyes, Koplik spots (white spots in mouth), red blotchy rash (starts on face)
+Severity Indicators: very high fever, difficulty breathing, seizures, confusion
+Risk Factors: unvaccinated individuals, travel to endemic areas, weakened immune system, vitamin A deficiency
+Complications: ear infections, pneumonia, encephalitis, subacute sclerosing panencephalitis (rare), death
+Treatment: supportive care, vitamin A supplements, treatment of complications, isolation
+When to Seek Emergency: difficulty breathing, seizures, confusion, severe headache, signs of pneumonia
+
+Disease: HIV/AIDS
+ICD-10: B20
+Category: Infectious
+Description: Viral infection attacking immune system, leading to AIDS if untreated.
+Key Symptoms: early (flu-like symptoms, rash, swollen lymph nodes), later (weight loss, fever, night sweats, chronic diarrhea, opportunistic infections)
+Severity Indicators: very low CD4 count (<200), opportunistic infections, AIDS-defining illnesses
+Risk Factors: unprotected sex, sharing needles, blood transfusion (before screening), mother-to-child transmission
+Complications: opportunistic infections, cancers (Kaposi's sarcoma, lymphoma), neurological complications, organ damage
+Treatment: antiretroviral therapy (ART) - lifelong treatment, prophylaxis for opportunistic infections
+When to Seek Emergency: high fever with confusion, severe difficulty breathing, signs of serious infection, neurological symptoms
+
+Disease: Hepatitis A
+ICD-10: B15.9
+Category: Infectious/Gastrointestinal
+Description: Viral liver infection spread through contaminated food/water, usually self-limiting.
+Key Symptoms: fatigue, nausea, vomiting, abdominal pain, loss of appetite, low-grade fever, dark urine, clay-colored stools, jaundice
+Severity Indicators: severe jaundice, confusion, severe vomiting, signs of liver failure
+Risk Factors: travel to endemic areas, poor sanitation, men who have sex with men, drug use, close contact with infected person
+Complications: rare liver failure (especially in elderly), prolonged illness
+Treatment: supportive care (rest, fluids, nutrition), avoid alcohol, no specific antiviral treatment
+When to Seek Emergency: severe jaundice, confusion, severe abdominal pain, signs of dehydration
+
+================================================================================
+MENTAL HEALTH DISORDERS
+================================================================================
+
+Disease: Major Depressive Disorder
+ICD-10: F32.9
+Category: Mental Health
+Description: Mood disorder causing persistent sadness and loss of interest, affecting daily functioning.
+Key Symptoms: persistent sadness, loss of interest, sleep changes, appetite changes, fatigue, worthlessness/guilt, difficulty concentrating, thoughts of death
+Severity Indicators: suicidal thoughts or plans, inability to function, psychotic symptoms, severe weight loss
+Risk Factors: family history, trauma, chronic illness, certain medications, major life changes, substance abuse
+Complications: substance abuse, anxiety, physical health problems, social isolation, suicide
+Treatment: antidepressants (SSRIs, SNRIs), psychotherapy (CBT, interpersonal), combination therapy, ECT (severe cases)
+When to Seek Emergency: suicidal thoughts or plans, self-harm, psychotic symptoms, inability to care for self
+
+Disease: Bipolar Disorder
+ICD-10: F31.9
+Category: Mental Health
+Description: Mood disorder with episodes of mania/hypomania and depression, affecting energy and activity.
+Key Symptoms: manic (elevated mood, decreased sleep, racing thoughts, risky behavior), depressive (sadness, fatigue, hopelessness), mixed episodes possible
+Severity Indicators: psychotic symptoms, severe depression with suicidal thoughts, dangerous manic behavior
+Risk Factors: family history, high stress, substance abuse, major life events
+Complications: substance abuse, suicide, relationship problems, work/school problems, legal issues
+Treatment: mood stabilizers (lithium, valproate), antipsychotics, antidepressants (with caution), psychotherapy
+When to Seek Emergency: suicidal thoughts, psychotic symptoms, severe depression, dangerous manic behavior, substance overdose
+
+Disease: Post-Traumatic Stress Disorder (PTSD)
+ICD-10: F43.10
+Category: Mental Health
+Description: Disorder triggered by experiencing or witnessing traumatic events, causing persistent symptoms.
+Key Symptoms: flashbacks, nightmares, avoidance, negative mood changes, hyperarousal, emotional numbness, sleep problems, irritability
+Severity Indicators: suicidal thoughts, severe flashbacks, complete avoidance affecting functioning, substance abuse
+Risk Factors: trauma exposure, previous mental health issues, lack of support, additional life stress
+Complications: depression, anxiety, substance abuse, eating disorders, suicidal thoughts
+Treatment: trauma-focused psychotherapy (CPT, PE, EMDR), medications (SSRIs, SNRIs), support groups
+When to Seek Emergency: suicidal thoughts, severe flashbacks causing dangerous behavior, substance abuse crisis
+
+Disease: Obsessive-Compulsive Disorder (OCD)
+ICD-10: F42.9
+Category: Mental Health
+Description: Disorder featuring unwanted recurring thoughts (obsessions) and repetitive behaviors (compulsions).
+Key Symptoms: intrusive thoughts, excessive fears, repetitive behaviors, need for order/symmetry, unwanted taboo thoughts, compulsive checking/counting/washing
+Severity Indicators: rituals consuming >1 hour daily, severe distress, inability to function, suicidal thoughts
+Risk Factors: family history, childhood trauma, other mental health disorders, stressful life events
+Complications: poor quality of life, depression, anxiety, substance abuse, suicidal thoughts, skin problems (from excessive washing)
+Treatment: cognitive behavioral therapy (ERP), SSRIs, combination therapy, deep brain stimulation (severe cases)
+When to Seek Emergency: suicidal thoughts, self-harm behaviors, complete inability to function
+
+Disease: Panic Disorder
+ICD-10: F41.0
+Category: Mental Health
+Description: Recurrent unexpected panic attacks with persistent concern about future attacks.
+Key Symptoms: sudden intense fear, heart palpitations, sweating, trembling, shortness of breath, chest pain, nausea, dizziness, fear of dying, numbness
+Severity Indicators: chest pain (rule out cardiac), severe agoraphobia, suicidal thoughts, complete life restriction
+Risk Factors: family history, major life stress, history of abuse, smoking, caffeine
+Complications: agoraphobia, depression, substance abuse, social isolation, suicidal thoughts
+Treatment: CBT (especially exposure therapy), SSRIs, SNRIs, benzodiazepines (short-term), lifestyle modifications
+When to Seek Emergency: chest pain (to rule out heart attack), suicidal thoughts, severe difficulty breathing
+
+================================================================================
+DERMATOLOGICAL CONDITIONS
+================================================================================
+
+Disease: Eczema (Atopic Dermatitis)
+ICD-10: L20.9
+Category: Dermatological
+Description: Chronic condition causing itchy, inflamed skin, often starting in childhood.
+Key Symptoms: dry skin, itching (often severe), red/brownish patches, small raised bumps, thickened/cracked skin, raw/sensitive skin from scratching
+Severity Indicators: widespread rash, severe itching disrupting sleep, signs of skin infection, fever with rash
+Risk Factors: family history of eczema/allergies/asthma, food allergies, environmental factors, stress
+Complications: skin infections, asthma and hay fever, chronic itchy skin, sleep problems
+Treatment: moisturizers, topical corticosteroids, calcineurin inhibitors, antihistamines, phototherapy, biologics (severe)
+When to Seek Emergency: signs of skin infection (fever, pus, spreading redness), severe widespread rash
+
+Disease: Psoriasis
+ICD-10: L40.9
+Category: Dermatological/Autoimmune
+Description: Chronic autoimmune condition causing rapid skin cell buildup, forming scales and red patches.
+Key Symptoms: red patches with silvery scales, dry cracked skin, itching/burning, thickened nails, stiff/swollen joints
+Severity Indicators: widespread coverage, severe joint involvement (psoriatic arthritis), pustular psoriasis
+Risk Factors: family history, stress, obesity, smoking, infections, certain medications
+Complications: psoriatic arthritis, eye conditions, metabolic syndrome, cardiovascular disease, depression
+Treatment: topical treatments, phototherapy, systemic medications (methotrexate, cyclosporine), biologics
+When to Seek Emergency: widespread pustular psoriasis, fever with skin changes, severe joint symptoms
+
+Disease: Cellulitis
+ICD-10: L03.90
+Category: Dermatological/Infectious
+Description: Bacterial skin infection affecting deeper skin layers, causing redness, swelling, and pain.
+Key Symptoms: red area that spreads, swelling, tenderness, warmth, fever, red spots, blisters, skin dimpling
+Severity Indicators: rapidly spreading redness, high fever, severe pain, blistering, confusion
+Risk Factors: skin injury, chronic skin conditions (eczema, athlete's foot), weakened immune system, obesity, lymphedema
+Complications: bacteremia, sepsis, abscess, necrotizing fasciitis, lymphangitis
+Treatment: oral antibiotics, IV antibiotics (severe cases), wound care, elevation, hospitalization if severe
+When to Seek Emergency: rapidly spreading redness, high fever, severe pain, blistering, black discoloration, confusion
+
+Disease: Shingles (Herpes Zoster)
+ICD-10: B02.9
+Category: Dermatological/Infectious
+Description: Viral infection causing painful rash, caused by reactivation of chickenpox virus.
+Key Symptoms: pain/burning/tingling before rash, red rash (usually one side of body), fluid-filled blisters, itching, fever, headache, fatigue
+Severity Indicators: rash near eye, widespread rash, severe pain, fever, immunocompromised patient
+Risk Factors: previous chickenpox, age >50, weakened immune system, stress, certain medications
+Complications: postherpetic neuralgia (chronic pain), vision loss (if eye involved), neurological problems, skin infections
+Treatment: antiviral medications (acyclovir, valacyclovir), pain medications, topical treatments, shingles vaccine for prevention
+When to Seek Emergency: rash near eye, widespread rash in immunocompromised, severe headache with rash, high fever
+
+================================================================================
+UROLOGICAL CONDITIONS
+================================================================================
+
+Disease: Kidney Stones
+ICD-10: N20.0
+Category: Urological
+Description: Hard deposits of minerals and salts forming inside kidneys, causing pain when passing.
+Key Symptoms: severe pain in side/back (below ribs), pain radiating to lower abdomen/groin, pain in waves, painful urination, pink/red/brown urine, nausea, vomiting
+Severity Indicators: severe uncontrollable pain, fever with pain, inability to urinate, blood in urine with fever
+Risk Factors: dehydration, high-protein/salt/sugar diet, obesity, digestive diseases, family history, certain medications
+Complications: kidney damage, recurrent stones, urinary tract infections, urinary obstruction
+Treatment: pain management, hydration, alpha-blockers, lithotripsy, ureteroscopy, surgery (large stones)
+When to Seek Emergency: severe pain, fever with kidney stone symptoms, inability to urinate, persistent vomiting
+
+Disease: Benign Prostatic Hyperplasia (BPH)
+ICD-10: N40.0
+Category: Urological
+Description: Non-cancerous enlargement of prostate gland, causing urinary symptoms in older men.
+Key Symptoms: frequent urination, urgency, difficulty starting urination, weak stream, dribbling, incomplete bladder emptying, nocturia
+Severity Indicators: complete inability to urinate, bladder infections, kidney damage
+Risk Factors: age >50, family history, diabetes, heart disease, obesity, sedentary lifestyle
+Complications: urinary retention, UTIs, bladder stones, bladder damage, kidney damage
+Treatment: lifestyle changes, alpha-blockers, 5-alpha reductase inhibitors, combination therapy, minimally invasive procedures, surgery
+When to Seek Emergency: complete inability to urinate, severe abdominal pain, blood in urine with fever
+
+Disease: Interstitial Cystitis (Painful Bladder Syndrome)
+ICD-10: N30.10
+Category: Urological
+Description: Chronic condition causing bladder pressure, bladder pain, and pelvic pain.
+Key Symptoms: pelvic pain, persistent urge to urinate, frequent urination (small amounts), pain during intercourse, pain between vagina and anus or scrotum and anus
+Severity Indicators: severe pain affecting quality of life, unable to hold any urine, depression
+Risk Factors: female gender, fair skin/red hair, age 30+, chronic pain conditions, irritable bowel syndrome
+Complications: reduced bladder capacity, sexual dysfunction, sleep problems, depression, reduced quality of life
+Treatment: lifestyle/dietary changes, physical therapy, oral medications (pentosan polysulfate, amitriptyline), bladder instillations, nerve stimulation
+When to Seek Emergency: severe uncontrolled pain, blood in urine, signs of urinary infection with fever
+
+================================================================================
+EXISTING CONDITIONS (Enhanced)
+================================================================================
+
+Disease: Diabetes Mellitus
+ICD-10: E11.9 (Type 2), E10.9 (Type 1)
+Category: Endocrine/Metabolic
+Description: Chronic metabolic disorder characterized by high blood sugar due to insulin issues.
+Key Symptoms: increased thirst, frequent urination, extreme hunger, unexplained weight loss, fatigue, blurred vision, slow-healing sores, frequent infections
+Severity Indicators: very high blood sugar (>300), diabetic ketoacidosis symptoms (nausea, vomiting, abdominal pain, fruity breath), hypoglycemia
+Risk Factors: obesity, family history, sedentary lifestyle, age >45, gestational diabetes history, PCOS
+Complications: cardiovascular disease, neuropathy, nephropathy, retinopathy, foot problems, skin conditions
+Treatment: lifestyle modifications, metformin, other oral medications, insulin, continuous glucose monitoring
+When to Seek Emergency: very high or very low blood sugar, confusion, loss of consciousness, diabetic ketoacidosis symptoms
+
+Disease: Hypertension
+ICD-10: I10
+Category: Cardiovascular
+Description: Persistently elevated blood pressure that increases risk of heart disease and stroke.
+Key Symptoms: usually asymptomatic, headaches (severe cases), shortness of breath, nosebleeds, dizziness, chest pain, visual changes
+Severity Indicators: BP >180/120 with symptoms (hypertensive crisis), chest pain, vision changes, difficulty breathing
+Risk Factors: age, family history, obesity, sedentary lifestyle, high sodium diet, excessive alcohol, stress, chronic conditions
+Complications: heart attack, stroke, heart failure, kidney disease, vision loss, metabolic syndrome, dementia
+Treatment: lifestyle modifications, diuretics, ACE inhibitors, ARBs, calcium channel blockers, beta-blockers
+When to Seek Emergency: BP >180/120 with headache/chest pain/vision changes, signs of stroke or heart attack
+
+Disease: Asthma
+ICD-10: J45.909
+Category: Respiratory
+Description: Chronic condition where airways narrow and swell, producing extra mucus and making breathing difficult.
+Key Symptoms: shortness of breath, chest tightness, wheezing, coughing (especially at night), difficulty sleeping due to breathing, symptoms triggered by exercise/allergens
+Severity Indicators: severe shortness of breath, rapid worsening, no improvement with rescue inhaler, difficulty speaking
+Risk Factors: family history, allergies, obesity, smoking/smoke exposure, occupational exposures, air pollution
+Complications: severe asthma attacks, side effects from medications, permanent airway remodeling
+Treatment: inhaled corticosteroids, long-acting beta agonists, rescue inhalers (albuterol), biologics, allergen avoidance
+When to Seek Emergency: severe shortness of breath, no improvement with rescue inhaler, difficulty speaking, bluish lips/fingernails
+
+Disease: Migraine
+ICD-10: G43.909
+Category: Neurological
+Description: Recurring severe headaches often with nausea, sensitivity to light and sound.
+Key Symptoms: throbbing pain (usually one side), nausea, vomiting, light sensitivity, sound sensitivity, visual disturbances (aura), tingling
+Severity Indicators: worst headache of life, neurological symptoms, fever with headache, headache after head injury
+Risk Factors: family history, female gender, hormonal changes, stress, certain foods, sleep changes, weather changes
+Complications: chronic migraine, medication overuse headache, status migrainosus, persistent aura
+Treatment: pain relievers (NSAIDs, triptans), preventive medications (beta-blockers, antidepressants, anticonvulsants, CGRP inhibitors), lifestyle modifications
+When to Seek Emergency: worst headache of life, sudden severe headache, headache with fever/stiff neck/confusion, neurological deficits
+
+Disease: Common Cold
+ICD-10: J00
+Category: Respiratory/Infectious
+Description: Viral infection of upper respiratory tract, self-limiting illness.
+Key Symptoms: runny nose, sneezing, sore throat, cough, congestion, mild body aches, low-grade fever, mild headache
+Severity Indicators: high fever, severe sore throat, difficulty breathing, symptoms lasting >10 days
+Risk Factors: weakened immune system, young children, fall/winter season, close contact with infected persons
+Complications: ear infection, sinusitis, asthma exacerbation, secondary bacterial infections
+Treatment: rest, fluids, over-the-counter symptomatic treatment (decongestants, pain relievers, cough suppressants)
+When to Seek Emergency: difficulty breathing, high fever in infants, severe symptoms, symptoms worsening after initial improvement
+
+Disease: Influenza (Flu)
+ICD-10: J11.1
+Category: Respiratory/Infectious
+Description: Contagious respiratory illness caused by influenza viruses, more severe than common cold.
+Key Symptoms: sudden fever, chills, cough, sore throat, runny nose, muscle aches, headache, fatigue, sometimes vomiting/diarrhea
+Severity Indicators: difficulty breathing, chest pain, confusion, severe vomiting, symptoms improving then worsening
+Risk Factors: age <5 or >65, chronic conditions, weakened immune system, pregnancy, obesity
+Complications: pneumonia, bronchitis, sinus infections, ear infections, myocarditis, encephalitis, death
+Treatment: rest, fluids, antivirals (oseltamivir, zanamivir - most effective within 48 hours), symptomatic treatment
+When to Seek Emergency: difficulty breathing, chest pain, confusion, severe vomiting, bluish discoloration
+
+Disease: COVID-19
+ICD-10: U07.1
+Category: Respiratory/Infectious
+Description: Infectious disease caused by SARS-CoV-2 coronavirus with wide range of severity.
+Key Symptoms: fever, cough, fatigue, loss of taste/smell, sore throat, headache, body aches, congestion, nausea, diarrhea
+Severity Indicators: difficulty breathing, persistent chest pain, confusion, inability to stay awake, bluish lips
+Risk Factors: age >65, chronic conditions, weakened immune system, obesity, unvaccinated status
+Complications: pneumonia, ARDS, blood clots, multiorgan failure, long COVID, death
+Treatment: supportive care, antivirals (Paxlovid), monoclonal antibodies (high-risk), oxygen/ventilation (severe), dexamethasone
+When to Seek Emergency: difficulty breathing, persistent chest pain, confusion, bluish lips, inability to stay awake
+
+Disease: Urinary Tract Infection (UTI)
+ICD-10: N39.0
+Category: Urological/Infectious
+Description: Infection in urinary system, most commonly affecting bladder and urethra.
+Key Symptoms: burning during urination, frequent urination, urgency, cloudy urine, strong-smelling urine, pelvic pain, blood in urine
+Severity Indicators: fever, back pain, nausea/vomiting (suggests kidney infection), confusion in elderly
+Risk Factors: female anatomy, sexual activity, certain birth control, menopause, urinary tract abnormalities, catheter use
+Complications: recurrent infections, kidney infection (pyelonephritis), sepsis, kidney damage
+Treatment: antibiotics (trimethoprim, nitrofurantoin, fosfomycin), increased fluids, pain relievers
+When to Seek Emergency: high fever, severe back/side pain, nausea/vomiting, signs of sepsis, confusion
+
+Disease: Anemia
+ICD-10: D64.9
+Category: Hematological
+Description: Condition where blood lacks enough healthy red blood cells to carry adequate oxygen.
+Key Symptoms: fatigue, weakness, pale skin, shortness of breath, dizziness, cold hands/feet, headache, chest pain, irregular heartbeat
+Severity Indicators: severe fatigue, chest pain, rapid heartbeat, severe shortness of breath
+Risk Factors: poor diet (iron, B12, folate deficiency), intestinal disorders, menstruation, pregnancy, chronic diseases, family history
+Complications: severe fatigue, pregnancy complications, heart problems, death (severe untreated cases)
+Treatment: depends on type - iron supplements, B12 injections, folate supplements, treating underlying cause, blood transfusions
+When to Seek Emergency: severe shortness of breath, rapid heartbeat, chest pain, fainting
+
+Disease: Dengue Fever
+ICD-10: A90
+Category: Infectious
+Description: Mosquito-borne viral disease common in tropical regions, can be severe.
+Key Symptoms: high fever, severe headache, pain behind eyes, muscle/joint pain, fatigue, nausea, vomiting, skin rash, mild bleeding
+Severity Indicators: severe abdominal pain, persistent vomiting, bleeding gums, blood in vomit/stool, rapid breathing, fatigue/restlessness
+Risk Factors: living/traveling in tropical areas, previous dengue infection (increases severe dengue risk)
+Complications: dengue hemorrhagic fever, dengue shock syndrome, organ damage, death
+Treatment: supportive care (rest, fluids, acetaminophen for pain - avoid NSAIDs/aspirin), hospitalization for severe cases
+When to Seek Emergency: severe abdominal pain, persistent vomiting, bleeding, difficulty breathing, signs of shock
+
+Disease: Malaria
+ICD-10: B54
+Category: Infectious
+Description: Mosquito-borne parasitic disease causing cycles of fever, chills, and flu-like illness.
+Key Symptoms: fever, chills, sweating, headache, nausea, vomiting, muscle pain, fatigue, cycles of symptoms
+Severity Indicators: severe anemia, respiratory distress, cerebral malaria (confusion, seizures), organ failure
+Risk Factors: travel to endemic areas, lack of preventive medications, mosquito exposure
+Complications: cerebral malaria, severe anemia, respiratory distress, organ failure, death
+Treatment: antimalarial medications (artemisinin-based combinations, chloroquine, quinine), supportive care
+When to Seek Emergency: high fever after travel to malaria area, confusion, seizures, severe weakness, difficulty breathing
+
+Disease: Anxiety Disorder (Generalized)
+ICD-10: F41.1
+Category: Mental Health
+Description: Persistent excessive worry about various aspects of life, difficult to control.
+Key Symptoms: excessive worry, restlessness, fatigue, difficulty concentrating, irritability, muscle tension, sleep problems
+Severity Indicators: panic attacks, severe avoidance behaviors, inability to function, suicidal thoughts
+Risk Factors: family history, trauma, chronic medical conditions, substance use, personality factors
+Complications: depression, substance abuse, digestive problems, headaches, sleep disorders, reduced quality of life
+Treatment: CBT, medications (SSRIs, SNRIs, buspirone), relaxation techniques, lifestyle modifications
+When to Seek Emergency: panic attacks mistaken for heart attack, suicidal thoughts, severe inability to function
+
+Disease: Gastroenteritis
+ICD-10: K52.9
+Category: Gastrointestinal/Infectious
+Description: Inflammation of stomach and intestines, usually from viral or bacterial infection.
+Key Symptoms: watery diarrhea, nausea, vomiting, stomach cramps, fever, headache, muscle aches
+Severity Indicators: bloody diarrhea, high fever, severe dehydration, symptoms >3 days, severe abdominal pain
+Risk Factors: close contact with infected persons, contaminated food/water, weakened immune system, young children/elderly
+Complications: dehydration, electrolyte imbalances, reactive arthritis, hemolytic uremic syndrome (rare)
+Treatment: oral rehydration, rest, bland diet (BRAT), antiemetics, antibiotics (bacterial cases only)
+When to Seek Emergency: bloody diarrhea, signs of severe dehydration, high fever, severe abdominal pain, inability to keep fluids down
+
+Disease: Muscle Strain
+ICD-10: M62.9
+Category: Musculoskeletal
+Description: Injury to muscle or tendon from overstretching or tearing of muscle fibers.
+Key Symptoms: pain, swelling, limited range of motion, muscle spasms, weakness, bruising, stiffness
+Severity Indicators: severe pain, complete inability to move, significant swelling, popping sound at injury
+Risk Factors: poor conditioning, muscle fatigue, improper warm-up, previous injury, overuse
+Complications: chronic pain, muscle weakness, re-injury, compartment syndrome (severe)
+Treatment: RICE (rest, ice, compression, elevation), pain relievers, physical therapy, gradual return to activity
+When to Seek Emergency: severe pain with inability to move, significant swelling, numbness, signs of compartment syndrome
+
+Disease: Viral Infection (General)
+ICD-10: B34.9
+Category: Infectious
+Description: Infection caused by various viruses, presenting with general symptoms of illness.
+Key Symptoms: fever, fatigue, body aches, headache, sore throat, runny nose, cough, loss of appetite
+Severity Indicators: high fever, difficulty breathing, severe headache with stiff neck, rash with fever, confusion
+Risk Factors: weakened immune system, close contact with infected persons, seasonal exposure
+Complications: secondary bacterial infections, dehydration, worsening of chronic conditions
+Treatment: supportive care (rest, fluids, fever reducers), treating specific viral infections when available
+When to Seek Emergency: difficulty breathing, high fever unresponsive to treatment, confusion, signs of meningitis

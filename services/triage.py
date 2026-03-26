@@ -42,12 +42,43 @@ QUESTION_LIBRARY = {
     },
 }
 
+NEGATION_TERMS = (
+    "no ",
+    "not ",
+    "without ",
+    "don't have ",
+    "do not have ",
+    "doesn't have ",
+    "does not have ",
+    "dont have ",
+)
+
+
+def _keyword_is_present(text: str, keyword: str) -> bool:
+    start = 0
+    while True:
+        idx = text.find(keyword, start)
+        if idx == -1:
+            return False
+
+        context = text[max(0, idx - 40):idx]
+        for conj in (" but ", ", but ", " and ", ", and ", " however ", ", however "):
+            parts = context.rsplit(conj, 1)
+            if len(parts) > 1:
+                context = parts[-1]
+                break
+
+        if not any(neg in context for neg in NEGATION_TERMS):
+            return True
+
+        start = idx + len(keyword)
+
 
 def extract_symptom_facts(text: str) -> Dict[str, Any]:
     lower = text.lower()
     facts: Dict[str, Any] = {"symptoms": []}
     for name, keywords in SYMPTOM_KEYWORDS.items():
-        if any(keyword in lower for keyword in keywords):
+        if any(_keyword_is_present(lower, keyword) for keyword in keywords):
             facts["symptoms"].append(name)
 
     duration_match = re.search(r"\b(\d+\s*(?:hour|hours|day|days|week|weeks|month|months))\b", lower)
@@ -66,23 +97,23 @@ def extract_symptom_facts(text: str) -> Dict[str, Any]:
     if temp_match:
         facts["temperature"] = temp_match.group(0)
 
-    if "dry cough" in lower:
+    if _keyword_is_present(lower, "dry cough"):
         facts["cough_type"] = "dry"
-    elif "mucus" in lower or "phlegm" in lower or "wet cough" in lower:
+    elif any(_keyword_is_present(lower, term) for term in ("mucus", "phlegm", "wet cough")):
         facts["cough_type"] = "mucus"
 
     pain_location = None
     for location in ("chest", "head", "throat", "stomach", "abdomen", "back", "lower back", "leg"):
-        if location in lower:
+        if _keyword_is_present(lower, location):
             pain_location = location
             break
     if pain_location:
         facts["pain_location"] = pain_location
 
-    if any(term in lower for term in ("shortness of breath", "wheezing", "chest tightness")):
+    if any(_keyword_is_present(lower, term) for term in ("shortness of breath", "wheezing", "chest tightness")):
         facts["breathing"] = "yes"
 
-    if any(term in lower for term in ("frequent urination", "urinating more", "very thirsty", "excessive thirst")):
+    if any(_keyword_is_present(lower, term) for term in ("frequent urination", "urinating more", "very thirsty", "excessive thirst")):
         facts["urination"] = "yes"
 
     return facts
@@ -143,11 +174,12 @@ def maybe_create_followup_state(
     raw_match_count: int,
     profile: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
-    if raw_match_count > 4:
-        return None
-
     facts = extract_symptom_facts(message)
     if not facts.get("symptoms"):
+        return None
+
+    symptom_count = len(facts.get("symptoms", []))
+    if raw_match_count > 4 and symptom_count > 2:
         return None
 
     top_confidence = prediction_list[0][1] if prediction_list else 0
