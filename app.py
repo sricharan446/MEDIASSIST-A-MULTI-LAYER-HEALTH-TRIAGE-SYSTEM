@@ -1014,8 +1014,82 @@ def keyword_is_present(text: str, keyword: str) -> bool:
     return _contains_fuzzy_phrase(text, keyword, threshold=0.86)
 
 
+def should_prefer_general_physician(message: str, prediction_list: Optional[List[tuple]] = None) -> bool:
+    """Route common acute cold/cough cases to a general physician unless red flags suggest escalation."""
+    text = (message or "").lower()
+    if not text:
+        return False
+
+    if prediction_list:
+        top_disease = str(prediction_list[0][0]).lower().strip()
+        if top_disease in {"common cold", "flu", "viral infection", "covid"}:
+            return True
+
+    common_respiratory_terms = (
+        "cold",
+        "cough",
+        "fever",
+        "sore throat",
+        "runny nose",
+        "sneezing",
+        "body pain",
+    )
+    escalation_terms = (
+        "shortness of breath",
+        "difficulty breathing",
+        "breathing difficulty",
+        "wheezing",
+        "chest pain",
+        "blue lips",
+        "asthma",
+        "copd",
+        "persistent cough",
+        "coughing blood",
+    )
+
+    has_common_terms = any(keyword_is_present(text, term) for term in common_respiratory_terms)
+    has_escalation_terms = any(keyword_is_present(text, term) for term in escalation_terms)
+    return has_common_terms and not has_escalation_terms
+
+
+def resolve_specialty_slug_from_text(message: str) -> str:
+    """Resolve specialty slug from direct specialty mentions, including common misspellings."""
+    text = (message or "").strip().lower()
+    if not text:
+        return ""
+
+    for slug, display in SPECIALTY_DISPLAY.items():
+        if slug in text or display.lower() in text:
+            return slug
+
+    fuzzy_match = _best_fuzzy_candidate(
+        text,
+        list(SPECIALTY_DISPLAY.keys()) + list(SPECIALTY_DISPLAY.values()),
+        threshold=0.8,
+    )
+    if not fuzzy_match:
+        return ""
+
+    normalized = fuzzy_match.strip().lower()
+    if normalized in SPECIALTY_DISPLAY:
+        return normalized
+
+    for slug, display in SPECIALTY_DISPLAY.items():
+        if display.lower() == normalized:
+            return slug
+
+    return ""
+
+
 def infer_specialty_slug(message: str, prediction_list: Optional[List[tuple]] = None) -> str:
     """Pick the most relevant specialist based on predicted disease or explicit medical terms."""
+    if should_prefer_general_physician(message, prediction_list):
+        return "general-physician"
+
+    direct_specialty_slug = resolve_specialty_slug_from_text(message)
+    if direct_specialty_slug:
+        return direct_specialty_slug
+
     for disease, _confidence in prediction_list or []:
         slug = DISEASE_SPECIALTY.get(str(disease).lower().strip())
         if slug:
@@ -1177,10 +1251,9 @@ def extract_booking_details(message: str) -> Dict[str, str]:
         details["problem"] = problem_match.group(1).strip(" .,:;")
 
     if not details["specialty"]:
-        for slug, display in SPECIALTY_DISPLAY.items():
-            if slug in lowered or display.lower() in lowered:
-                details["specialty"] = display
-                break
+        resolved_specialty_slug = resolve_specialty_slug_from_text(text)
+        if resolved_specialty_slug:
+            details["specialty"] = SPECIALTY_DISPLAY.get(resolved_specialty_slug, resolved_specialty_slug.replace("-", " ").title())
 
     if not details["specialty"]:
         specialty_match = _best_fuzzy_candidate(
