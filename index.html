@@ -1358,6 +1358,15 @@
     }
     .practo-specialty { font-size: 10px; color: var(--text3); margin-top: 4px; margin-left: 2px; }
     .doctor-link-row { display:flex; flex-direction:column; gap:8px; }
+    .practo-btn.practo-primary {
+      background: rgba(255, 111, 0, 0.12);
+      border-color: rgba(255, 111, 0, 0.4);
+      color: #ff9d57;
+    }
+    .practo-btn.practo-primary:hover {
+      background: rgba(255, 111, 0, 0.22);
+      box-shadow: 0 0 16px rgba(255, 111, 0, 0.25);
+    }
 
     .profile-panel {
       margin-top: 12px;
@@ -1942,7 +1951,7 @@
   </div>
 
   <script>
-    let sessionId = null, userToken = null, selectedFile = null, isLoading = false, pendingFollowup = null;
+    let sessionId = null, userToken = null, selectedFile = null, isLoading = false, pendingFollowup = null, currentLocationCity = '';
 
     /* ===================== THEME ===================== */
     function applyTheme(theme) {
@@ -1986,6 +1995,30 @@
     function scrollDown() {
       var c = document.getElementById('messages');
       c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+    }
+
+    async function ensureCurrentCity() {
+      if (currentLocationCity) return currentLocationCity;
+      if (!navigator.geolocation) return '';
+
+      return new Promise(function (resolve) {
+        navigator.geolocation.getCurrentPosition(
+          async function (position) {
+            try {
+              var lat = position.coords.latitude;
+              var lng = position.coords.longitude;
+              var res = await fetch('/api/resolve-city?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng));
+              var data = await res.json();
+              currentLocationCity = (data && data.city) ? String(data.city).trim() : '';
+              resolve(currentLocationCity);
+            } catch (e) {
+              resolve('');
+            }
+          },
+          function () { resolve(''); },
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+        );
+      });
     }
 
     function splitCsv(value) {
@@ -2112,12 +2145,17 @@
       scrollDown();
     }
 
-    async function showEmergencyHospitalFinder() {
+    async function showEmergencyHospitalFinder(practoUrl) {
       document.querySelectorAll('.hospital-card').forEach(function (card) { card.remove(); });
 
       var c = document.getElementById('messages');
       var card = document.createElement('div');
       card.className = 'hospital-card';
+      var emergencyPractoAction = practoUrl
+        ? '<a class="hospital-link" href="' + practoUrl + '" target="_blank" rel="noopener noreferrer">' +
+            '<span>📅 Find the recommended specialist on Practo</span><span>→</span>' +
+          '</a>'
+        : '';
       card.innerHTML =
         '<div class="hospital-title">Emergency Hospital Finder</div>' +
         '<div class="hospital-actions" id="hospitalActions">' +
@@ -2127,6 +2165,7 @@
           '<a class="hospital-link" href="https://www.google.com/maps/search/hospitals+near+me" target="_blank" rel="noopener noreferrer">' +
             '<span>🏥 Hospitals Near Me</span><span>→</span>' +
           '</a>' +
+          emergencyPractoAction +
         '</div>' +
         '<div class="hospital-calls">' +
           '<a class="hospital-link call-link" href="tel:108"><span>📞 Call 108 Ambulance</span><span>→</span></a>' +
@@ -2161,10 +2200,12 @@
               return '<a class="hospital-link" href="' + item.url + '" target="_blank" rel="noopener noreferrer">' +
                 '<span>' + (item.emoji || '') + ' ' + item.name + '</span><span>→</span>' +
               '</a>';
-            }).join('');
+            }).join('') + emergencyPractoAction;
 
             if (meta) {
-              meta.textContent = 'Location detected. Open Google Maps or Google Search for nearby hospitals immediately if this is urgent.';
+              meta.textContent = practoUrl
+                ? 'Location detected. Use Maps for immediate hospital access, or use Practo to reach the recommended specialist.'
+                : 'Location detected. Open Google Maps or Google Search for nearby hospitals immediately if this is urgent.';
             }
           } catch (e) { }
         },
@@ -2320,6 +2361,7 @@
 
       isLoading = true;
       document.getElementById('sendBtn').disabled = true;
+      var liveCity = await ensureCurrentCity();
 
       input.value = '';
       autoResize(input);
@@ -2382,7 +2424,13 @@
           var res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, session_id: sessionId, token: userToken, model: document.getElementById('modelSelect').value })
+            body: JSON.stringify({
+              message: text,
+              session_id: sessionId,
+              token: userToken,
+              model: document.getElementById('modelSelect').value,
+              current_city: liveCity
+            })
           });
           var data = await res.json();
           var el = document.getElementById(tid);
@@ -2398,9 +2446,10 @@
             }
             renderSafetyCard(data.safety_alerts || []);
             if (data.show_hospital_finder) {
-              showEmergencyHospitalFinder();
+              showEmergencyHospitalFinder(data.practo_url || '');
+            } else if (data.practo_url) {
+              showPractoButton(data.practo_url);
             }
-            if (data.practo_url) { showPractoButton(data.practo_url); }
           } else {
             appendMsg('assistant', 'Error: ' + (data.detail || 'Something went wrong'), []);
           }
@@ -2463,6 +2512,10 @@
       if (role === 'assistant' && typeof marked !== 'undefined') {
         bubble.classList.add('md-rendered');
         bubble.innerHTML = marked.parse(content);
+        bubble.querySelectorAll('a[href]').forEach(function (link) {
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+        });
       } else {
         bubble.textContent = content;
       }
@@ -2824,15 +2877,30 @@
   function showPractoButton(practoUrl) {
     if (!practoUrl) return;
 
-    // Legacy function name retained; now renders location-based doctor search links.
     var slug = 'general-physician';
-    var match = practoUrl.match(/maps\/search\/([^/?]+)/);
-    if (match) {
-      slug = decodeURIComponent(match[1]).replace(/\+/g, ' ').replace(/ near me$/i, '').trim().replace(/\s+/g, '-');
+    var isPractoUrl = practoUrl.indexOf('practo.com') !== -1;
+
+    if (isPractoUrl) {
+      try {
+        var practoParsedUrl = new URL(practoUrl);
+        var qParam = practoParsedUrl.searchParams.get('q');
+        if (qParam) {
+          var qJson = JSON.parse(qParam);
+          if (qJson[0] && qJson[0].word) {
+            slug = qJson[0].word.trim().toLowerCase().replace(/\s+/g, '-');
+          }
+        }
+      } catch (e) {}
+    } else {
+      var match = practoUrl.match(/maps\/search\/([^/?]+)/);
+      if (match) {
+        slug = decodeURIComponent(match[1]).replace(/\+/g, ' ').replace(/ near me$/i, '').trim().replace(/\s+/g, '-');
+      }
     }
+
     var displayName = SPECIALTY_DISPLAY[slug] || slug.replace(/-/g, ' ')
       .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-    var mapsUrl = practoUrl;
+    var mapsUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(displayName + ' near me');
     var searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(displayName + ' doctor near me');
 
     var c = document.getElementById('messages');
@@ -2852,6 +2920,10 @@
     inner.className = 'practo-btn-wrap';
     inner.innerHTML =
       '<div class="doctor-link-row">' +
+        '<a class="practo-btn practo-primary" href="' + practoUrl + '" target="_blank" rel="noopener noreferrer">' +
+          '📅 Book ' + displayName + ' on Practo' +
+          '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
+        '</a>' +
         '<a class="practo-btn" href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer">' +
           '🗺️ Find a ' + displayName + ' on Google Maps' +
           '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
@@ -2861,7 +2933,7 @@
           '<span style="margin-left:6px;opacity:0.6;font-size:11px">→</span>' +
         '</a>' +
       '</div>' +
-      '<div class="practo-specialty">Uses Google Maps and Google Search to find nearby doctors for ' + displayName + '</div>';
+      '<div class="practo-specialty">Book appointments on Practo or use Maps and Google Search to find nearby doctors.</div>';
 
     bwrap.appendChild(meta);
     bwrap.appendChild(inner);

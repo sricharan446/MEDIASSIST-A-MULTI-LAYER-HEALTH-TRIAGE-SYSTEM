@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional
 
 DEFAULT_PROFILE = {
     "age": 30,
+    "city": None,
+    "preferred_name": None,
     "known_conditions": [],
     "allergies": [],
     "current_medications": [],
@@ -77,10 +79,26 @@ def normalize_profile(profile_data: Optional[Dict[str, Any]], existing: Optional
     # Validate contact fields
     email = profile.get("email", "")
     phone = profile.get("phone", "")
+    city = profile.get("city", None)
+    preferred_name = profile.get("preferred_name", None)
     if email and not isinstance(email, str):
         profile["email"] = None
     if phone and not isinstance(phone, str):
         profile["phone"] = None
+    if city is None:
+        profile["city"] = None
+    elif isinstance(city, str):
+        city = city.strip()
+        profile["city"] = city or None
+    else:
+        profile["city"] = None
+    if preferred_name is None:
+        profile["preferred_name"] = None
+    elif isinstance(preferred_name, str):
+        preferred_name = preferred_name.strip()
+        profile["preferred_name"] = preferred_name or None
+    else:
+        profile["preferred_name"] = None
 
     return profile
 

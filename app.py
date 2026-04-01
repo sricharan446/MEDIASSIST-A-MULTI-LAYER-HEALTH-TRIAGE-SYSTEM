@@ -37,6 +37,7 @@ import csv
 import re
 import asyncio
 import hashlib
+import difflib
 import aiohttp
 import uvicorn
 import logging
@@ -834,9 +835,53 @@ SPECIALTY_DISPLAY: dict = {
 
 
 def build_practo_url(specialty_slug: str, city: str = "") -> str:
-    """Build a Google Maps doctor search URL without hard-coding a city."""
-    specialty_query = urllib.parse.quote_plus(f"{specialty_slug.replace('-', ' ')} near me")
-    return f"https://www.google.com/maps/search/{specialty_query}"
+    """Build a Practo doctor search URL for the requested specialty."""
+    specialty_name = SPECIALTY_DISPLAY.get(
+        specialty_slug.strip().lower(),
+        specialty_slug.replace("-", " ").strip().title()
+    ).lower()
+    q_payload = json.dumps([
+        {
+            "word": specialty_name,
+            "autocompleted": True,
+            "category": "subspeciality",
+        }
+    ])
+    query = urllib.parse.urlencode({
+        "results_type": "doctor",
+        "q": q_payload,
+    })
+    if city and city.strip():
+        query += "&city=" + urllib.parse.quote_plus(city.strip())
+    return f"https://www.practo.com/search/doctors?{query}"
+
+
+async def resolve_city_from_coordinates(lat: float, lng: float) -> str:
+    """Resolve a city name from latitude/longitude using OpenStreetMap reverse geocoding."""
+    try:
+        headers = {
+            "User-Agent": "MediAssist/1.0 (medical assistant city resolver)"
+        }
+        url = (
+            "https://nominatim.openstreetmap.org/reverse"
+            f"?format=jsonv2&lat={lat:.6f}&lon={lng:.6f}"
+        )
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=8)) as response:
+                if response.status != 200:
+                    return ""
+                payload = await response.json()
+        address = payload.get("address", {}) if isinstance(payload, dict) else {}
+        return (
+            address.get("city")
+            or address.get("town")
+            or address.get("municipality")
+            or address.get("county")
+            or ""
+        )
+    except Exception as e:
+        logger.error(f"City resolution error: {e}")
+        return ""
 
 
 SPECIALTY_KEYWORDS: Dict[str, str] = {
@@ -901,12 +946,58 @@ NEGATION_TERMS = (
 )
 
 
+def _normalize_fuzzy_text(text: str) -> str:
+    text = (text or "").lower()
+    text = re.sub(r"[^a-z0-9\s+/-]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _best_fuzzy_candidate(text: str, candidates: List[str], threshold: float = 0.84) -> str:
+    normalized_text = _normalize_fuzzy_text(text)
+    if not normalized_text:
+        return ""
+
+    best_candidate = ""
+    best_score = 0.0
+    words = normalized_text.split()
+
+    for candidate in candidates:
+        normalized_candidate = _normalize_fuzzy_text(candidate)
+        if not normalized_candidate:
+            continue
+        if normalized_candidate in normalized_text:
+            return candidate
+
+        candidate_words = normalized_candidate.split()
+        span = len(candidate_words)
+        if span == 0 or len(words) < span:
+            score = difflib.SequenceMatcher(None, normalized_text, normalized_candidate).ratio()
+            if score > best_score:
+                best_score = score
+                best_candidate = candidate
+            continue
+
+        for i in range(len(words) - span + 1):
+            window = " ".join(words[i:i + span])
+            score = difflib.SequenceMatcher(None, window, normalized_candidate).ratio()
+            if score > best_score:
+                best_score = score
+                best_candidate = candidate
+
+    return best_candidate if best_score >= threshold else ""
+
+
+def _contains_fuzzy_phrase(text: str, phrase: str, threshold: float = 0.84) -> bool:
+    return bool(_best_fuzzy_candidate(text, [phrase], threshold=threshold))
+
+
 def keyword_is_present(text: str, keyword: str) -> bool:
     start = 0
     while True:
         idx = text.find(keyword, start)
         if idx == -1:
-            return False
+            break
 
         context = text[max(0, idx - 40):idx]
         for conj in (" but ", ", but ", " and ", ", and ", " however ", ", however "):
@@ -919,6 +1010,8 @@ def keyword_is_present(text: str, keyword: str) -> bool:
             return True
 
         start = idx + len(keyword)
+
+    return _contains_fuzzy_phrase(text, keyword, threshold=0.86)
 
 
 def infer_specialty_slug(message: str, prediction_list: Optional[List[tuple]] = None) -> str:
@@ -934,6 +1027,500 @@ def infer_specialty_slug(message: str, prediction_list: Optional[List[tuple]] = 
             return slug
 
     return "general-physician"
+
+
+APPOINTMENT_INTENT_PHRASES = (
+    "book an appointment",
+    "book appointment",
+    "book a doctor appointment",
+    "book doctor appointment",
+    "book doctor",
+    "book a doctor",
+    "schedule appointment",
+    "schedule an appointment",
+    "doctor appointment",
+    "want to book an appointment",
+    "want to book appointment",
+    "need an appointment",
+    "see a doctor",
+    "consult a doctor",
+)
+
+TABLET_ORDER_INTENT_PHRASES = (
+    "order tablet",
+    "order a tablet",
+    "order tablets",
+    "buy tablet",
+    "buy a tablet",
+    "buy tablets",
+    "need tablet",
+    "need a tablet",
+    "want tablet",
+    "want a tablet",
+    "want to order tablet",
+    "want to order a tablet",
+    "want to buy tablet",
+    "want to buy a tablet",
+    "medicine order",
+    "order medicine",
+    "buy medicine",
+)
+
+
+def is_appointment_booking_intent(message: str) -> bool:
+    text = (message or "").lower().strip()
+    if not text:
+        return False
+    return any(_contains_fuzzy_phrase(text, phrase, threshold=0.82) for phrase in APPOINTMENT_INTENT_PHRASES)
+
+
+def is_tablet_order_intent(message: str) -> bool:
+    text = (message or "").lower().strip()
+    if not text:
+        return False
+    return any(_contains_fuzzy_phrase(text, phrase, threshold=0.82) for phrase in TABLET_ORDER_INTENT_PHRASES)
+
+
+def should_show_doctor_links(message: str, prediction_list: Optional[List[tuple]] = None, has_report: bool = False) -> bool:
+    text = (message or "").strip().lower()
+    if not text:
+        return False
+
+    if is_appointment_booking_intent(text):
+        return True
+
+    doctor_terms = (
+        "doctor",
+        "specialist",
+        "appointment",
+        "book",
+        "consultation",
+        "clinic",
+        "hospital",
+        "practo",
+    )
+    if any(term in text for term in doctor_terms):
+        return True
+
+    if has_report and should_use_uploaded_report(text, has_report):
+        return True
+
+    if prediction_list:
+        return True
+
+    return any(keyword_is_present(text, keyword) for keyword in SPECIALTY_KEYWORDS)
+def extract_preferred_name(message: str) -> str:
+    text = (message or "").strip()
+    match = re.search(r"\bmy name is\s+([A-Za-z][A-Za-z\s'\-]{0,40})", text, re.IGNORECASE)
+    if not match:
+        return ""
+    candidate = re.split(r"\b(and|but|because|i am|i'm|im|hello|hi)\b", match.group(1), maxsplit=1, flags=re.IGNORECASE)[0]
+    cleaned = candidate.strip(" .,:;!?")
+    return cleaned.title() if cleaned else ""
+
+
+def is_name_recall_question(message: str) -> bool:
+    text = (message or "").strip().lower()
+    if not text:
+        return False
+    prompts = (
+        "what is my name",
+        "what's my name",
+        "do you know my name",
+        "tell me my name",
+        "who am i",
+    )
+    return any(prompt in text for prompt in prompts)
+
+
+def build_appointment_followup_questions() -> List[Dict[str, str]]:
+    return [
+        {
+            "id": "specialty",
+            "question": "Which specialist do you want to book?",
+            "placeholder": "e.g. dermatologist, cardiologist, general physician",
+        },
+        {
+            "id": "problem",
+            "question": "What problem or symptoms should the doctor know about?",
+            "placeholder": "e.g. fever, skin rash, cough, chest discomfort",
+        },
+    ]
+
+
+def build_tablet_order_followup_questions() -> List[Dict[str, str]]:
+    return [
+        {
+            "id": "tablet_name",
+            "question": "What tablet do you want to order?",
+            "placeholder": "e.g. Paracetamol 500mg",
+        },
+        {
+            "id": "symptoms",
+            "question": "What symptoms are you having?",
+            "placeholder": "e.g. fever, headache, cold, body pain",
+        },
+    ]
+
+
+def extract_booking_details(message: str) -> Dict[str, str]:
+    text = (message or "").strip()
+    lowered = text.lower()
+    details = {"specialty": "", "problem": ""}
+
+    specialty_match = re.search(r"specialty\s*:\s*([^\n\r]+)", text, re.IGNORECASE)
+    if specialty_match:
+        details["specialty"] = specialty_match.group(1).strip(" .,:;")
+
+    problem_match = re.search(r"problem\s*:\s*([^\n\r]+)", text, re.IGNORECASE)
+    if problem_match:
+        details["problem"] = problem_match.group(1).strip(" .,:;")
+
+    if not details["specialty"]:
+        for slug, display in SPECIALTY_DISPLAY.items():
+            if slug in lowered or display.lower() in lowered:
+                details["specialty"] = display
+                break
+
+    if not details["specialty"]:
+        specialty_match = _best_fuzzy_candidate(
+            text,
+            list(SPECIALTY_DISPLAY.values()) + list(SPECIALTY_DISPLAY.keys()),
+            threshold=0.84,
+        )
+        if specialty_match:
+            details["specialty"] = SPECIALTY_DISPLAY.get(specialty_match, specialty_match.replace("-", " ").title())
+
+    if not details["problem"]:
+        for marker in (" for ", " regarding ", " about ", " because of "):
+            if marker in lowered:
+                candidate = text[lowered.find(marker) + len(marker):].strip(" .,:;")
+                if candidate:
+                    details["problem"] = candidate
+                    break
+
+    return details
+
+
+def extract_tablet_order_details(message: str) -> Dict[str, str]:
+    text = (message or "").strip()
+    lowered = text.lower()
+    details = {"tablet_name": "", "symptoms": ""}
+
+    tablet_match = re.search(r"(?:tablet|medicine|medication)\s*(?:name)?\s*:\s*([^\n\r]+)", text, re.IGNORECASE)
+    if tablet_match:
+        details["tablet_name"] = tablet_match.group(1).strip(" .,:;")
+
+    symptoms_match = re.search(r"(?:symptoms?|reason|problem|for|taken for)\s*:\s*([^\n\r]+)", text, re.IGNORECASE)
+    if symptoms_match:
+        details["symptoms"] = symptoms_match.group(1).strip(" .,:;")
+
+    if not details["symptoms"]:
+        for marker in (" for ", " because of ", " due to ", " since i have ", " for my "):
+            if marker in lowered:
+                candidate = text[lowered.find(marker) + len(marker):].strip(" .,:;")
+                if candidate:
+                    details["symptoms"] = candidate
+                    break
+
+    if not details["tablet_name"]:
+        for medicine_name in _KNOWN_MEDICATIONS:
+            candidate = medicine_name.strip()
+            if candidate and candidate.lower() in lowered:
+                details["tablet_name"] = candidate
+                break
+
+    if not details["tablet_name"]:
+        fuzzy_medication = _best_fuzzy_candidate(text, _KNOWN_MEDICATIONS, threshold=0.8)
+        if fuzzy_medication:
+            details["tablet_name"] = fuzzy_medication
+
+    return details
+
+
+def fill_tablet_order_followup_answers(existing_answers: Dict[str, str], message: str, current_field: str = "") -> Dict[str, str]:
+    answers = dict(existing_answers or {})
+    extracted = extract_tablet_order_details(message)
+
+    if extracted.get("tablet_name"):
+        answers["tablet_name"] = extracted["tablet_name"]
+    if extracted.get("symptoms"):
+        answers["symptoms"] = extracted["symptoms"]
+
+    plain_text = (message or "").strip()
+    cleaned = plain_text.strip(" .,:;")
+
+    # In follow-up mode, map unlabeled replies to the exact field currently being asked.
+    if cleaned:
+        if current_field == "tablet_name" and not answers.get("tablet_name"):
+            answers["tablet_name"] = cleaned
+        elif current_field == "symptoms" and not answers.get("symptoms"):
+            answers["symptoms"] = cleaned
+        elif not answers.get("tablet_name"):
+            answers["tablet_name"] = cleaned
+        elif not answers.get("symptoms") and cleaned.lower() != answers["tablet_name"].strip().lower():
+            answers["symptoms"] = cleaned
+
+    return answers
+
+
+def find_medication_by_name(tablet_name: str) -> Optional[Dict[str, str]]:
+    query = (tablet_name or "").strip().lower()
+    if not query:
+        return None
+
+    best_med = None
+    best_score = 0.0
+
+    for disease_info in DISEASE_MEDICATIONS.values():
+        for med in disease_info.get("medicines", []):
+            med_name = med.get("name", "").lower()
+            composition = med.get("composition", "").lower()
+            if query in med_name or med_name in query or query in composition:
+                return med
+            score = max(
+                difflib.SequenceMatcher(None, _normalize_fuzzy_text(query), _normalize_fuzzy_text(med_name)).ratio(),
+                difflib.SequenceMatcher(None, _normalize_fuzzy_text(query), _normalize_fuzzy_text(composition)).ratio(),
+            )
+            if score > best_score:
+                best_score = score
+                best_med = med
+    return best_med if best_score >= 0.78 else None
+
+
+def start_tablet_order_flow(username: str, sid: str, user_message: str) -> ChatResponse:
+    response = (
+        "I can help with that tablet order.\n\n"
+        "First, tell me the tablet name.\n\n"
+        "Then I will ask about the symptoms so I can recommend the right medication guidance.\n\n"
+        "Reply like this:\n"
+        "`tablet: Paracetamol 500mg`"
+    )
+    questions = build_tablet_order_followup_questions()
+    state = {
+        "flow": "tablet_order",
+        "pending_followup": True,
+        "current_field": "tablet_name",
+        "questions": questions,
+        "answers": {"tablet_name": "", "symptoms": ""},
+    }
+    sources = build_sources(
+        {"type": "tablet_order", "label": "Tablet Order Assistant"},
+        {"type": "profile", "label": "Structured Profile"},
+    )
+    memory.set_diagnostic_state(username, sid, state)
+    memory.add_message(username, sid, "user", user_message)
+    memory.add_message(
+        username,
+        sid,
+        "assistant",
+        response,
+        {
+            "tools_used": ["Tablet Order Assistant"],
+            "followup_questions": questions,
+            "sources": sources,
+        },
+    )
+    return ChatResponse(
+        response=response,
+        session_id=sid,
+        tools_used=["Tablet Order Assistant"],
+        needs_followup=True,
+        followup_questions=questions,
+        timestamp=datetime.now().isoformat(),
+        sources=sources,
+    )
+
+
+def build_tablet_order_response(tablet_name: str, symptoms: str, prediction_list: List[tuple], profile: Dict[str, Any]) -> str:
+    requested_tablet = (tablet_name or "").strip()
+    symptom_reason = (symptoms or "").strip()
+    matched_med = find_medication_by_name(requested_tablet)
+    risk_confidence = prediction_list[0][1] if prediction_list else 0
+    top_disease = prediction_list[0][0] if prediction_list else ""
+
+    if risk_confidence >= 85:
+        risk_level = "🔴 Critical"
+    elif risk_confidence >= 75:
+        risk_level = "🟠 High"
+    elif risk_confidence >= 50:
+        risk_level = "🟡 Moderate"
+    else:
+        risk_level = "🟢 Low"
+
+    if prediction_list:
+        conditions_text = "\n".join(
+            [f"{i+1}. {d.title()} ({c}%)" for i, (d, c) in enumerate(prediction_list)]
+        )
+    else:
+        conditions_text = "No clear condition could be predicted from the symptoms provided."
+
+    encoded_name = urllib.parse.quote_plus(requested_tablet)
+    lines = [
+        "🩺 Symptom Predictor:",
+        conditions_text,
+        "",
+        f"📊 Risk Level: {risk_level}",
+        "",
+        "💊 Tablet Requested:",
+        f"- Tablet: {requested_tablet}",
+        f"- Symptoms: {symptom_reason}",
+    ]
+
+    if matched_med:
+        safety_report = assess_medication_safety([matched_med], profile)
+        med_status = safety_report.get("medication_status", {}).get(matched_med["name"], {})
+        lines.extend([
+            f"- Type: {matched_med['type']}",
+            f"- Composition: {matched_med['composition']}",
+            f"- Usual Dosage Info: {matched_med['dosage']}",
+            f"- Purpose: {matched_med['purpose']}",
+        ])
+        if med_status.get("status") == "blocked":
+            lines.append("- Safety: BLOCKED for your current profile. Please do not self-start it without a doctor.")
+        elif med_status.get("status") == "caution":
+            lines.append("- Safety: Use caution based on your profile.")
+        else:
+            lines.append("- Safety: No major profile conflicts were detected by the local safety checker.")
+        for warning in med_status.get("warnings", []):
+            lines.append(f"- Warning: {warning}")
+    else:
+        lines.append("- Safety: This exact tablet was not found in the local medication database, so only a search link is available.")
+
+    lines.extend([
+        "",
+        "💡 Recommendation:",
+    ])
+    if prediction_list:
+        lines.append(
+            f"- Based on the symptoms, {top_disease.title()} is the strongest match in the symptom predictor."
+        )
+        lines.append(
+            "- Please use medicines only if they fit your doctor's advice, allergies, and current medication list."
+        )
+    else:
+        lines.append("- The symptom predictor could not identify a clear condition from the symptoms provided.")
+
+    if matched_med:
+        lines.append(f"- The requested tablet `{requested_tablet}` may be relevant, but it should match the actual cause of the symptoms.")
+    else:
+        lines.append(f"- I can show the requested tablet `{requested_tablet}`, but I cannot verify it from the local medication database.")
+
+    lines.extend([
+        f"- Order Link: https://www.1mg.com/search/all?name={encoded_name}",
+        "",
+    ])
+
+    if top_disease:
+        recommended_medication_card = format_medication_card(top_disease)
+        if recommended_medication_card:
+            lines.append(recommended_medication_card)
+
+    lines.extend([
+        "",
+        "⚠️ Disclaimer: This is AI-generated health guidance, not a medical diagnosis or prescription. Please consult a qualified healthcare professional before taking or ordering medicines.",
+    ])
+    return "\n".join(lines)
+
+
+def start_appointment_booking_flow(username: str, sid: str, user_message: str) -> ChatResponse:
+    response = (
+        "I can help with that appointment booking.\n\n"
+        "Please share these details so I can suggest the right doctor and booking link:\n\n"
+        "1. Which specialist do you want to book?\n\n"
+        "2. What problem or symptoms should the doctor know about?\n\n"
+        "Reply in the form `specialty: ...` and `problem: ...`, or use the inline form below."
+    )
+    questions = build_appointment_followup_questions()
+    state = {
+        "flow": "appointment_booking",
+        "pending_followup": True,
+        "questions": questions,
+        "answers": {"specialty": "", "problem": ""},
+    }
+    sources = build_sources(
+        {"type": "appointment_booking", "label": "Appointment Booking Assistant"},
+        {"type": "profile", "label": "Structured Profile"},
+    )
+    memory.set_diagnostic_state(username, sid, state)
+    memory.add_message(username, sid, "user", user_message)
+    memory.add_message(
+        username,
+        sid,
+        "assistant",
+        response,
+        {
+            "tools_used": ["Appointment Booking Assistant"],
+            "followup_questions": questions,
+            "sources": sources,
+        },
+    )
+    return ChatResponse(
+        response=response,
+        session_id=sid,
+        tools_used=["Appointment Booking Assistant"],
+        needs_followup=True,
+        followup_questions=questions,
+        timestamp=datetime.now().isoformat(),
+        sources=sources,
+    )
+
+
+def build_appointment_booking_response(specialty_slug: str, problem: str, prediction_list: List[tuple], profile: Dict[str, Any]) -> str:
+    display_name = SPECIALTY_DISPLAY.get(specialty_slug, specialty_slug.replace("-", " ").title())
+    summary_problem = (problem or "your symptoms").strip()
+    top_disease = prediction_list[0][0] if prediction_list else ""
+    disease_label = top_disease.title() if top_disease else ""
+
+    general_description = (
+        f"This could be related to {disease_label.lower()} and should be reviewed by a {display_name}."
+        if disease_label else
+        f"A {display_name} is a good match for evaluating {summary_problem.lower()}."
+    )
+
+    doctor_tips = [
+        f"When the {summary_problem.lower()} started.",
+        "How severe it is right now and whether it is getting worse.",
+        "Any associated symptoms, triggers, or recent changes you noticed.",
+        "What medicines or home remedies you have already tried.",
+    ]
+
+    medication_note = (
+        "Over-the-counter medicines may help temporarily, but prescription treatment should be guided by a clinician."
+        if prediction_list else
+        "Please follow a clinician's advice before starting any new medicine."
+    )
+
+    lines = [
+        f"📎 **Recommended Specialist:** {display_name}",
+        "",
+        f"📌 **Problem Summary:** You're seeking care for {summary_problem}.",
+        "",
+        f"💡 **General Description:** {general_description}",
+        "",
+        "📝 **What To Tell The Doctor:**",
+    ]
+    for item in doctor_tips:
+        lines.append(f"- {item}")
+    lines.extend([
+        "",
+        f"⚠️ **Medication Note:** {medication_note}",
+        "",
+        "Book your appointment using the Practo booking link below.",
+        "",
+        "⚠️ **Medical Disclaimer:** This is AI-generated health information for educational purposes only. "
+        "It is NOT a substitute for professional medical advice, diagnosis, or treatment. "
+        "Always consult a qualified healthcare provider for medical concerns.",
+    ])
+
+    if top_disease:
+        safety_report = assess_medication_safety(
+            DISEASE_MEDICATIONS.get(top_disease.lower(), {}).get("medicines", []),
+            profile,
+        ) if DISEASE_MEDICATIONS.get(top_disease.lower(), {}).get("medicines") else None
+        lines.append(format_medication_card(top_disease, safety_report=safety_report))
+
+    return "\n".join(lines)
 
 
 REPORT_TRIGGER_PHRASES = [
@@ -1121,18 +1708,18 @@ def predict_disease_from_symptoms(user_text: str) -> List[tuple]:
 
     def symptom_present(text: str, symptom: str) -> bool:
         idx = text.find(symptom)
-        if idx == -1:
-            return False
-        context = text[max(0, idx - 30):idx]
-        # Conjunction reset: only check the segment after the last conjunction
-        # so "no fever but fatigue" correctly detects fatigue
-        for conj in [" but ", ", but ", " and ", ", and ", " however ", ", however "]:
-            parts = context.rsplit(conj, 1)
-            if len(parts) > 1:
-                context = parts[-1]
-                break
-        negations = ["no ", "not ", "without ", "don't have ", "do not have "]
-        return not any(neg in context for neg in negations)
+        if idx != -1:
+            context = text[max(0, idx - 30):idx]
+            # Conjunction reset: only check the segment after the last conjunction
+            # so "no fever but fatigue" correctly detects fatigue
+            for conj in [" but ", ", but ", " and ", ", and ", " however ", ", however "]:
+                parts = context.rsplit(conj, 1)
+                if len(parts) > 1:
+                    context = parts[-1]
+                    break
+            negations = ["no ", "not ", "without ", "don't have ", "do not have "]
+            return not any(neg in context for neg in negations)
+        return _contains_fuzzy_phrase(text, symptom, threshold=0.82)
 
     text_lower = user_text.lower()
     results = []
@@ -1856,11 +2443,45 @@ async def chat(req: ChatRequest):
     if not history:
         memory.set_session_name(username, sid, req.message)
 
+    profile = normalize_profile(memory.load_profile(username))
+    current_city = (req.current_city or "").strip()
+    profile_city = current_city or (profile.get("city") or "").strip()
+    preferred_name = (profile.get("preferred_name") or "").strip()
+
+    declared_name = extract_preferred_name(req.message)
+    if declared_name:
+        profile["preferred_name"] = declared_name
+        memory.save_profile(username, normalize_profile(profile, existing=profile))
+        response = f"Nice to meet you, {declared_name}. I will remember your name for this chat."
+        sources = build_sources({"type": "profile", "label": "Structured Profile"})
+        memory.add_message(username, sid, "user", req.message)
+        memory.add_message(username, sid, "assistant", response, {"tools_used": ["Structured Profile"], "sources": sources})
+        return ChatResponse(
+            response=response,
+            session_id=sid,
+            tools_used=["Structured Profile"],
+            timestamp=datetime.now().isoformat(),
+            sources=sources,
+        )
+
+    if is_name_recall_question(req.message):
+        response = f"Your name is {preferred_name}." if preferred_name else "You have not told me your name yet."
+        sources = build_sources({"type": "profile", "label": "Structured Profile"})
+        memory.add_message(username, sid, "user", req.message)
+        memory.add_message(username, sid, "assistant", response, {"tools_used": ["Structured Profile"], "sources": sources})
+        return ChatResponse(
+            response=response,
+            session_id=sid,
+            tools_used=["Structured Profile"],
+            timestamp=datetime.now().isoformat(),
+            sources=sources,
+        )
+
     if check_emergency(req.message):
         emg_lower   = req.message.lower()
         emg_slug    = next((slug for kw, slug in EMERGENCY_SPECIALTY.items() if keyword_is_present(emg_lower, kw)), "general-physician")
         emg_display = SPECIALTY_DISPLAY.get(emg_slug, "General Physician")
-        emg_practo_url = build_practo_url(emg_slug)
+        emg_practo_url = build_practo_url(emg_slug, city=profile_city)
         emergency_response = (
             "🚨 EMERGENCY ALERT\n\n"
             "Your symptoms may indicate a serious or life-threatening condition.\n\n"
@@ -1887,6 +2508,215 @@ async def chat(req: ChatRequest):
                             sources=sources)
 
     pending_followup = memory.get_diagnostic_state(username, sid)
+    if is_appointment_booking_intent(req.message):
+        booking_details = extract_booking_details(req.message)
+        if not booking_details.get("specialty") or not booking_details.get("problem"):
+            return start_appointment_booking_flow(username, sid, req.message)
+        pending_followup = {
+            "flow": "appointment_booking",
+            "pending_followup": True,
+            "questions": build_appointment_followup_questions(),
+            "answers": booking_details,
+        }
+    elif is_tablet_order_intent(req.message):
+        tablet_details = extract_tablet_order_details(req.message)
+        if not tablet_details.get("tablet_name") or not tablet_details.get("symptoms"):
+            return start_tablet_order_flow(username, sid, req.message)
+        pending_followup = {
+            "flow": "tablet_order",
+            "pending_followup": True,
+            "questions": build_tablet_order_followup_questions(),
+            "answers": tablet_details,
+        }
+
+    if pending_followup and pending_followup.get("flow") == "appointment_booking":
+        answers = dict((pending_followup.get("answers") or {}))
+        extracted = extract_booking_details(req.message)
+        if extracted.get("specialty"):
+            answers["specialty"] = extracted["specialty"]
+        if extracted.get("problem"):
+            answers["problem"] = extracted["problem"]
+
+        if not answers.get("specialty") or not answers.get("problem"):
+            pending_followup["answers"] = answers
+            memory.set_diagnostic_state(username, sid, pending_followup)
+            followup_response = (
+                "I still need both booking details before I can prepare the appointment links.\n\n"
+                "Please share:\n"
+                "1. `specialty: ...`\n"
+                "2. `problem: ...`\n\n"
+                "You can also use the inline form below."
+            )
+            questions = build_appointment_followup_questions()
+            sources = build_sources(
+                {"type": "appointment_booking", "label": "Appointment Booking Assistant"},
+                {"type": "profile", "label": "Structured Profile"},
+            )
+            memory.add_message(username, sid, "user", req.message)
+            memory.add_message(
+                username,
+                sid,
+                "assistant",
+                followup_response,
+                {
+                    "tools_used": ["Appointment Booking Assistant"],
+                    "followup_questions": questions,
+                    "sources": sources,
+                },
+            )
+            return ChatResponse(
+                response=followup_response,
+                session_id=sid,
+                tools_used=["Appointment Booking Assistant"],
+                needs_followup=True,
+                followup_questions=questions,
+                timestamp=datetime.now().isoformat(),
+                sources=sources,
+            )
+
+        problem = answers["problem"]
+        profile = normalize_profile(memory.load_profile(username))
+        prediction_list = predict_disease_from_symptoms(problem)
+        prediction_list = [
+            (disease, adjust_confidence(conf, profile.get("age", 30), profile.get("known_conditions", []), disease))
+            for disease, conf in prediction_list
+        ]
+        prediction_list.sort(key=lambda x: x[1], reverse=True)
+        prediction_list = prediction_list[:3]
+
+        requested_specialty = answers["specialty"].lower().strip()
+        specialty_slug = next(
+            (
+                slug for slug, display in SPECIALTY_DISPLAY.items()
+                if requested_specialty in (slug, display.lower())
+            ),
+            "",
+        )
+        if not specialty_slug:
+            specialty_slug = infer_specialty_slug(problem, prediction_list)
+
+        booking_response = build_appointment_booking_response(specialty_slug, problem, prediction_list, profile)
+        sources = build_sources(
+            {"type": "appointment_booking", "label": "Appointment Booking Assistant"},
+            {"type": "symptom_predictor", "label": "Symptom Predictor"} if prediction_list else None,
+            {"type": "profile", "label": "Structured Profile"},
+        )
+        tools_used = ["Appointment Booking Assistant"]
+        if prediction_list:
+            tools_used.append("Symptom Predictor")
+        memory.set_diagnostic_state(username, sid, None)
+        memory.add_message(username, sid, "user", req.message)
+        memory.add_message(
+            username,
+            sid,
+            "assistant",
+            booking_response,
+            {"tools_used": tools_used, "sources": sources},
+        )
+        return ChatResponse(
+            response=booking_response,
+            session_id=sid,
+            tools_used=tools_used,
+            practo_url=build_practo_url(specialty_slug, city=profile_city),
+            timestamp=datetime.now().isoformat(),
+            sources=sources,
+        )
+
+    if pending_followup and pending_followup.get("flow") == "tablet_order":
+        current_field = pending_followup.get("current_field", "")
+        answers = fill_tablet_order_followup_answers(
+            pending_followup.get("answers") or {},
+            req.message,
+            current_field=current_field,
+        )
+
+        if not answers.get("tablet_name") or not answers.get("symptoms"):
+            pending_followup["answers"] = answers
+            pending_followup["current_field"] = "tablet_name" if not answers.get("tablet_name") else "symptoms"
+            memory.set_diagnostic_state(username, sid, pending_followup)
+            if not answers.get("tablet_name"):
+                followup_response = (
+                    "Please tell me the tablet name you want to order.\n\n"
+                    "Reply like this:\n"
+                    "`tablet: Paracetamol 500mg`\n\n"
+                    "You can also use the inline form below."
+                )
+            else:
+                followup_response = (
+                    f"Tablet noted: {answers['tablet_name']}.\n\n"
+                    "Now tell me your symptoms so I can suggest the likely condition and recommend medication guidance.\n\n"
+                    "Reply like this:\n"
+                    "`symptoms: fever and headache`\n\n"
+                    "You can also use the inline form below."
+                )
+            questions = build_tablet_order_followup_questions()
+            sources = build_sources(
+                {"type": "tablet_order", "label": "Tablet Order Assistant"},
+                {"type": "profile", "label": "Structured Profile"},
+            )
+            memory.add_message(username, sid, "user", req.message)
+            memory.add_message(
+                username,
+                sid,
+                "assistant",
+                followup_response,
+                {
+                    "tools_used": ["Tablet Order Assistant"],
+                    "followup_questions": questions,
+                    "sources": sources,
+                },
+            )
+            return ChatResponse(
+                response=followup_response,
+                session_id=sid,
+                tools_used=["Tablet Order Assistant"],
+                needs_followup=True,
+                followup_questions=questions,
+                timestamp=datetime.now().isoformat(),
+                sources=sources,
+            )
+
+        tablet_name = answers["tablet_name"]
+        symptoms = answers["symptoms"]
+        prediction_list = predict_disease_from_symptoms(symptoms)
+        prediction_list = [
+            (disease, adjust_confidence(conf, profile.get("age", 30), profile.get("known_conditions", []), disease))
+            for disease, conf in prediction_list
+        ]
+        prediction_list.sort(key=lambda x: x[1], reverse=True)
+        prediction_list = prediction_list[:3]
+
+        tablet_response = build_tablet_order_response(tablet_name, symptoms, prediction_list, profile)
+        top_disease = prediction_list[0][0] if prediction_list else ""
+        sources = build_sources(
+            {"type": "tablet_order", "label": "Tablet Order Assistant"},
+            {"type": "symptom_predictor", "label": "Symptom Predictor"} if prediction_list else None,
+            {"type": "medication_safety", "label": "Medication Safety"} if find_medication_by_name(tablet_name) else None,
+            {"type": "profile", "label": "Structured Profile"},
+        )
+        tools_used = ["Tablet Order Assistant"]
+        if prediction_list:
+            tools_used.append("Symptom Predictor")
+        if find_medication_by_name(tablet_name):
+            tools_used.append("Medication Safety")
+        memory.set_diagnostic_state(username, sid, None)
+        memory.add_message(username, sid, "user", req.message)
+        memory.add_message(
+            username,
+            sid,
+            "assistant",
+            tablet_response,
+            {"tools_used": tools_used, "sources": sources},
+        )
+        return ChatResponse(
+            response=tablet_response,
+            session_id=sid,
+            tools_used=tools_used,
+            practo_url=build_practo_url(DISEASE_SPECIALTY.get(top_disease.lower(), "general-physician"), city=profile_city) if top_disease else "",
+            timestamp=datetime.now().isoformat(),
+            sources=sources,
+        )
+
     if pending_followup and pending_followup.get("pending_followup"):
         updated_state = merge_followup_answers(pending_followup, req.message)
         memory.add_message(username, sid, "user", req.message)
@@ -1921,7 +2751,6 @@ async def chat(req: ChatRequest):
         history = memory.get_message_context(username, sid, exclude_tools=["Uploaded Report"]) or []
         memory.set_diagnostic_state(username, sid, None)
 
-    profile = normalize_profile(memory.load_profile(username))
     age = profile.get("age", 30)
     gender = profile.get("gender", "unknown")
     known_conditions = profile.get("known_conditions", [])
@@ -1968,7 +2797,7 @@ async def chat(req: ChatRequest):
                            {"tools_used": result["tools_used"], "sources": sources})
         return ChatResponse(response=result["response"], session_id=sid,
                             tools_used=result["tools_used"],
-                            practo_url=build_practo_url(report_specialty),
+                            practo_url=build_practo_url(report_specialty, city=profile_city),
                             timestamp=datetime.now().isoformat(),
                             sources=sources)
 
@@ -2073,9 +2902,35 @@ Respond EXACTLY in this format:
 
 ⚠️ Disclaimer: This is AI-generated health guidance, not a medical diagnosis. Please consult a qualified healthcare professional."""
 
-        raw_explanation = await agent.process(explanation_prompt, history, model=active_model)
-        validated_text = validate_and_process_response(raw_explanation["response"], {"symptoms": req.message})
-        explanation = {"response": validated_text, "tools_used": raw_explanation.get("tools_used", [])}
+        try:
+            raw_explanation = await agent.process(explanation_prompt, history, model=active_model)
+            validated_text = validate_and_process_response(raw_explanation["response"], {"symptoms": req.message})
+            explanation = {"response": validated_text, "tools_used": raw_explanation.get("tools_used", [])}
+        except Exception as e:
+            logger.error(f"Symptom predictor explanation error: {e}")
+            top_condition_text = f"{top_disease.title()} appears to be the strongest local match for the symptoms you described."
+            alternatives_text = (
+                "\n".join([f"- {d.title()} ({c}%)" for d, c in prediction_list[1:]])
+                if len(prediction_list) > 1 else
+                "- No strong alternative matches were identified."
+            )
+            explanation = {
+                "response": (
+                    "🩺 Most Likely Condition:\n"
+                    f"{top_condition_text}\n\n"
+                    "🔍 Other Possible Conditions:\n"
+                    f"{alternatives_text}\n\n"
+                    f"📊 Risk Level: {risk_level.replace('🔴 ', '').replace('🟠 ', '').replace('🟡 ', '').replace('🟢 ', '')}\n\n"
+                    "🔎 Why This Risk Level:\n"
+                    "This estimate is based on the symptom-pattern match, your profile details, and known conditions if available.\n\n"
+                    "💊 Immediate Precautions:\n"
+                    "Rest, stay hydrated, avoid self-starting prescription medicines, and monitor for worsening symptoms.\n\n"
+                    "🏥 When to See a Doctor:\n"
+                    "Seek medical care if symptoms are severe, getting worse, or not improving.\n\n"
+                    "⚠️ Disclaimer: Live AI explanation is temporarily unavailable, so this summary is based on the app's local symptom predictor."
+                ),
+                "tools_used": [],
+            }
         conditions_text = "\n".join(
             [f"{i+1}. {d.title()} ({c}%)" for i, (d, c) in enumerate(prediction_list)]
         )
@@ -2103,7 +2958,7 @@ Respond EXACTLY in this format:
         symptom_display = SPECIALTY_DISPLAY.get(symptom_slug, "General Physician")
         return ChatResponse(response=final_response, session_id=sid,
                             tools_used=["Symptom Predictor", "Medication Safety"] if safety_alerts else ["Symptom Predictor"],
-                            practo_url=build_practo_url(symptom_slug),
+                            practo_url=build_practo_url(symptom_slug, city=profile_city),
                             timestamp=datetime.now().isoformat(),
                             safety_alerts=safety_alerts,
                             sources=sources)
@@ -2173,6 +3028,9 @@ Respond EXACTLY in this format:
             result = None
 
         if result:
+            kg_practo_url = ""
+            if should_show_doctor_links(req.message, prediction_list=prediction_list):
+                kg_practo_url = build_practo_url(infer_specialty_slug(req.message, prediction_list), city=profile_city)
             sources = build_sources(
                 {"type": "knowledge_graph", "label": "Medical KG"},
                 {"type": "profile", "label": "Structured Profile"},
@@ -2182,7 +3040,7 @@ Respond EXACTLY in this format:
                                {"tools_used": result["tools_used"], "sources": sources})
             return ChatResponse(response=result["response"], session_id=sid,
                                 tools_used=result["tools_used"],
-                                practo_url=build_practo_url(infer_specialty_slug(req.message, prediction_list)),
+                                practo_url=kg_practo_url,
                                 timestamp=datetime.now().isoformat(),
                                 sources=sources)
 
@@ -2227,11 +3085,14 @@ Respond EXACTLY in this format:
     memory.add_message(username, sid, "user", req.message)
     memory.add_message(username, sid, "assistant", result["response"],
                        {"tools_used": result.get("tools_used", []), "sources": sources})
+    fallback_practo_url = ""
+    if should_show_doctor_links(req.message, prediction_list=prediction_list, has_report=bool(user_report)):
+        fallback_practo_url = build_practo_url(infer_specialty_slug(req.message, prediction_list), city=profile_city)
     return ChatResponse(
         response=result["response"],
         session_id=sid,
         tools_used=result.get("tools_used", []),
-        practo_url=build_practo_url(infer_specialty_slug(req.message, prediction_list)),
+        practo_url=fallback_practo_url,
         timestamp=datetime.now().isoformat(),
         sources=sources
     )
@@ -2419,7 +3280,7 @@ async def nearby_hospitals(lat: float = Query(...), lng: float = Query(...), cit
         "practo": {
             "name": "Practo",
             "emoji": "🏥",
-            "url": f"https://www.practo.com/search/doctors?results_type=doctor&q=%5B%7B%22word%22%3A%22general+physician%22%2C%22autocompleted%22%3Atrue%2C%22category%22%3A%22subspeciality%22%7D%5D&city={location_str}",
+            "url": build_practo_url("general-physician", city=city if city and city != "Your Location" else ""),
             "desc": "Book nearby general physician appointments",
         },
         "justdial": {
@@ -2436,6 +3297,17 @@ async def nearby_hospitals(lat: float = Query(...), lng: float = Query(...), cit
         "city": city_display,
         "links": links,
         "maps_embed_url": f"https://maps.google.com/maps?q=hospitals+near+me&ll={lat_s},{lng_s}&z=14&output=embed",
+    }
+
+
+# ── Live City Resolver ────────────────────────────────────────────────────────
+@app.get("/api/resolve-city")
+async def resolve_city(lat: float = Query(...), lng: float = Query(...)):
+    city = await resolve_city_from_coordinates(lat, lng)
+    return {
+        "lat": lat,
+        "lng": lng,
+        "city": city,
     }
 
 
@@ -2749,3 +3621,8 @@ if __name__ == "__main__":
     print("  Stop   : CTRL+C\n")
     print("=" * 50)
     uvicorn.run("app:app", host="0.0.0.0", port=PORT, reload=False)
+
+
+
+
+

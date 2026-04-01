@@ -14,6 +14,7 @@ class LoginRequest(BaseModel):
     password: str
     age: Optional[int] = None
     gender: Optional[str] = None
+    city: Optional[str] = None
     known_conditions: List[str] = Field(default_factory=list)
     allergies: List[str] = Field(default_factory=list)
     current_medications: List[str] = Field(default_factory=list)
@@ -36,6 +37,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     token: str
     model: Optional[str] = None
+    current_city: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
