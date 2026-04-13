@@ -95,7 +95,11 @@ The following environment variables are automatically set during deployment:
 - ✅ `GEMINI_API_KEY` - From Cloud Secret
 - ✅ `MODEL_NAME=gemini-2.5-flash-lite`
 - ✅ `CHROMA_DB_PATH=/app/chroma_db`
-- ✅ `PORT=8000`
+
+### Persistence Warning
+
+- [ ] Decide where to persist `users.json`, `memory/`, `uploads/`, and `chroma_db/`
+- [ ] Do not rely on Cloud Run local disk for durable user/session/report data
 
 ---
 

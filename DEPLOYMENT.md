@@ -68,7 +68,7 @@ docker-compose up --build
 
 - **Web UI**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
+- **Health Check**: http://localhost:8000/api/health
 
 ## Step 3: Deploy to Google Cloud Run
 
@@ -161,7 +161,9 @@ In **Build trigger settings**:
 
 ## Step 5: Persist Data Volumes
 
-Cloud Run has ephemeral storage. For persistent data (chroma_db, memory):
+Cloud Run has ephemeral storage. In the current codebase, `users.json`, `memory/`, `uploads/`, and `chroma_db/` are all local paths, so they will not be durable across instance restarts or scale-out events on Cloud Run.
+
+For production use, move those paths to managed storage:
 
 ### 5.1 Use Cloud Storage (Recommended)
 
