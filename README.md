@@ -1,220 +1,221 @@
-# MediAssist - AI Health Triage System
+# MediAssist
 
-MediAssist is a FastAPI-based health triage application that combines rule-based screening, a medical knowledge graph, RAG retrieval with ChromaDB, Google Gemini-backed responses, lab report parsing, and file-based user state.
+MediAssist is a FastAPI-based health triage app with a single-page web UI. It combines emergency screening, symptom-based triage, optional follow-up questioning, uploaded lab report analysis, medication safety checks, lightweight expert consultation flows, and local file-backed user data.
+
+## What Changed
+
+The current app is no longer just a simple symptom checker. The active workflow now includes:
+
+- Token-based signup, login, logout, and profile persistence
+- Chat routing for emergency detection, symptom triage, uploaded report Q&A, appointment booking, and tablet-order guidance
+- Follow-up question state stored per session when symptoms are ambiguous
+- Lab upload analysis with structured metric extraction and trend comparison against prior reports
+- Health dashboard, trends, and report generation from saved metrics
+- Expert consultation, appointment scheduling, audit logging, and data export/deletion APIs
+
+## Core Workflow
+
+### 1. Authentication and Profile
+
+1. User signs up with `username` and `password`
+2. User logs in and receives a token
+3. Login also seeds or updates the saved health profile
+4. The frontend uses that token for chat, uploads, analytics, consultations, and privacy endpoints
+
+### 2. Chat Routing
+
+Each `POST /api/chat` request is routed roughly like this:
+
+```text
+User message
+  -> token validation
+  -> session lookup / creation
+  -> preferred-name memory checks
+  -> emergency detector
+  -> special follow-up flows
+       - appointment booking
+       - tablet order guidance
+       - symptom clarification
+  -> uploaded report Q&A (if the user refers to a saved report)
+  -> symptom predictor + medication safety
+  -> Gemini-generated final response
+  -> session history + sources saved to local storage
+```
+
+### 3. Lab Report Workflow
+
+1. User uploads `txt`, `pdf`, `png`, `jpg`, or `jpeg`
+2. Text is extracted from the file
+3. Structured lab metrics are parsed from the content
+4. Findings and trend comparisons are generated
+5. The latest report is saved for future chat-based follow-up
+6. Users can later ask questions about the uploaded report in chat
+
+### 4. Data Persistence
+
+The app stores data locally:
+
+- `users.json` for authentication state
+- `memory/<username>/` for profile, sessions, analytics, and lab history
+- `memory/consultations/` for expert consultations and appointments
+- `memory/audit_logs/` for audit events
+- `uploads/` for uploaded files
+- `chroma_db/` for optional RAG data
 
 ## Features
 
-- **Emergency detection** - 21 life-threatening keyword patterns with instant hospital redirect
-- **Symptom prediction** - 15 disease patterns with confidence scoring
-- **Follow-up triage** - Adaptive questions when confidence is low or symptoms are ambiguous
-- **Knowledge graph** - NetworkX-based medical term lookup
-- **RAG search** - ChromaDB vector store for medical document retrieval
-- **Gemini AI** - Google Gemini 2.5 Flash Lite for response generation
-- **Medication database** - 15 diseases with prescription cards including dosage and pharmacy links
-- **Drug interaction checker** - 40+ documented interactions with severity levels
-- **Medication safety** - Checks against allergies, conditions, pregnancy, and current medications
-- **Lab report analysis** - Upload TXT, PDF, PNG, or JPG; extracts 9 biomarkers + blood pressure
-- **Lab trend tracking** - Compare current vs previous reports
-- **Expert consultation** - Book appointments with doctors and nutritionists
-- **Multi-language UI** - English, Spanish, French, German, Hindi
-- **Health analytics** - Track custom metrics with trend analysis and dashboard
-- **GDPR compliance** - Data export and account deletion
-
-## Architecture
-
-```
-User Message
-  -> Emergency Check (21 keywords)
-  -> Symptom Predictor (15 diseases)
-  -> Follow-up Triage (when needed)
-  -> Knowledge Graph
-  -> RAG Search (when available)
-  -> Gemini Response
-```
+- Emergency detection with hospital/escalation guidance
+- Symptom prediction for common conditions
+- Adaptive follow-up triage when confidence is low or details are missing
+- Uploaded report analysis with metric extraction and trend comparison
+- Medication cards, drug interaction checks, and profile-aware safety warnings
+- Appointment-booking and tablet-order assistant flows inside chat
+- Health metric tracking, dashboard summaries, and generated health reports
+- Expert consultation and appointment scheduling endpoints
+- UI localization endpoints
+- Audit logging plus export/delete account flows
+- Optional RAG and knowledge-graph support with graceful degradation
 
 ## Project Structure
 
-```
+```text
 MediAssist/
-├── app.py                    # Main FastAPI application
-├── models.py                 # Pydantic request/response models
-├── index.html                # Frontend UI
-├── requirements.txt          # Python dependencies
-├── med_safety.py             # Medication safety & drug interactions
-├── lab_services.py           # Lab report parsing & analysis
+├── app.py
+├── index.html
+├── models.py
+├── requirements.txt
+├── run.ps1
+├── run.bat
+├── med_safety.py
+├── lab_services.py
 ├── services/
-│   ├── profile.py            # User profile management
-│   ├── triage.py             # Symptom triage logic
-│   ├── analytics.py          # Health metrics & trends
-│   ├── security.py           # Encryption & audit logging
-│   ├── expert_consultation.py # Doctor consultation
-│   └── language.py           # Multi-language support
+│   ├── analytics.py
+│   ├── expert_consultation.py
+│   ├── language.py
+│   ├── profile.py
+│   ├── response_validator.py
+│   ├── security.py
+│   └── triage.py
+├── prompts/
 ├── rag/
-│   ├── rag_engine.py         # ChromaDB RAG retrieval
-│   └── document_loader.py    # Document text extraction
 ├── knowledge_graph/
-│   └── graph.py              # NetworkX medical knowledge graph
-├── medical_data/             # Static medical reference files
-├── memory/                   # User data (profiles, sessions, analytics)
-├── uploads/                  # Uploaded lab reports
-└── chroma_db/                # ChromaDB vector store
+├── medical_data/
+├── uploads/
+├── memory/
+└── chroma_db/
 ```
 
-## API Endpoints
+## Main API Surface
 
-### Authentication
-- `POST /api/signup` - Register new user
-- `POST /api/login` - Login and get token (optionally with health profile data)
-- `POST /api/logout` - Invalidate token
+### Auth and Profile
 
-#### Authentication Flow (UI)
+- `POST /api/signup`
+- `POST /api/login`
+- `POST /api/logout`
+- `POST /api/profile`
+- `GET /api/profile`
+- `POST /api/update-profile-extended`
 
-The frontend implements a multi-step authentication flow:
+### Chat and Sessions
 
-1. **Welcome Screen** - Landing page with "Login" and "Sign Up" buttons
-2. **Sign Up Screen** - New user registration with:
-   - Username
-   - Password
-   - Confirm Password
-3. **Health Profile Setup** (Optional) - After registration, users can:
-   - Add health details (age, gender, conditions, allergies, medications, etc.)
-   - Click "Save & Continue" to save profile and enter the app
-   - Click "Skip for now" to skip and enter the app directly
-4. **Login Screen** - Existing user login with username and password
+- `POST /api/chat`
+- `GET /api/health`
+- `GET /api/models`
+- `GET /api/sessions`
+- `GET /api/sessions/{sid}/history`
+- `DELETE /api/sessions/{sid}`
+- `GET /api/handoff-summary`
 
-### Chat & Triage
-- `POST /api/chat` - Main chat endpoint with multi-stage routing
-- `GET /api/health` - Health check
-- `GET /api/models` - List available models
+### Lab and Medication
 
-### Profile & Sessions
-- `POST /api/profile` - Save user profile
-- `GET /api/profile` - Get user profile
-- `GET /api/sessions` - List user sessions
-- `GET /api/sessions/{sid}/history` - Get session history
-- `DELETE /api/sessions/{sid}` - Delete session
-- `GET /api/handoff-summary` - Generate doctor handoff summary
-- `POST /api/update-profile-extended` - Update extended profile fields
+- `POST /api/upload`
+- `GET /api/lab-history`
+- `POST /api/check-drug-interactions`
+- `GET /api/pharmacy-links`
+- `GET /api/nearby-hospitals`
+- `GET /api/resolve-city`
 
-### Lab & Health Tracking
-- `POST /api/upload` - Upload lab report (TXT/PDF/PNG/JPG)
-- `GET /api/lab-history` - Get lab history with trends
-- `POST /api/health-metric` - Add health metric
-- `GET /api/health-dashboard` - Get health dashboard
-- `GET /api/health-trends` - Get health trends
-- `GET /api/health-report` - Generate health report
+### Analytics and Consultation
 
-### Medication
-- `POST /api/check-drug-interactions` - Check drug interactions
-- `GET /api/pharmacy-links` - Get pharmacy order links
-- `GET /api/nearby-hospitals` - Hospital finder links
+- `GET /api/health-dashboard`
+- `POST /api/health-metric`
+- `GET /api/health-trends`
+- `GET /api/health-report`
+- `GET /api/experts`
+- `POST /api/request-consultation`
+- `GET /api/my-consultations`
+- `POST /api/close-consultation`
+- `POST /api/schedule-appointment`
 
-### Consultation
-- `GET /api/experts` - List available experts
-- `POST /api/request-consultation` - Request consultation
-- `GET /api/my-consultations` - Get user consultations
-- `POST /api/close-consultation` - Close consultation with feedback
-- `POST /api/schedule-appointment` - Schedule appointment
+### Localization and Privacy
 
-### Localization
-- `GET /api/ui-strings` - UI translations
-- `GET /api/supported-languages` - List languages
-
-### Privacy
-- `GET /api/export-data` - Export user data (GDPR)
-- `POST /api/delete-account` - Delete account and data
-- `GET /api/audit-log` - Get user audit log
+- `GET /api/ui-strings`
+- `GET /api/supported-languages`
+- `GET /api/export-data`
+- `POST /api/delete-account`
+- `GET /api/audit-log`
 
 ## Setup
 
 ### Prerequisites
-- Python 3.10+
-- A valid `GEMINI_API_KEY` from Google AI Studio
 
-### Installation
+- Python 3.10+
+- A valid Google Gemini API key
+
+### Install
 
 ```powershell
-# Create virtual environment
 python -m venv .venv
-
-# Activate (Windows PowerShell)
 .\.venv\Scripts\Activate.ps1
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Configuration
+### Configure
 
-Create a `.env` file:
+Create `.env` from `.env.example` and set at least:
 
 ```env
 GEMINI_API_KEY=your_api_key_here
 MODEL_NAME=gemini-2.5-flash-lite
 PORT=8000
 CHROMA_DB_PATH=./chroma_db
+ENCRYPTION_KEY=your_secret_key
 ```
 
-### Running
+### Run
+
+Use either:
 
 ```powershell
 .\.venv\Scripts\python.exe app.py
 ```
 
-Open:
-- UI: `http://localhost:8000`
-- API Docs: `http://localhost:8000/docs`
+or:
 
-## Quick Start
-
-See [QUICK_START.md](QUICK_START.md) for detailed examples and curl commands.
-
-## Storage Model
-
-```
-users.json                         # Authentication store
-memory/{username}/profile.json     # User profile
-memory/{username}/*.json           # Chat sessions
-memory/{username}/analytics.json   # Health metrics
-memory/{username}/lab_history.json # Lab history
-memory/consultations/              # Consultation data
-memory/audit_logs/                 # Audit trails
-uploads/                           # Uploaded files
-chroma_db/                         # Vector store
+```powershell
+.\run.ps1
 ```
 
-### Data Limits
-- Max 50 sessions per user
-- Session history: last 20 messages for AI context
-- Stored messages: max 50 per session
-- Health metrics: max 100 entries
-- Audit log: max 500 entries
-- Lab history: max 30 records
+Then open:
 
-## Security Notes
+- `http://localhost:8000`
+- `http://localhost:8000/docs`
 
-- `app.py` hashes passwords with SHA-256
-- `services/security.py` includes PBKDF2-HMAC-SHA256 helpers (not yet wired to auth routes)
-- Fernet encryption for sensitive data
-- Token-based authentication
-- Path traversal protection on file operations
-- Audit logging for compliance
+## Notes
 
-## RAG Behavior
+- Authentication currently uses SHA-256 hashing in `app.py`
+- Stronger PBKDF2 helpers exist in `services/security.py` but are not wired into login yet
+- Uploaded image OCR depends on `pytesseract`
+- PDF extraction prefers `pdfplumber` and falls back to `PyMuPDF`
+- RAG support is optional and designed to fail gracefully if unavailable
+- This project stores user data locally and is intended for development/demo use, not production clinical deployment
 
-The RAG engine gracefully degrades if ChromaDB cannot initialize:
-- App import still succeeds
-- `search_rag()` returns empty results
-- `add_document_to_rag()` returns status message
+## Related Docs
 
-## Known Limitations
-
-- Medical responses are informational only, not clinical advice
-- Expert consultation is mock/static (no real provider network)
-- Localization covers UI strings only, not full response translation
-- OCR requires Tesseract installation
-- Storage is local JSON + ChromaDB, not a scalable database
+- [QUICK_START.md](QUICK_START.md)
+- [DEPLOYMENT.md](DEPLOYMENT.md)
+- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
 
 ## Disclaimer
 
-This project is for informational and development purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment.
+MediAssist provides informational guidance only. It is not a substitute for professional medical advice, diagnosis, or treatment.

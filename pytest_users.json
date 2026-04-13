@@ -1,0 +1,13 @@
+{
+  "login_be4c85c2e3": {
+    "password": "162fdbc2f46bbce7bf045ed3201873bdc6344857864544dfa35bf3d02e0ad5ba",
+    "token": "dff20fa5-d0a3-4cb6-845d-ac8b050981d0"
+  },
+  "pytest_user_12df8448d3": {
+    "password": "162fdbc2f46bbce7bf045ed3201873bdc6344857864544dfa35bf3d02e0ad5ba",
+    "token": "edf54d17-7da5-405d-b06c-d255eb0a6b14"
+  },
+  "logout_285b645ce4": {
+    "password": "162fdbc2f46bbce7bf045ed3201873bdc6344857864544dfa35bf3d02e0ad5ba"
+  }
+}

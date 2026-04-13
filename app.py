@@ -42,6 +42,7 @@ import aiohttp
 import uvicorn
 import logging
 import urllib.parse
+import tempfile
 from dotenv import load_dotenv
 load_dotenv(override=True)
 logging.basicConfig(level=logging.ERROR)
@@ -2244,12 +2245,57 @@ class AIAgent:
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 USERS_FILE = "users.json"
+FALLBACK_USERS_FILE = "users.local.json"
+
+
+def _copy_json_if_missing(source_path: str, target_path: str):
+    if os.path.exists(target_path) or not os.path.exists(source_path):
+        return
+    try:
+        with open(source_path, "r", encoding="utf-8") as src:
+            payload = json.load(src)
+        with open(target_path, "w", encoding="utf-8") as dst:
+            json.dump(payload, dst, indent=2)
+    except Exception:
+        # Fall back to an empty auth store if the source file cannot be copied.
+        pass
+
+
+def _can_write_file(path: str) -> bool:
+    try:
+        parent_dir = os.path.dirname(os.path.abspath(path)) or "."
+        os.makedirs(parent_dir, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=parent_dir, delete=True):
+            pass
+        if os.path.exists(path):
+            with open(path, "a", encoding="utf-8"):
+                pass
+        return True
+    except Exception:
+        return False
+
+
+def get_users_file_path(for_write: bool = False) -> str:
+    preferred_path = os.getenv("MEDIASSIST_USERS_FILE", USERS_FILE)
+    if not for_write:
+        if preferred_path != USERS_FILE:
+            return preferred_path
+        if os.path.exists(FALLBACK_USERS_FILE):
+            return FALLBACK_USERS_FILE
+        return preferred_path
+
+    if _can_write_file(preferred_path):
+        return preferred_path
+
+    _copy_json_if_missing(preferred_path, FALLBACK_USERS_FILE)
+    return FALLBACK_USERS_FILE
 
 async def load_users() -> dict:
-    if not os.path.exists(USERS_FILE):
+    users_file = get_users_file_path(for_write=False)
+    if not os.path.exists(users_file):
         return {}
     try:
-        with open(USERS_FILE) as f:
+        with open(users_file, encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return {}
@@ -2259,7 +2305,8 @@ async def save_users(users: dict):
     if _users_lock is None:
         _users_lock = asyncio.Lock()
     async with _users_lock:
-        with open(USERS_FILE, "w") as f:
+        users_file = get_users_file_path(for_write=True)
+        with open(users_file, "w", encoding="utf-8") as f:
             json.dump(users, f, indent=2)
 
 def hash_password(pw: str) -> str:
