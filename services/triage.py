@@ -97,10 +97,45 @@ def extract_symptom_facts(text: str) -> Dict[str, Any]:
     if temp_match:
         facts["temperature"] = temp_match.group(0)
 
-    if _keyword_is_present(lower, "dry cough"):
+    normalized = re.sub(r"[^a-z\s/]", " ", lower).strip()
+    field_value_patterns = {
+        "cough_type": re.search(r"\bcough[_\s]*type\s*:\s*([a-z\s/]+)", lower),
+        "duration": re.search(r"\bduration\s*:\s*([a-z0-9\s/.-]+)", lower),
+        "severity": re.search(r"\bseverity\s*:\s*([a-z\s/]+)", lower),
+        "temperature": re.search(r"\btemperature\s*:\s*([a-z0-9\s/°.-]+)", lower),
+        "pain_location": re.search(r"\bpain[_\s]*location\s*:\s*([a-z\s/]+)", lower),
+        "breathing": re.search(r"\bbreathing\s*:\s*([a-z\s/]+)", lower),
+        "urination": re.search(r"\burination\s*:\s*([a-z\s/]+)", lower),
+    }
+
+    if field_value_patterns["duration"]:
+        facts["duration"] = field_value_patterns["duration"].group(1).strip()
+    if field_value_patterns["severity"]:
+        facts["severity"] = field_value_patterns["severity"].group(1).strip()
+    if field_value_patterns["temperature"]:
+        facts["temperature"] = field_value_patterns["temperature"].group(1).strip()
+    if field_value_patterns["pain_location"]:
+        facts["pain_location"] = field_value_patterns["pain_location"].group(1).strip()
+    if field_value_patterns["breathing"]:
+        facts["breathing"] = field_value_patterns["breathing"].group(1).strip()
+    if field_value_patterns["urination"]:
+        facts["urination"] = field_value_patterns["urination"].group(1).strip()
+
+    cough_type_field = field_value_patterns["cough_type"].group(1).strip() if field_value_patterns["cough_type"] else ""
+    if (
+        _keyword_is_present(lower, "dry cough")
+        or normalized in {"dry", "dry cough"}
+        or cough_type_field.startswith("dry")
+    ):
         facts["cough_type"] = "dry"
-    elif any(_keyword_is_present(lower, term) for term in ("mucus", "phlegm", "wet cough")):
+    elif (
+        any(_keyword_is_present(lower, term) for term in ("mucus", "phlegm", "wet cough"))
+        or normalized in {"mucus", "phlegm", "wet", "wet cough"}
+        or any(term in cough_type_field for term in ("mucus", "phlegm", "wet", "productive"))
+    ):
         facts["cough_type"] = "mucus"
+    elif cough_type_field.startswith("not sure"):
+        facts["cough_type"] = "not sure"
 
     pain_location = None
     for location in ("chest", "head", "throat", "stomach", "abdomen", "back", "lower back", "leg"):
@@ -123,6 +158,7 @@ def merge_followup_answers(state: Dict[str, Any], message: str) -> Dict[str, Any
     merged = dict(state or {})
     working = dict(merged.get("working_facts") or {})
     text = message.strip()
+    inferred = extract_symptom_facts(text)
 
     for line in [part.strip() for part in text.splitlines() if part.strip()]:
         if ":" not in line:
@@ -131,6 +167,18 @@ def merge_followup_answers(state: Dict[str, Any], message: str) -> Dict[str, Any
         clean_key = key.strip().lower().replace(" ", "_")
         if clean_key in QUESTION_LIBRARY and value.strip():
             working[clean_key] = value.strip()
+
+    for key in ("duration", "severity", "temperature", "cough_type", "pain_location", "breathing", "urination"):
+        if inferred.get(key) and not working.get(key):
+            working[key] = inferred[key]
+
+    unanswered = [
+        question["id"]
+        for question in merged.get("questions", [])
+        if not working.get(question["id"])
+    ]
+    if ":" not in text and len(unanswered) == 1 and text:
+        working[unanswered[0]] = text
 
     merged["working_facts"] = working
     merged["answered_questions"] = [
@@ -223,8 +271,19 @@ def needs_more_followup(state: Optional[Dict[str, Any]]) -> bool:
     return False
 
 
+def get_remaining_followup_questions(state: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not state:
+        return []
+    working = state.get("working_facts") or {}
+    return [
+        item
+        for item in state.get("questions", [])
+        if not working.get(item["id"])
+    ]
+
+
 def build_followup_prompt(state: Dict[str, Any]) -> str:
-    questions = state.get("questions", [])
+    questions = get_remaining_followup_questions(state)
     lines = [
         "I need a few more details before I finish the assessment.",
         "",

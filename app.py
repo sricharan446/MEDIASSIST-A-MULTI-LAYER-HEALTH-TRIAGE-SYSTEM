@@ -70,6 +70,7 @@ from services.profile import normalize_profile, profile_from_login
 from services.triage import (
     build_followup_prompt,
     combine_messages_for_assessment,
+    get_remaining_followup_questions,
     maybe_create_followup_state,
     merge_followup_answers,
     needs_more_followup,
@@ -2841,6 +2842,8 @@ async def chat(req: ChatRequest):
         updated_state = merge_followup_answers(pending_followup, req.message)
         memory.add_message(username, sid, "user", req.message)
         if needs_more_followup(updated_state):
+            remaining_questions = get_remaining_followup_questions(updated_state)
+            updated_state["questions"] = remaining_questions
             followup_response = build_followup_prompt(updated_state)
             sources = build_sources(
                 {"type": "followup_triage", "label": "Follow-up Triage"},
@@ -2854,7 +2857,7 @@ async def chat(req: ChatRequest):
                 followup_response,
                 {
                     "tools_used": ["Follow-up Triage"],
-                    "followup_questions": updated_state.get("questions", []),
+                    "followup_questions": remaining_questions,
                     "sources": sources,
                 },
             )
@@ -2864,7 +2867,7 @@ async def chat(req: ChatRequest):
                 tools_used=["Follow-up Triage"],
                 timestamp=datetime.now().isoformat(),
                 needs_followup=True,
-                followup_questions=updated_state.get("questions", []),
+                followup_questions=remaining_questions,
                 sources=sources,
             )
         req.message = combine_messages_for_assessment(updated_state, req.message)
@@ -3741,8 +3744,3 @@ if __name__ == "__main__":
     print("  Stop   : CTRL+C\n")
     print("=" * 50)
     uvicorn.run("app:app", host="0.0.0.0", port=PORT, reload=False)
-
-
-
-
-

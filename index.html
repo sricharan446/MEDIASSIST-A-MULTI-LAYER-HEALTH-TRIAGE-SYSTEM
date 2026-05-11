@@ -2074,6 +2074,15 @@
       document.querySelectorAll('.followup-card').forEach(function (card) { card.remove(); });
     }
 
+    function getRemainingFollowupQuestions(payload) {
+      if (!payload) return [];
+      var questions = Array.isArray(payload) ? payload : (payload.questions || []);
+      var workingFacts = Array.isArray(payload) ? {} : (payload.working_facts || {});
+      return questions.filter(function (item) {
+        return !(workingFacts && workingFacts[item.id]);
+      });
+    }
+
     function syncPregnancyOptions(prefix, gender) {
       var pregnancySelect = document.getElementById(profileFieldId(prefix, 'Pregnancy'));
       if (!pregnancySelect) return;
@@ -2332,8 +2341,7 @@
         var history = data.history || (Array.isArray(data) ? data : []);
         history.forEach(function (m) { appendMsg(m.role, m.content, m.tools_used || [], m.sources || []); });
         if (data.pending_followup && data.pending_followup.questions) {
-          pendingFollowup = data.pending_followup.questions;
-          renderFollowupCard(data.pending_followup.questions);
+          renderFollowupCard(getRemainingFollowupQuestions(data.pending_followup));
         } else {
           clearFollowupCard();
         }
